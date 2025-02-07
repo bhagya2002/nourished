@@ -7,26 +7,46 @@ import {
   Stack,
   Typography,
   CircularProgress,
+  Button,
 } from '@mui/material';
-// components
-import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
-import Logo from '@/app/(DashboardLayout)/layout/shared/logo/Logo';
-import AuthLogin from '../auth/AuthLogin';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import GoogleIcon from '@mui/icons-material/Google';
+import { auth, provider } from '@/firebaseConfig';
+import { signInWithPopup } from 'firebase/auth';
+
+// Components
+import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
+import AuthLogin from '../auth/AuthLogin';
 
 const Login2 = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleDelayedNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault(); // Prevent immediate navigation
-    setLoading(true); // Show spinner
+    e.preventDefault();
+    setLoading(true);
 
     setTimeout(() => {
-      router.push('/authentication/register'); // Navigate after delay
+      router.push('/authentication/register');
       setLoading(false);
-    }, 5000); // 5-second delay
+    }, 1000);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log('User signed in:', result.user);
+
+      // Redirect user after login
+      router.push('/');
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -67,7 +87,6 @@ const Login2 = () => {
               sx={{ p: 4, zIndex: 1, width: '100%', maxWidth: '500px' }}
             >
               <Box display='flex' alignItems='center' justifyContent='center'>
-                {/* <Logo /> */}
                 <Typography
                   variant='h1'
                   textAlign='center'
@@ -90,39 +109,52 @@ const Login2 = () => {
                   </Typography>
                 }
                 subtitle={
-                  <Stack
-                    direction='row'
-                    spacing={1}
-                    justifyContent='center'
-                    mt={3}
-                  >
-                    <Typography
-                      color='textSecondary'
-                      variant='h6'
-                      fontWeight='500'
+                  <Stack direction='column' spacing={2} mt={3}>
+                    {/* Create an account */}
+                    <Stack direction='row' spacing={1} justifyContent='center'>
+                      <Typography
+                        color='textSecondary'
+                        variant='h6'
+                        fontWeight='500'
+                      >
+                        New to Nourished?
+                      </Typography>
+                      <Typography
+                        component='a'
+                        href='/authentication/register'
+                        fontWeight='500'
+                        onClick={handleDelayedNavigation}
+                        sx={{
+                          textDecoration: 'none',
+                          color: loading ? 'grey' : 'primary.main',
+                          cursor: loading ? 'default' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        {loading ? (
+                          <CircularProgress size={16} color='inherit' />
+                        ) : (
+                          'Create an account'
+                        )}
+                      </Typography>
+                    </Stack>
+
+                    {/* Google Sign-In */}
+                    <Button
+                      variant='outlined'
+                      fullWidth
+                      startIcon={<GoogleIcon />}
+                      onClick={handleGoogleSignIn}
+                      disabled={googleLoading}
                     >
-                      New to Nourished?
-                    </Typography>
-                    <Typography
-                      component='a'
-                      href='/authentication/register'
-                      fontWeight='500'
-                      onClick={handleDelayedNavigation}
-                      sx={{
-                        textDecoration: 'none',
-                        color: loading ? 'grey' : 'primary.main',
-                        cursor: loading ? 'default' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                      }}
-                    >
-                      {loading ? (
-                        <CircularProgress size={16} color='inherit' />
+                      {googleLoading ? (
+                        <CircularProgress size={20} />
                       ) : (
-                        'Create an account'
+                        'Sign in with Google'
                       )}
-                    </Typography>
+                    </Button>
                   </Stack>
                 }
               />
@@ -133,4 +165,5 @@ const Login2 = () => {
     </PageContainer>
   );
 };
+
 export default Login2;

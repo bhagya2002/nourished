@@ -1,106 +1,152 @@
 'use client';
-import { Grid, Box, Card, Typography, Stack } from '@mui/material';
+import {
+  Grid,
+  Box,
+  Card,
+  Typography,
+  Stack,
+  Button,
+  CircularProgress,
+} from '@mui/material';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import GoogleIcon from '@mui/icons-material/Google';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, provider } from '@/firebaseConfig';
+
+// Components
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
-import Logo from '@/app/(DashboardLayout)/layout/shared/logo/Logo';
 import AuthRegister from '../auth/AuthRegister';
 
-const Register2 = () => (
-  <PageContainer
-    title='Nourished Register'
-    description='Register for Nourished'
-  >
-    <Box
-      sx={{
-        position: 'relative',
-        '&:before': {
-          content: '""',
-          background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
-          backgroundSize: '400% 400%',
-          animation: 'gradient 15s ease infinite',
-          position: 'absolute',
-          height: '100%',
-          width: '100%',
-          opacity: '0.3',
-        },
-      }}
+const Register2 = () => {
+  const router = useRouter();
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log('User signed in:', result.user);
+
+      // Redirect user after successful sign-in
+      router.push('/');
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  return (
+    <PageContainer
+      title='Nourished Register'
+      description='Register for Nourished'
     >
-      <Grid
-        container
-        spacing={0}
-        justifyContent='center'
-        sx={{ height: '100vh' }}
+      <Box
+        sx={{
+          position: 'relative',
+          '&:before': {
+            content: '""',
+            background: 'radial-gradient(#d2f1df, #d3d7fa, #bad8f4)',
+            backgroundSize: '400% 400%',
+            animation: 'gradient 15s ease infinite',
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            opacity: '0.3',
+          },
+        }}
       >
         <Grid
-          item
-          xs={12}
-          sm={12}
-          lg={4}
-          xl={3}
-          display='flex'
+          container
+          spacing={0}
           justifyContent='center'
-          alignItems='center'
+          sx={{ height: '100vh' }}
         >
-          <Card
-            elevation={9}
-            sx={{ p: 4, zIndex: 1, width: '100%', maxWidth: '500px' }}
+          <Grid
+            item
+            xs={12}
+            sm={12}
+            lg={4}
+            xl={3}
+            display='flex'
+            justifyContent='center'
+            alignItems='center'
           >
-            <Box display='flex' alignItems='center' justifyContent='center'>
-              {/* <Logo /> */}
-              <Typography
-                variant='h1'
-                textAlign='center'
-                color='textPrimary'
-                mb={1}
-                fontWeight='700'
-              >
-                Nourished
-              </Typography>
-            </Box>
-            <AuthRegister
-              subtext={
+            <Card
+              elevation={9}
+              sx={{ p: 4, zIndex: 1, width: '100%', maxWidth: '500px' }}
+            >
+              <Box display='flex' alignItems='center' justifyContent='center'>
                 <Typography
-                  variant='subtitle1'
+                  variant='h1'
                   textAlign='center'
-                  color='textSecondary'
+                  color='textPrimary'
                   mb={1}
+                  fontWeight='700'
                 >
-                  Wellness Made Simple
+                  Nourished
                 </Typography>
-              }
-              subtitle={
-                <Stack
-                  direction='row'
-                  justifyContent='center'
-                  spacing={1}
-                  mt={3}
-                >
+              </Box>
+              <AuthRegister
+                subtext={
                   <Typography
+                    variant='subtitle1'
+                    textAlign='center'
                     color='textSecondary'
-                    variant='h6'
-                    fontWeight='400'
+                    mb={1}
                   >
-                    Already have an Account?
+                    Wellness Made Simple
                   </Typography>
-                  <Typography
-                    component={Link}
-                    href='/authentication/login'
-                    fontWeight='500'
-                    sx={{
-                      textDecoration: 'none',
-                      color: 'primary.main',
-                    }}
-                  >
-                    Sign In
-                  </Typography>
-                </Stack>
-              }
-            />
-          </Card>
+                }
+                subtitle={
+                  <Stack direction='column' spacing={2} mt={3}>
+                    {/* Already have an account? */}
+                    <Stack direction='row' justifyContent='center' spacing={1}>
+                      <Typography
+                        color='textSecondary'
+                        variant='h6'
+                        fontWeight='400'
+                      >
+                        Already have an Account?
+                      </Typography>
+                      <Typography
+                        component={Link}
+                        href='/authentication/login'
+                        fontWeight='500'
+                        sx={{
+                          textDecoration: 'none',
+                          color: 'primary.main',
+                        }}
+                      >
+                        Sign In
+                      </Typography>
+                    </Stack>
+
+                    {/* Google Sign-Up */}
+                    <Button
+                      variant='outlined'
+                      fullWidth
+                      startIcon={<GoogleIcon />}
+                      onClick={handleGoogleSignIn}
+                      disabled={googleLoading}
+                    >
+                      {googleLoading ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        'Sign up with Google'
+                      )}
+                    </Button>
+                  </Stack>
+                }
+              />
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
-  </PageContainer>
-);
+      </Box>
+    </PageContainer>
+  );
+};
 
 export default Register2;
