@@ -109,7 +109,7 @@ const Register2 = () => {
                         variant='h6'
                         fontWeight='400'
                       >
-                        Already have an Account?
+                        Already have an account?
                       </Typography>
                       <Typography
                         component={Link}
