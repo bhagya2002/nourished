@@ -6,6 +6,7 @@ import {
   IconMoodHappy,
   IconTypography,
   IconUserPlus,
+  IconStack,
 } from '@tabler/icons-react';
 
 import { uniqueId } from 'lodash';
@@ -29,6 +30,12 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Tasks',
+    icon: IconStack,
+    href: '/tasks'
+  },
+  {
+    id: uniqueId(),
+    title: 'Typos',
     icon: IconTypography,
     href: '/utilities/typography',
   },
