@@ -1,11 +1,10 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require("express");
+const routes = require("./routes.js");
+const app = express();
+const port = 3000;
 
-app.get('/heartbeat', (req, res) => {
-  res.send('Hello World!')
-})
-
+// TODO: Load any additional stuff
+routes(app);
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Example app listening on port ${port}`);
 });
