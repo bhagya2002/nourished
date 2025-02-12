@@ -1,8 +1,12 @@
 const admin = require("./firebaseAdmin");
 
-module.exports.getUserInfo = async function getUserInfo(uid) {
-  const db = admin.firestore();
-  const docRef = db.collection("users").doc(uid);
+const db = admin.firestore();
+
+module.exports.queryDatabaseSingle = async function getUserInfo(
+  uid,
+  collectionName
+) {
+  const docRef = db.collection(collectionName).doc(uid);
   return await docRef
     .get()
     .then((docSnapshot) => {
