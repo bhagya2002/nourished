@@ -1,5 +1,9 @@
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/firebaseConfig';
+import { useAuth } from '@/context/AuthContext';
 import {
   Avatar,
   Box,
@@ -9,57 +13,71 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-} from "@mui/material";
-
-import { IconListCheck, IconMail, IconUser } from "@tabler/icons-react";
+} from '@mui/material';
+import { IconListCheck, IconMail, IconUser } from '@tabler/icons-react';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
+  const router = useRouter();
+  const { user } = useAuth();
+
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
   };
+
   const handleClose2 = () => {
     setAnchorEl2(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('authToken');
+      router.push('/authentication/login');
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
   };
 
   return (
     <Box>
       <IconButton
-        size="large"
-        aria-label="show 11 new notifications"
-        color="inherit"
-        aria-controls="msgs-menu"
-        aria-haspopup="true"
+        size='large'
+        aria-label='show profile menu'
+        color='inherit'
+        aria-controls='profile-menu'
+        aria-haspopup='true'
         sx={{
-          ...(typeof anchorEl2 === "object" && {
-            color: "primary.main",
+          ...(typeof anchorEl2 === 'object' && {
+            color: 'primary.main',
           }),
         }}
         onClick={handleClick2}
       >
         <Avatar
-          src="/images/profile/user-1.jpg"
-          alt="image"
+          src='/images/profile/user-1.jpg'
+          alt='User Avatar'
           sx={{
             width: 35,
             height: 35,
           }}
         />
       </IconButton>
+
       {/* ------------------------------------------- */}
-      {/* Message Dropdown */}
+      {/* Profile Dropdown */}
       {/* ------------------------------------------- */}
       <Menu
-        id="msgs-menu"
+        id='profile-menu'
         anchorEl={anchorEl2}
         keepMounted
         open={Boolean(anchorEl2)}
         onClose={handleClose2}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{
-          "& .MuiMenu-paper": {
-            width: "200px",
+          '& .MuiMenu-paper': {
+            width: '200px',
           },
         }}
       >
@@ -83,11 +101,10 @@ const Profile = () => {
         </MenuItem>
         <Box mt={1} py={1} px={2}>
           <Button
-            href="/authentication/login"
-            variant="outlined"
-            color="primary"
-            component={Link}
+            variant='outlined'
+            color='primary'
             fullWidth
+            onClick={handleLogout}
           >
             Logout
           </Button>
