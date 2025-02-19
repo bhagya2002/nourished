@@ -1,7 +1,14 @@
+import { AuthProvider } from '@/context/AuthContext';
+
 export default function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode
+  children: React.ReactNode;
 }) {
-    return <section>{children}</section>
+  return (
+    <AuthProvider>
+      {' '}
+      <section>{children}</section>
+    </AuthProvider>
+  );
 }

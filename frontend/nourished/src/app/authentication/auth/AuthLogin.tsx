@@ -47,13 +47,29 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
       );
       const user = userCredential.user;
 
+      // Fetch ID Token
+      const token = await user.getIdToken();
+
       // Check if user exists in Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (!userDoc.exists()) {
         throw new Error('User not found in database.');
       }
 
-      // Redirect to dashboard on success
+      // Store token in localStorage (optional but useful for API requests)
+      localStorage.setItem('authToken', token);
+
+      // Send token to the backend
+      await fetch('/api/auth/verifyToken', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ uid: user.uid }),
+      });
+
+      // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       setError('Invalid email or password.');
