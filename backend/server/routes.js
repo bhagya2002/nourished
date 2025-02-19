@@ -1,4 +1,4 @@
-const firestore = require("../firebase/firestore");
+const userService = require("../services/userService");
 
 function addHeartbeatRoute(app) {
   app.get("/heartbeat", (req, res) => {
@@ -7,8 +7,12 @@ function addHeartbeatRoute(app) {
 }
 
 function addGetUserInfo(app) {
-  app.get("/userInfo/:token", async (req, res) => {
-    const result = await firestore.getUserInfo(req.params.token); // TODO: Add authentication
+  app.post("/userInfo", async (req, res) => {
+    // const authResult = authService.authenticateToken(req.body.token);
+    // if (!authResult.uid) {
+    //   res.send(`Authentication failed! Error message: ${authResult.message}`);
+    // }
+    const result = await userService.getUserInfo(req.body.token); // TODO: Add authentication
     if (result.success) {
       res.send(result.data);
     } else {
