@@ -3,7 +3,7 @@ import {
   IconCopy,
   IconLayoutDashboard,
   IconLogin,
-  IconMoodHappy,
+  IconCalendarEvent,
   IconTypography,
   IconUserPlus,
   IconStack,
@@ -11,6 +11,8 @@ import {
 } from '@tabler/icons-react';
 
 import { uniqueId } from 'lodash';
+import { unique } from 'next/dist/build/utils';
+import { title } from 'process';
 
 const Menuitems = [
   {
@@ -27,6 +29,12 @@ const Menuitems = [
   {
     navlabel: true,
     subheader: 'Goals',
+  },
+  {
+    id: uniqueId(),
+    title: 'Calendar',
+    icon: IconCalendarEvent,
+    href: '/calendar',
   },
   {
     id: uniqueId(),
