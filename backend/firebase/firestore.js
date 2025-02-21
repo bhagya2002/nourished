@@ -37,9 +37,46 @@ module.exports.queryMultiple = async function queryMultiple(ids, collectionName)
         });
 }
 
+module.exports.addSingleDoc = async function addSingleDoc(collectionName, object) {
+    let newDocRef = db.collection(collectionName).doc();
+    object["uid"] = newDocRef.id;
+    return await newDocRef.set(object)
+        .then(() => {
+            return { success: true, id: newDocRef.id };
+        })
+        .catch((error) => {
+            return { success: false, error: error };
+        });
+}
+
+module.exports.deleteSingleDoc = async function deleteSingleDoc(collectionName, uid) {
+    return await db.collection(collectionName).doc(uid).delete()
+        .then(() => {
+            return { success: true };
+        })
+        .catch((error) => {
+            return { success: false, error: error };
+        });
+}
+
 module.exports.updateFieldArray = async function updateFieldArray(collection, doc, fieldName, newValue) {
     const docRef = db.collection(collection).doc(doc);
     let update = {};
     update[fieldName] = admin.firestore.FieldValue.arrayUnion(newValue);
-    return await docRef.update(update);
+    return await docRef.update(update).then(() => {
+        return { success: true };
+    }).catch((error) => {
+        return { success: false, error: error };
+    });
+}
+
+module.exports.removeFromFieldArray = async function removeFromFieldArray(collection, doc, fieldName, valueToRemove) {
+    const docRef = db.collection(collection).doc(doc);
+    let update = {};
+    update[fieldName] = admin.firestore.FieldValue.arrayRemove(valueToRemove);
+    return await docRef.update(update).then(() => {
+        return { success: true };
+    }).catch((error) => {
+        return { success: false, error: error };
+    });
 }
