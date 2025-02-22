@@ -1,12 +1,26 @@
 const db = require("../firebase/firestore");
-
 module.exports.createTask = async function createTask(uid, task) {
-    task["uid"] = uid;
-    const result = await db.addSingleDoc("tasks", task);
-    if (result.success) {
-        return await db.updateFieldArray("users", uid, "tasks", result.id);
+    try {
+      // Set the uid on the task
+      task.uid = uid;
+      // Create a new task document in the "tasks" collection
+      const taskResult = await db.addSingleDoc("tasks", task);
+      if (!taskResult.success) {
+        console.error("Failed to add task document:", taskResult.error);
+        return { success: false, error: taskResult.error };
+      }
+      // Update the user's document in the "users" collection by adding the new task id to the tasks array
+      const updateResult = await db.updateFieldArray("users", uid, "tasks", taskResult.id);
+      if (!updateResult.success) {
+        console.error("Failed to update user's tasks array:", updateResult.error);
+        return { success: false, error: updateResult.error };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error("Error in createTask:", err);
+      return { success: false, error: err };
     }
-}
+};
 
 module.exports.editTask = async function editTask(uid, taskId, fieldToChange, newValue) {
     const result = await db.queryDatabaseSingle(uid, "users");
@@ -23,8 +37,10 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
 }
 
 module.exports.deleteTask = async function deleteTask(uid, taskId) {
-    const result = await db.removeFromFieldArray("users", uid, "tasks", taskId);
-    if (result.success) {
-        return await db.deleteSingleDoc("tasks", taskId);
+    const removeResult = await db.removeFromFieldArray("users", uid, "tasks", taskId);
+    if (!removeResult.success) {
+        return { success: false, error: removeResult.error };
     }
+    const deleteResult = await db.deleteSingleDoc("tasks", taskId);
+    return deleteResult;
 }

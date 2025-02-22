@@ -22,11 +22,15 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
 };
 
 module.exports.queryMultiple = async function queryMultiple(ids, collectionName) {
+    if (!ids || ids.length === 0) {
+        return { success: true, data: [] };
+    }
+
     return await db.collection(collectionName).where("__name__", "in", ids)
         .get()
         .then((docSnapshot) => {
             if (!docSnapshot.empty) {
-                const docs = docSnapshot.docs.map(x => x.data());
+                const docs = docSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 return { success: true, data: docs };
             } else {
                 return { success: false, message: "No such documents!" };

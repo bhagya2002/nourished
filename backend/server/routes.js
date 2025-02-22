@@ -11,15 +11,15 @@ function addHeartbeatRoute(app) {
 
 function addGetUserInfo(app) {
     app.post("/userInfo", async (req, res) => {
-        const authResult = authService.authenticateToken(req.body.token);
+        const authResult = await authService.authenticateToken(req.body.token);
         if (!authResult.uid) {
-            res.send(`Authentication failed! Error message: ${authResult.message}`);
+            return res.status(401).send(`Authentication failed: ${authResult.message}`);
         }
         const result = await userService.getUserInfo(authResult.uid); // TODO: Add authentication
         if (result.success) {
             res.send(result.data);
         } else {
-            res.send(result.message);
+            res.status(500).send(result.message);
         }
     });
 }
@@ -37,164 +37,205 @@ function addGetFriendRecommendation(app) {
     })
 }
 
+
 function addCreateTask(app) {
     app.post("/createTask", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await taskService.createTask(authResult.uid, req.body.task)
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        // Debug header bypass
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await taskService.createTask(authResult.uid, req.body.task);
+      if (result.success) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
 
 function addDeleteTask(app) {
     app.post("/deleteTask", async (req, res) => {
         let authResult = {};
         if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+            return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
+        } else {
+        authResult.uid = req.body.token;
+        }
+
         const result = await taskService.deleteTask(authResult.uid, req.body.taskId);
         if (result.success) {
-            res.sendStatus(200);
+        res.sendStatus(200);
         } else {
-            res.sendStatus(500);
+        res.sendStatus(500);
         }
-    })
+    });
 }
 
 function addEditTask(app) {
     app.post("/editTask", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await taskService.editTask(authResult.uid, req.body.taskId, req.body.fieldToChange, req.body.newValue);
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await taskService.editTask(
+        authResult.uid,
+        req.body.taskId,
+        req.body.fieldToChange,
+        req.body.newValue
+      );
+      if (result.success) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
 
 function addGetUserTasks(app) {
     app.post("/getUserTasks", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await taskService.getUserTasks(authResult.uid);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await taskService.getUserTasks(authResult.uid);
+      if (result.success) {
+        res.send(result.data);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
+
 
 function addCreateGoal(app) {
     app.post("/createGoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await goalService.createGoal(authResult.uid, req.body.goal)
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await goalService.createGoal(authResult.uid, req.body.goal);
+      if (result.success) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
+
 
 function addDeleteGoal(app) {
     app.post("/deletegoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await goalService.deleteGoal(authResult.uid, req.body.goalId);
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await goalService.deleteGoal(
+        authResult.uid,
+        req.body.goalId
+      );
+      if (result.success) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
 
 function addEditGoal(app) {
     app.post("/editgoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await goalService.editGoal(authResult.uid, req.body.goalId, req.body.fieldToChange, req.body.newValue);
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await goalService.editGoal(
+        authResult.uid,
+        req.body.goalId,
+        req.body.fieldToChange,
+        req.body.newValue
+      );
+      if (result.success) {
+        res.sendStatus(200);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
 
 function addGetUserGoals(app) {
     app.post("/getUsergoals", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                res.send(`Authentication failed! Error message: ${authResult.message}`);
-            }
-        } else {
-            authResult.uid = req.body.token;
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res
+            .status(401)
+            .send(`Authentication failed! Error message: ${authResult.message}`);
         }
-        const result = await goalService.getUserGoals(authResult.uid);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.sendStatus(500);
-        }
-    })
+      } else {
+        authResult.uid = req.body.token;
+      }
+  
+      const result = await goalService.getUserGoals(authResult.uid);
+      if (result.success) {
+        res.send(result.data);
+      } else {
+        res.sendStatus(500);
+      }
+    });
 }
 
 module.exports = function injectRoutes(app) {
