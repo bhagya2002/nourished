@@ -1,3 +1,4 @@
 # Probably don't want these
 node_modules
 secrets
+capstone2025.*
