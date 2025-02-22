@@ -10,6 +10,7 @@ import {
   MenuItem,
   Stack,
   Alert,
+  Fade,
 } from "@mui/material";
 
 interface TaskCreateDialogProps {
@@ -90,7 +91,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm" TransitionComponent={Fade}>
       <DialogTitle>Add a New Task</DialogTitle>
       <DialogContent dividers>
         {errorMsg && (

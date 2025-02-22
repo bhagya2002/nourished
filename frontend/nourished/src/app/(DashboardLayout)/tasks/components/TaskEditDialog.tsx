@@ -9,6 +9,7 @@ import {
   TextField, 
   MenuItem,
   Stack,
+  Fade,
   Alert 
 } from "@mui/material";
 
@@ -88,7 +89,7 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleCancel} fullWidth maxWidth="sm" TransitionComponent={Fade}>
       <DialogTitle>Edit Task</DialogTitle>
       <DialogContent dividers>
         {errorMsg && (
