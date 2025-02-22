@@ -1,35 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "@/firebaseConfig";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
-  getDocs,
-} from "firebase/firestore";
-
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from "next/navigation";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import {
   Alert,
   Box,
   Button,
-  Grid,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { last } from "lodash";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
 export default function TaskHistoryPage() {
-  const [user] = useAuthState(auth);
   const [completions, setCompletions] = useState<any[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { token, user, loading: authLoading } = useAuth();
+  const router = useRouter();
 
   // Date filter
   const [startDate, setStartDate] = useState<string>("");
@@ -39,59 +30,50 @@ export default function TaskHistoryPage() {
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [noMoreData, setNoMoreData] = useState(false);
 
+  // Redierect if user is not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+        router.push("/authentication/login");
+    }
+  }, [authLoading, user, router]);
+
   const fetchHistory = async (isLoadMore = false) => {
-    if (!user) return;
+    if (!token) return;
+
     setLoading(true);
     setErrorMsg(null);
 
     try {
-        const completionsRef = collection(db, "taskCompletions");
-        let q = query(
-            completionsRef,
-            where("uid", "==", user.uid),
-            orderBy("completedAt", "desc"),
-            limit(5)
-        );
-
-        if (startDate) {
-            const start = new Date(`${startDate}T00:00:00`);
-            q = query(q, where("completedAt", ">=", start));
-        }
-        if (endDate) {
-            const end = new Date(`${endDate}T23:59:59`);
-            q = query(q, where("completedAt", "<=", end));
-        }
-
-        // Pagination
-        if (isLoadMore && lastDoc) {
-            q = query(q, startAfter(lastDoc));
-        }
-
-        const snap = await getDocs(q);
-        if (snap.empty && isLoadMore) {
-            setNoMoreData(true);
-        }
-
-        const newData: any[] = [];
-        snap.forEach((docSnap) => {
-            newData.push({ id: docSnap.id, ...docSnap.data() });
-        });
-
-        const lastVisible = snap.docs[snap.docs.length - 1];
-        setLastDoc(lastVisible || null);
-
-        setCompletions(isLoadMore ? [...completions, ...newData] : newData);
+      const response = await fetch(`${API_BASE_URL}/getTaskHistory`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          startDate,
+          endDate,
+          lastDoc: isLoadMore ? lastDoc : null,
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch task history");
+      const data = await response.json();
+      // Assume the API returns { completions: [...], lastDoc: ... }
+      const newData = data.completions || [];
+      setLastDoc(data.lastDoc || null);
+      setNoMoreData(newData.length < 5);
+      setCompletions(isLoadMore ? [...completions, ...newData] : newData);
     } catch (err) {
-        console.error("Error fetching history:", err);
-        setErrorMsg("Failed to load task history.");
+      console.error("Error fetching history:", err);
+      setErrorMsg("Failed to load task history.");
     } finally {
-        setLoading(false)
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchHistory();
-  }, [user]);
+  }, []);
 
   return (
     <PageContainer title="Task History" description="View completed tasks">
@@ -116,11 +98,14 @@ export default function TaskHistoryPage() {
             onChange={(e) => setEndDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
           />
-          <Button variant="contained" onClick={() => {
-            setLastDoc(null);
-            setNoMoreData(false);
-            fetchHistory(false);
-          }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setLastDoc(null);
+              setNoMoreData(false);
+              fetchHistory(false);
+            }}
+          >
             Filter
           </Button>
         </Stack>
@@ -128,15 +113,12 @@ export default function TaskHistoryPage() {
         {/* Render Completions */}
         <Box sx={{ maxHeight: 400, overflow: "auto", border: "1px solid #ccc" }}>
           {completions.map((item) => (
-            <Box
-              key={item.id}
-              sx={{ p: 2, borderBottom: "1px solid #eee" }}
-            >
+            <Box key={item.id} sx={{ p: 2, borderBottom: "1px solid #eee" }}>
               <Typography variant="subtitle1">
                 Task ID: {item.taskId}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Completed At: {new Date(item.completedAt?.seconds * 1000).toLocaleString()}
+                Completed At: {new Date(item.completedAt).toLocaleString()}
               </Typography>
             </Box>
           ))}
