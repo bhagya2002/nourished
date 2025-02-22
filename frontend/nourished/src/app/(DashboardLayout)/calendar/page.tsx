@@ -5,13 +5,13 @@ import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCa
 
 
 const CalendarPage = () => {
-  return (
-    <PageContainer title="Calendar Page" description="this is calendar page">
-      <DashboardCard title="Calendar Page">
-        <Typography>This is a sample page</Typography>
-      </DashboardCard>
-    </PageContainer>
-  );
+    return (
+        <PageContainer title="Calendar Page" description="this is calendar page">
+            <DashboardCard title="Calendar Page">
+                <Typography>This is a sample page</Typography>
+            </DashboardCard>
+        </PageContainer>
+    );
 };
 
 export default CalendarPage;
