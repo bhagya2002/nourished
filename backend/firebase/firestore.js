@@ -39,7 +39,6 @@ module.exports.queryMultiple = async function queryMultiple(ids, collectionName)
 
 module.exports.addSingleDoc = async function addSingleDoc(collectionName, object) {
     let newDocRef = db.collection(collectionName).doc();
-    object["uid"] = newDocRef.id;
     return await newDocRef.set(object)
         .then(() => {
             return { success: true, id: newDocRef.id };
@@ -57,6 +56,17 @@ module.exports.deleteSingleDoc = async function deleteSingleDoc(collectionName, 
         .catch((error) => {
             return { success: false, error: error };
         });
+}
+
+module.exports.updateField = async function updateField(collection, doc, fieldName, newValue) {
+    const docRef = db.collection(collection).doc(doc);
+    let update = {};
+    update[fieldName] = newValue;
+    return await docRef.update(update).then(() => {
+        return { success: true };
+    }).catch((error) => {
+        return { success: false, error: error };
+    });
 }
 
 module.exports.updateFieldArray = async function updateFieldArray(collection, doc, fieldName, newValue) {
