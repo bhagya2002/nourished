@@ -1,5 +1,6 @@
 const userService = require("../services/userService");
 const taskService = require("../services/taskService");
+const goalService = require("../services/goalService");
 const authService = require("../services/authService");
 
 function addHeartbeatRoute(app) {
@@ -116,6 +117,85 @@ function addGetUserTasks(app) {
     })
 }
 
+function addCreateGoal(app) {
+    app.post("/createGoal", async (req, res) => {
+        let authResult = {};
+        if (!req.headers.debug) {
+            authResult = authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                res.send(`Authentication failed! Error message: ${authResult.message}`);
+            }
+        } else {
+            authResult.uid = req.body.token;
+        }
+        const result = await goalService.createGoal(authResult.uid, req.body.goal)
+        if (result.success) {
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(500);
+        }
+    })
+}
+
+function addDeleteGoal(app) {
+    app.post("/deletegoal", async (req, res) => {
+        let authResult = {};
+        if (!req.headers.debug) {
+            authResult = authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                res.send(`Authentication failed! Error message: ${authResult.message}`);
+            }
+        } else {
+            authResult.uid = req.body.token;
+        }
+        const result = await goalService.deleteGoal(authResult.uid, req.body.goalId);
+        if (result.success) {
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(500);
+        }
+    })
+}
+
+function addEditGoal(app) {
+    app.post("/editgoal", async (req, res) => {
+        let authResult = {};
+        if (!req.headers.debug) {
+            authResult = authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                res.send(`Authentication failed! Error message: ${authResult.message}`);
+            }
+        } else {
+            authResult.uid = req.body.token;
+        }
+        const result = await goalService.editGoal(authResult.uid, req.body.goalId, req.body.fieldToChange, req.body.newValue);
+        if (result.success) {
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(500);
+        }
+    })
+}
+
+function addGetUserGoals(app) {
+    app.post("/getUsergoals", async (req, res) => {
+        let authResult = {};
+        if (!req.headers.debug) {
+            authResult = authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                res.send(`Authentication failed! Error message: ${authResult.message}`);
+            }
+        } else {
+            authResult.uid = req.body.token;
+        }
+        const result = await goalService.getUserGoals(authResult.uid);
+        if (result.success) {
+            res.send(result.data);
+        } else {
+            res.sendStatus(500);
+        }
+    })
+}
 
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
@@ -132,5 +212,8 @@ module.exports = function injectRoutes(app) {
     addGetUserTasks(app);
 
     // Goals
-
+    addCreateGoal(app);
+    addDeleteGoal(app);
+    addEditGoal(app);
+    addGetUserGoals(app);
 };

@@ -22,7 +22,7 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
 };
 
 module.exports.queryMultiple = async function queryMultiple(ids, collectionName) {
-    return await db.collection(collectionName).where("uid", "in", ids)
+    return await db.collection(collectionName).where("__name__", "in", ids)
         .get()
         .then((docSnapshot) => {
             if (!docSnapshot.empty) {
