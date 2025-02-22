@@ -1,10 +1,10 @@
-module.exports.authenticateUser = async function authenticateUser(idToken) {
-  getAuth()
-    .verifyIdToken(idToken)
-    .then((decodedToken) => {
-      return { uid: decodedToken.uid };
-    })
-    .catch((error) => {
-      return { message: error };
-    });
+const admin = require("../firebase/firebaseAdmin");
+
+module.exports.authenticateToken = async function authenticateToken(idToken) {
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    return { uid: decodedToken.uid };
+  } catch (error) {
+    return { message: error.message };
+  }
 };
