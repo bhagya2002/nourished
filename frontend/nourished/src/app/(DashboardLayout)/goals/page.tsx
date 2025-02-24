@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,18 +13,25 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3
 export default function GoalsPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
+
   const [goals, setGoals] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ id:'' ,title: '', description: '', deadline: '', createAt: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
+  const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const today = new Date().toISOString().split('T')[0];
 
   // reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({ id: '', title: '', description: '', deadline: '', createAt: '' });
   }
+
+  // Handle closing the toast box
+  const handleToastClose = () => {
+    setToast({ ...toast, open: false });
+  };
 
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
@@ -41,6 +48,7 @@ export default function GoalsPage() {
       setGoals(goalsData);
     } catch (error) {
       console.error("Error fetching goals:", error);
+      setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
     }
   };
 
@@ -74,8 +82,10 @@ export default function GoalsPage() {
         });
         if (!response.ok) throw new Error("Failed to delete goal");
         setGoals(prevGoals => prevGoals.filter((_, i) => i !== index));
+        setToast({ open: true, message: 'Goal deleted successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error deleting goal:", error);
+        setToast({ open: true, message: 'Failed to delete goal', severity: 'error' });
       }
     }
   };
@@ -137,8 +147,10 @@ export default function GoalsPage() {
           updateField('deadline', newGoal.deadline),
         ]);
         setGoals(prevGoals => prevGoals.map((goal, idx) => idx === editingIndex ? newGoal : goal));
+        setToast({ open: true, message: 'Goal updated successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error updating goal:", error);
+        setToast({ open: true, message: 'Failed to update goal', severity: 'error' });
       }
       setOpen(false);
       resetNewGoal();
@@ -164,8 +176,10 @@ export default function GoalsPage() {
         if (!response.ok) throw new Error('Failed to create goal');
         const goalId = (await response.json()).id;
         setGoals(prevGoals => [...prevGoals, {...newGoal, id: goalId, createAt: goalCreateAt }]);
+        setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error creating goal:", error);
+        setToast({ open: true, message: 'Failed to create goal', severity: 'error' });
       }
       setOpen(false);
       resetNewGoal();
@@ -188,6 +202,14 @@ export default function GoalsPage() {
 
   return (
     <div className="goals-container">
+      {/* popup toast message */}
+      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270+16 }}}}>
+        <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
+
+      {/* goals list */}
       <List>
         {goals.map((goal, index) => (
           <ListItem key={index}>
@@ -203,11 +225,15 @@ export default function GoalsPage() {
           </ListItem>
         ))}
       </List>
+
+      {/* add goal button */}
       <Box sx={{ position: "fixed", bottom: 16, right: 16 }}>
         <Fab color="primary" onClick={handleAddGoalClick} aria-label="Add Goal">
           <AddIcon />
         </Fab>
       </Box>
+
+      {/* add/edit goal form dialog */}
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>{isEditing ? 'Edit Goal' : 'Add a New Goal'}</DialogTitle>
         <DialogContent dividers>
@@ -218,7 +244,7 @@ export default function GoalsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Save' : 'Create'}</Button>
+          <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
     </div>
