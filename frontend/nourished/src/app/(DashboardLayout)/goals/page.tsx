@@ -18,7 +18,7 @@ export default function GoalsPage() {
 
   const [goals, setGoals] = useState<any[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createAt: '', taskIds: [] });
+  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
@@ -32,7 +32,7 @@ export default function GoalsPage() {
 
   // reset the form to initial state
   const resetNewGoal = () => {
-    setNewGoal({ id: '', title: '', description: '', deadline: '', createAt: '', taskIds: [] });
+    setNewGoal({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
   }
 
   // Handle closing the toast box
@@ -56,6 +56,25 @@ export default function GoalsPage() {
     } catch (error) {
       console.error("Error fetching goals:", error);
       setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+    }
+  };
+
+  const fetchGoalTasks = async (index: number) => {
+    const goalId = goals[index].id;
+    try {
+      const response = await fetch(`${API_BASE_URL}/getGoalTasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, goalId: goalId }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch tasks");
+      const tasksData = await response.json();
+      setGoalTasks({ ...goalTasks, [index]: tasksData });
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      setToast({ open: true, message: 'Failed to fetch tasks', severity: 'error' });
     }
   };
 
@@ -163,7 +182,7 @@ export default function GoalsPage() {
       resetNewGoal();
     } else {
       // Otherwise, create a new goal in the database
-      const goalCreateAt = new Date().toISOString();
+      const goalcreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createGoal`, {
           method: 'POST',
@@ -176,14 +195,14 @@ export default function GoalsPage() {
               title: newGoal.title,
               description: newGoal.description,
               deadline: newGoal.deadline,
-              createAt: goalCreateAt,
+              createdAt: goalcreatedAt,
               taskIds: [],
             },
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
         const goalId = (await response.json()).id;
-        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createAt: goalCreateAt }]);
+        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createdAt: goalcreatedAt }]);
         setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error creating goal:", error);
@@ -199,6 +218,9 @@ export default function GoalsPage() {
       setExpandingGoalIndex(index);
     } else {
       setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
+    }
+    if (goalTasks[index] === undefined) {
+      fetchGoalTasks(index);
     }
   }
 
@@ -228,24 +250,37 @@ export default function GoalsPage() {
       {/* goals list */}
       <List>
         {goals.map((goal, index) => (
-          <>
-            <ListItem key={index}>
-              <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreateAt: ${goal.createAt}, Deadline: ${goal.deadline}`} />
+          <div key={index}>
+            <ListItem>
+              <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`} />
               <ListItemSecondaryAction>
-                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleEditGoalClick(index)}>
+                <IconButton edge="end" onClick={() => handleEditGoalClick(index)}>
                   <EditIcon />
                 </IconButton>
-                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleDeleteGoalClick(index)}>
+                <IconButton edge="end" onClick={() => handleDeleteGoalClick(index)}>
                   <DeleteIcon />
                 </IconButton>
-                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleGoalExpand(index)}>
+                <IconButton edge="end" onClick={() => handleGoalExpand(index)}>
                   {index === expandingGoalIndex ? <ExpandLess /> : <ExpandMore />}
                 </IconButton>
               </ListItemSecondaryAction>
             </ListItem>
             <Collapse in={index === expandingGoalIndex} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                <ListItemButton sx={{ pl: 4 }} dense>
+                {goalTasks[index] !== undefined && goalTasks[index].map((task: any, taskIndex: number) => (
+                  <ListItem key={taskIndex} sx={{ pl: 4 }}>
+                    <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}/>
+                    <ListItemSecondaryAction>
+                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { console.log('edit task') }}>
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { console.log('delete task') }}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                ))}
+                <ListItemButton sx={{ pl: 4 }} dense key={-1}>
                   <ListItemIcon sx={{ minWidth: 40 }}>
                     <AddIcon fontSize='small'/>
                   </ListItemIcon>
@@ -253,7 +288,7 @@ export default function GoalsPage() {
                 </ListItemButton>
               </List>
             </Collapse>
-          </>
+          </div>
         ))}
       </List>
 

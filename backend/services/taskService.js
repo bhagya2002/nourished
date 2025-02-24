@@ -33,8 +33,8 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
     } else return result;
 }
 
-module.exports.getGoalTasks = async function getGoalTasks(uid) {
-    const result = await db.queryDatabaseSingle(uid, "goals");
+module.exports.getGoalTasks = async function getGoalTasks(goalId) {
+    const result = await db.queryDatabaseSingle(goalId, "goals");
     if (result.success) {
         return await db.queryMultiple(result.data.taskIds, "tasks");
     } else return result;
