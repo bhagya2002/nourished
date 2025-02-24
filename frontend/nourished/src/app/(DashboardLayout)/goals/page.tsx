@@ -26,6 +26,10 @@ export default function GoalsPage() {
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
 
+  const [goalTasks, setGoalTasks] = useState<any[]>([]);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [newTask, setNewTask] = useState({ id: '', title: '', description: '', goalId: '' });
+
   // reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({ id: '', title: '', description: '', deadline: '', createAt: '', taskIds: [] });
