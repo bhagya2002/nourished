@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor, Collapse, ListItemIcon } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -16,12 +18,13 @@ export default function GoalsPage() {
 
   const [goals, setGoals] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({ id:'' ,title: '', description: '', deadline: '', createAt: '' });
+  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createAt: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
   const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const today = new Date().toISOString().split('T')[0];
+  const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
 
   // reset the form to initial state
   const resetNewGoal = () => {
@@ -175,7 +178,7 @@ export default function GoalsPage() {
         });
         if (!response.ok) throw new Error('Failed to create goal');
         const goalId = (await response.json()).id;
-        setGoals(prevGoals => [...prevGoals, {...newGoal, id: goalId, createAt: goalCreateAt }]);
+        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createAt: goalCreateAt }]);
         setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error creating goal:", error);
@@ -185,6 +188,14 @@ export default function GoalsPage() {
       resetNewGoal();
     }
   };
+
+  const handleGoalExpand = (index: number) => {
+    if (index === -1) {
+      setExpandingGoalIndex(index);
+    } else {
+      setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
+    }
+  }
 
   // Redirects to login if not authenticated
   useEffect(() => {
@@ -203,7 +214,7 @@ export default function GoalsPage() {
   return (
     <div className="goals-container">
       {/* popup toast message */}
-      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270+16 }}}}>
+      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
         <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
           {toast.message}
         </Alert>
@@ -212,17 +223,32 @@ export default function GoalsPage() {
       {/* goals list */}
       <List>
         {goals.map((goal, index) => (
-          <ListItem key={index}>
-            <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreateAt: ${goal.createAt}, Deadline: ${goal.deadline}`} />
-            <ListItemSecondaryAction>
-              <IconButton edge="end" onClick={() => handleEditGoalClick(index)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton edge="end" onClick={() => handleDeleteGoalClick(index)}>
-                <DeleteIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
+          <>
+            <ListItem key={index}>
+              <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreateAt: ${goal.createAt}, Deadline: ${goal.deadline}`} />
+              <ListItemSecondaryAction>
+                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleEditGoalClick(index)}>
+                  <EditIcon />
+                </IconButton>
+                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleDeleteGoalClick(index)}>
+                  <DeleteIcon />
+                </IconButton>
+                <IconButton edge="end" sx={{ right: 32 }} onClick={() => handleGoalExpand(index)}>
+                  {index === expandingGoalIndex ? <ExpandLess /> : <ExpandMore />}
+                </IconButton>
+              </ListItemSecondaryAction>
+            </ListItem>
+            <Collapse in={index === expandingGoalIndex} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                <ListItem sx={{ pl: 4 }}>
+                  <ListItemIcon>
+                    <AddIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Starred" />
+                </ListItem>
+              </List>
+            </Collapse>
+          </>
         ))}
       </List>
 
