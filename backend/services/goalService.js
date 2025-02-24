@@ -15,7 +15,7 @@ module.exports.createGoal = async function createGoal(uid, goal) {
       console.error("Failed to update user's goals array:", updateResult.error);
       return { success: false, error: updateResult.error };
     }
-    return { success: true };
+    return { success: true, data: { id: result.id } };
   } catch (err) {
     console.error("Error in createGoal:", err);
     return { success: false, error: err };

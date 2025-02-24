@@ -57,6 +57,7 @@ export default function GoalsPage() {
     setIsEditing(true);
     setEditingIndex(index);
     setNewGoal(goals[index]);
+    console.log(goals[index]);
     setOpen(true);
   };
 
@@ -143,6 +144,7 @@ export default function GoalsPage() {
       resetNewGoal();
     } else {
       // Otherwise, create a new goal in the database
+      const goalCreateAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createGoal`, {
           method: 'POST',
@@ -155,12 +157,13 @@ export default function GoalsPage() {
               title: newGoal.title,
               description: newGoal.description,
               deadline: newGoal.deadline,
-              createAt: new Date().toISOString(),
+              createAt: goalCreateAt,
             },
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
-        fetchGoals();
+        const goalId = (await response.json()).id;
+        setGoals(prevGoals => [...prevGoals, {...newGoal, id: goalId, createAt: goalCreateAt }]);
       } catch (error) {
         console.error("Error creating goal:", error);
       }
@@ -188,7 +191,7 @@ export default function GoalsPage() {
       <List>
         {goals.map((goal, index) => (
           <ListItem key={index}>
-            <ListItemText primary={goal.title} secondary={`Description: ${goal.description}, Deadline: ${goal.deadline}`} />
+            <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreateAt: ${goal.createAt}, Deadline: ${goal.deadline}`} />
             <ListItemSecondaryAction>
               <IconButton edge="end" onClick={() => handleEditGoalClick(index)}>
                 <EditIcon />
