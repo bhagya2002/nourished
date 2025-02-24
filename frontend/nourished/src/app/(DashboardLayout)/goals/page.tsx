@@ -18,7 +18,7 @@ export default function GoalsPage() {
 
   const [goals, setGoals] = useState<any[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createAt: '' });
+  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createAt: '', taskIds: [] });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
@@ -28,7 +28,7 @@ export default function GoalsPage() {
 
   // reset the form to initial state
   const resetNewGoal = () => {
-    setNewGoal({ id: '', title: '', description: '', deadline: '', createAt: '' });
+    setNewGoal({ id: '', title: '', description: '', deadline: '', createAt: '', taskIds: [] });
   }
 
   // Handle closing the toast box
@@ -173,6 +173,7 @@ export default function GoalsPage() {
               description: newGoal.description,
               deadline: newGoal.deadline,
               createAt: goalCreateAt,
+              taskIds: [],
             },
           }),
         });
