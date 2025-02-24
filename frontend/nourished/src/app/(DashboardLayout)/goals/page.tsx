@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor, Collapse, ListItemIcon } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor, Collapse, ListItemButton, ListItemIcon } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -17,7 +17,7 @@ export default function GoalsPage() {
   const { user, token, loading } = useAuth();
 
   const [goals, setGoals] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createAt: '' });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -59,7 +59,7 @@ export default function GoalsPage() {
   const handleAddGoalClick = () => {
     resetNewGoal();
     setIsEditing(false);
-    setOpen(true);
+    setGoalModalOpen(true);
     setValidationError('');
   };
 
@@ -69,7 +69,7 @@ export default function GoalsPage() {
     setEditingIndex(index);
     setNewGoal(goals[index]);
     console.log(goals[index]);
-    setOpen(true);
+    setGoalModalOpen(true);
   };
 
   // Deletes a goal after confirmation
@@ -95,7 +95,7 @@ export default function GoalsPage() {
 
   // Closes the dialog
   const handleClose = () => {
-    setOpen(false);
+    setGoalModalOpen(false);
     setValidationError('');
   };
 
@@ -155,7 +155,7 @@ export default function GoalsPage() {
         console.error("Error updating goal:", error);
         setToast({ open: true, message: 'Failed to update goal', severity: 'error' });
       }
-      setOpen(false);
+      setGoalModalOpen(false);
       resetNewGoal();
     } else {
       // Otherwise, create a new goal in the database
@@ -184,7 +184,7 @@ export default function GoalsPage() {
         console.error("Error creating goal:", error);
         setToast({ open: true, message: 'Failed to create goal', severity: 'error' });
       }
-      setOpen(false);
+      setGoalModalOpen(false);
       resetNewGoal();
     }
   };
@@ -240,12 +240,12 @@ export default function GoalsPage() {
             </ListItem>
             <Collapse in={index === expandingGoalIndex} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                <ListItem sx={{ pl: 4 }}>
-                  <ListItemIcon>
-                    <AddIcon />
+                <ListItemButton sx={{ pl: 4 }} dense>
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <AddIcon fontSize='small'/>
                   </ListItemIcon>
-                  <ListItemText primary="Starred" />
-                </ListItem>
+                  <ListItemText primary="Add a Task" />
+                </ListItemButton>
               </List>
             </Collapse>
           </>
@@ -260,7 +260,7 @@ export default function GoalsPage() {
       </Box>
 
       {/* add/edit goal form dialog */}
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={goalModalOpen} onClose={handleClose}>
         <DialogTitle>{isEditing ? 'Edit Goal' : 'Add a New Goal'}</DialogTitle>
         <DialogContent dividers>
           {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
