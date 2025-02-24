@@ -14,13 +14,14 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
             if (docSnapshot.exists) {
                 return { success: true, data: docSnapshot.data() };
             } else {
+                const message = `Failed to find document with uid:${docName} in ${collectionName} collection`;
                 logger.error(`Failed to find document with uid:${docName} in ${collectionName} collection`);
-                return { success: false };
+                return { success: false, message: message };
             }
         })
         .catch((error) => {
             logger.error(error);
-            return { success: false }; // TODO: More robust error handling
+            return { success: false, message: error }; // TODO: More robust error handling
         });
 };
 
