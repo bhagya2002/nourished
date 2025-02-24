@@ -153,7 +153,8 @@ function addCreateGoal(app) {
   
       const result = await goalService.createGoal(authResult.uid, req.body.goal);
       if (result.success) {
-        res.sendStatus(200);
+        // res.sendStatus(200);
+        res.status(200).send(result.data);
       } else {
         res.sendStatus(500);
       }

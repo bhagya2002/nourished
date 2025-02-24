@@ -6,6 +6,7 @@ import {
   IconMoodHappy,
   IconTypography,
   IconUserPlus,
+  IconTarget,
   IconStack,
   IconUser,
 } from '@tabler/icons-react';
@@ -27,6 +28,12 @@ const Menuitems = [
   {
     navlabel: true,
     subheader: 'Goals',
+  },
+  {
+    id: uniqueId(),
+    title: 'Goals',
+    icon: IconTarget,
+    href: '/goals',
   },
   {
     id: uniqueId(),
