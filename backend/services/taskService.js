@@ -1,24 +1,21 @@
 const db = require("../firebase/firestore");
 module.exports.createTask = async function createTask(uid, task) {
     try {
-      // Set the uid on the task
-      task.uid = uid;
-      // Create a new task document in the "tasks" collection
-      const taskResult = await db.addSingleDoc("tasks", task);
-      if (!taskResult.success) {
-        console.error("Failed to add task document:", taskResult.error);
-        return { success: false, error: taskResult.error };
-      }
-      // Update the user's document in the "users" collection by adding the new task id to the tasks array
-      const updateResult = await db.updateFieldArray("users", uid, "tasks", taskResult.id);
-      if (!updateResult.success) {
-        console.error("Failed to update user's tasks array:", updateResult.error);
-        return { success: false, error: updateResult.error };
-      }
-      return { success: true };
+        // Set the uid on the task
+        task.uid = uid;
+        // Create a new task document in the "tasks" collection
+        const taskResult = await db.addSingleDoc("tasks", task);
+        if (!taskResult.success) {
+            return { success: false, error: taskResult.error };
+        }
+        // Update the user's document in the "users" collection by adding the new task id to the tasks array
+        const updateResult = await db.updateFieldArray("users", uid, "tasks", taskResult.id);
+        if (!updateResult.success) {
+            return { success: false, error: updateResult.error };
+        }
+        return { success: true };
     } catch (err) {
-      console.error("Error in createTask:", err);
-      return { success: false, error: err };
+        return { success: false, error: err };
     }
 };
 
@@ -33,6 +30,13 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
     const result = await db.queryDatabaseSingle(uid, "users");
     if (result.success) {
         return await db.queryMultiple(result.data.tasks, "tasks");
+    } else return result;
+}
+
+module.exports.getGoalTasks = async function getGoalTasks(uid) {
+    const result = await db.queryDatabaseSingle(uid, "goals");
+    if (result.success) {
+        return await db.queryMultiple(result.data.taskIds, "tasks");
     } else return result;
 }
 

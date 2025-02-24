@@ -11,7 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "backend/server/server.js"
+            "program": "backend/server/server.js",
+            "console": "integratedTerminal"
         }
     ]
 }

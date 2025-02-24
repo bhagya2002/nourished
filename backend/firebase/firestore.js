@@ -1,4 +1,5 @@
 const admin = require("./firebaseAdmin");
+const logger = require("../util/logger");
 
 const db = admin.firestore();
 
@@ -13,11 +14,13 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
             if (docSnapshot.exists) {
                 return { success: true, data: docSnapshot.data() };
             } else {
-                return { success: false, message: "No such document!" }; // TODO: This is where we create a new one just in case
+                logger.error(`Failed to find document with uid:${docName} in ${collectionName} collection`);
+                return { success: false };
             }
         })
         .catch((error) => {
-            return { success: false, message: error }; // TODO: More robust error handling
+            logger.error(error);
+            return { success: false }; // TODO: More robust error handling
         });
 };
 
@@ -37,6 +40,7 @@ module.exports.queryMultiple = async function queryMultiple(ids, collectionName)
             }
         })
         .catch((error) => {
+            logger.error(error);
             return { success: false, message: error }; // TODO: More robust error handling
         });
 }
@@ -48,6 +52,7 @@ module.exports.addSingleDoc = async function addSingleDoc(collectionName, object
             return { success: true, id: newDocRef.id };
         })
         .catch((error) => {
+            logger.error(error);
             return { success: false, error: error };
         });
 }
@@ -58,6 +63,7 @@ module.exports.deleteSingleDoc = async function deleteSingleDoc(collectionName, 
             return { success: true };
         })
         .catch((error) => {
+            logger.error(error);
             return { success: false, error: error };
         });
 }
@@ -69,6 +75,7 @@ module.exports.updateField = async function updateField(collection, doc, fieldNa
     return await docRef.update(update).then(() => {
         return { success: true };
     }).catch((error) => {
+        logger.error(error);
         return { success: false, error: error };
     });
 }
@@ -80,6 +87,7 @@ module.exports.updateFieldArray = async function updateFieldArray(collection, do
     return await docRef.update(update).then(() => {
         return { success: true };
     }).catch((error) => {
+        logger.error(error);
         return { success: false, error: error };
     });
 }
@@ -91,6 +99,7 @@ module.exports.removeFromFieldArray = async function removeFromFieldArray(collec
     return await docRef.update(update).then(() => {
         return { success: true };
     }).catch((error) => {
+        logger.error(error);
         return { success: false, error: error };
     });
 }
