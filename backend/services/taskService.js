@@ -1,5 +1,5 @@
 const db = require("../firebase/firestore");
-module.exports.createTask = async function createTask(uid, task) {
+module.exports.createTask = async function createTask(uid, task, goalId) {
     try {
         // Set the uid on the task
         task.uid = uid;
@@ -12,6 +12,9 @@ module.exports.createTask = async function createTask(uid, task) {
         const updateResult = await db.updateFieldArray("users", uid, "tasks", taskResult.id);
         if (!updateResult.success) {
             return { success: false, error: updateResult.error };
+        }
+        if (goalId) {
+            await db.updateFieldArray("goals", goalId, "taskIds", taskResult.id);
         }
         return { success: true };
     } catch (err) {
