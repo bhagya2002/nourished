@@ -9,6 +9,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
+import TaskEditDialog from '../tasks/components/TaskEditDialog';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -26,9 +28,9 @@ export default function GoalsPage() {
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
 
-  const [goalTasks, setGoalTasks] = useState<any[]>([]);
-  const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [newTask, setNewTask] = useState({ id: '', title: '', description: '', goalId: '' });
+  const [goalTasks, setGoalTasks] = useState<Array<Array<any>>>([]);
+  const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
+  const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
 
   // reset the form to initial state
   const resetNewGoal = () => {
@@ -61,6 +63,7 @@ export default function GoalsPage() {
 
   const fetchGoalTasks = async (index: number) => {
     const goalId = goals[index].id;
+    console.log(goalId)
     try {
       const response = await fetch(`${API_BASE_URL}/getGoalTasks`, {
         method: "POST",
@@ -71,7 +74,16 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const tasksData = await response.json();
-      setGoalTasks({ ...goalTasks, [index]: tasksData });
+      console.log(tasksData);
+      setGoalTasks((prevGoalTasks) => {
+        // Ensure the index exists in the array by initializing it if necessary
+        if (!Array.isArray(prevGoalTasks[index])) {
+          prevGoalTasks[index] = [];
+        }
+        return prevGoalTasks.map((tasks, idx) =>
+          idx === index ? tasksData : tasks
+        )
+      });
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setToast({ open: true, message: 'Failed to fetch tasks', severity: 'error' });
@@ -172,6 +184,7 @@ export default function GoalsPage() {
           updateField('description', newGoal.description),
           updateField('deadline', newGoal.deadline),
         ]);
+        // Update the goals array with the new goal (avoiding redundant fetches)
         setGoals(prevGoals => prevGoals.map((goal, idx) => idx === editingIndex ? newGoal : goal));
         setToast({ open: true, message: 'Goal updated successfully!', severity: 'success' });
       } catch (error) {
@@ -182,7 +195,7 @@ export default function GoalsPage() {
       resetNewGoal();
     } else {
       // Otherwise, create a new goal in the database
-      const goalcreatedAt = new Date().toISOString();
+      const goalCreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createGoal`, {
           method: 'POST',
@@ -195,14 +208,15 @@ export default function GoalsPage() {
               title: newGoal.title,
               description: newGoal.description,
               deadline: newGoal.deadline,
-              createdAt: goalcreatedAt,
+              createdAt: goalCreatedAt,
               taskIds: [],
             },
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
         const goalId = (await response.json()).id;
-        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createdAt: goalcreatedAt }]);
+        // Update the goals array with the new goal (avoiding redundant fetches)
+        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createdAt: goalCreatedAt }]);
         setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });
       } catch (error) {
         console.error("Error creating goal:", error);
@@ -223,6 +237,60 @@ export default function GoalsPage() {
       fetchGoalTasks(index);
     }
   }
+
+  // Create a new task
+  const handleGoalTaskCreate = async ({
+    title,
+    description,
+    frequency,
+  }: {
+    title: string;
+    description: string;
+    frequency: string;
+  }) => {
+    const taskCreatedAt = new Date().toISOString();
+    // save the task to the database
+    try {
+      const response = await fetch(`${API_BASE_URL}/createTask`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          task: { title, description, frequency, createdAt: taskCreatedAt, goalId: goals[expandingGoalIndex].id },
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to create task");
+      const taskId = (await response.json()).id;
+      // Update the goal tasks array with the new task (avoiding redundant fetches)
+      setGoalTasks((prevGoalTasks) => {
+        // Ensure the index exists in the array by initializing it if necessary
+        if (!Array.isArray(prevGoalTasks[expandingGoalIndex])) {
+          prevGoalTasks[expandingGoalIndex] = [];
+        }
+        return prevGoalTasks.map((tasks, idx) =>
+          idx === expandingGoalIndex
+            ? [
+              ...tasks,
+              {
+                id: taskId,
+                title,
+                description,
+                frequency,
+                createdAt: taskCreatedAt,
+                goalId: goals[expandingGoalIndex]?.id || "",
+              },
+            ]
+            : tasks
+        )
+      });
+      setToast({ open: true, message: 'Task created successfully!', severity: 'success' });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      setToast({ open: true, message: 'Failed to create task', severity: 'error' });
+    }
+  };
 
   // Redirects to login if not authenticated
   useEffect(() => {
@@ -269,7 +337,7 @@ export default function GoalsPage() {
               <List component="div" disablePadding>
                 {goalTasks[index] !== undefined && goalTasks[index].map((task: any, taskIndex: number) => (
                   <ListItem key={taskIndex} sx={{ pl: 4 }}>
-                    <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}/>
+                    <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`} />
                     <ListItemSecondaryAction>
                       <IconButton edge="end" sx={{ right: 24 }} onClick={() => { console.log('edit task') }}>
                         <EditIcon />
@@ -280,9 +348,9 @@ export default function GoalsPage() {
                     </ListItemSecondaryAction>
                   </ListItem>
                 ))}
-                <ListItemButton sx={{ pl: 4 }} dense key={-1}>
+                <ListItemButton sx={{ pl: 4 }} dense key={-1} onClick={() => setTaskCreateModalOpen(true)}>
                   <ListItemIcon sx={{ minWidth: 40 }}>
-                    <AddIcon fontSize='small'/>
+                    <AddIcon fontSize='small' />
                   </ListItemIcon>
                   <ListItemText primary="Add a Task" />
                 </ListItemButton>
@@ -313,6 +381,14 @@ export default function GoalsPage() {
           <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
+
+      {/* add/edit task form dialog */}
+      <TaskCreateDialog
+        open={taskCreateModalOpen}
+        onClose={() => setTaskCreateModalOpen(false)}
+        onCreate={handleGoalTaskCreate}
+        userTasks={goalTasks[expandingGoalIndex]}
+      />
     </div>
   );
 };

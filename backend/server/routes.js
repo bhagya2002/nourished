@@ -55,7 +55,7 @@ function addCreateTask(app) {
 
         const result = await taskService.createTask(authResult.uid, req.body.task);
         if (result.success) {
-            res.sendStatus(200);
+            res.status(200).send(result.data);
         } else {
             res.sendStatus(500);
         }

@@ -13,7 +13,7 @@ module.exports.createTask = async function createTask(uid, task) {
         if (!updateResult.success) {
             return { success: false, error: updateResult.error };
         }
-        return { success: true };
+        return { success: true, data: { id: taskResult.id } };
     } catch (err) {
         return { success: false, error: err };
     }
