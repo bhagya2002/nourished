@@ -53,7 +53,7 @@ function addCreateTask(app) {
             authResult.uid = req.body.token;
         }
 
-        const result = await taskService.createTask(authResult.uid, req.body.task);
+        const result = await taskService.createTask(authResult.uid, req.body.task, req.body.goalId ?? null);
         if (result.success) {
             res.sendStatus(200);
         } else {
