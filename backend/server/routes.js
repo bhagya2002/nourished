@@ -76,7 +76,7 @@ function addDeleteTask(app) {
             authResult.uid = req.body.token;
         }
 
-        const result = await taskService.deleteTask(authResult.uid, req.body.taskId);
+        const result = await taskService.deleteTask(authResult.uid, req.body.taskId, req.body.goalId ?? null);
         if (result.success) {
             res.sendStatus(200);
         } else {

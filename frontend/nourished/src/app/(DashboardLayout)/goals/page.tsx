@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor, Collapse, ListItemButton, ListItemIcon } from '@mui/material';
@@ -31,6 +31,7 @@ export default function GoalsPage() {
   const [goalTasks, setGoalTasks] = useState<Array<Array<any>>>([]);
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
+  const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
 
   // reset the form to initial state
   const resetNewGoal = () => {
@@ -63,7 +64,6 @@ export default function GoalsPage() {
 
   const fetchGoalTasks = async (index: number) => {
     const goalId = goals[index].id;
-    console.log(goalId)
     try {
       const response = await fetch(`${API_BASE_URL}/getGoalTasks`, {
         method: "POST",
@@ -74,7 +74,6 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const tasksData = await response.json();
-      console.log(tasksData);
       setGoalTasks((prevGoalTasks) => {
         // Ensure the index exists in the array by initializing it if necessary
         if (!Array.isArray(prevGoalTasks[index])) {
@@ -259,6 +258,7 @@ export default function GoalsPage() {
         body: JSON.stringify({
           token,
           task: { title, description, frequency, createdAt: taskCreatedAt, goalId: goals[expandingGoalIndex].id },
+          goalId: goals[expandingGoalIndex].id,
         }),
       });
       if (!response.ok) throw new Error("Failed to create task");
@@ -289,6 +289,71 @@ export default function GoalsPage() {
     } catch (error) {
       console.error("Error creating task:", error);
       setToast({ open: true, message: 'Failed to create task', severity: 'error' });
+    }
+  };
+
+  // Save task changes from edit
+  const handleGoalTaskEdit = async (updatedData: {
+    title: string;
+    description: string;
+    frequency: string;
+  }) => {
+    try {
+      const updateField = async (field: string, value: string) => {
+        const res = await fetch(`${API_BASE_URL}/editTask`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token, taskId: goalTasks[expandingGoalIndex][taskEditingIndex].id, fieldToChange: field, newValue: value }),
+        });
+        if (!res.ok) throw new Error(`Failed to update ${field}`)
+      };
+
+      await Promise.all([
+        updateField("title", updatedData.title),
+        updateField("description", updatedData.description),
+        updateField("frequency", updatedData.frequency),
+      ]);
+      // Update the goal tasks array with the new task (avoiding redundant fetches)
+      setGoalTasks((prevGoalTasks) => {
+        const updatedTasks = [...prevGoalTasks[expandingGoalIndex]];
+        updatedTasks[taskEditingIndex] = {
+          ...updatedTasks[taskEditingIndex],
+          ...updatedData,
+        };
+        prevGoalTasks[expandingGoalIndex] = updatedTasks;
+        return prevGoalTasks;
+      });
+      setToast({ open: true, message: 'Task updated successfully!', severity: 'success' });
+    } catch (error) {
+      console.error("Error updating task:", error);
+      setToast({ open: true, message: 'Failed to update task', severity: 'error' });
+    }
+  };
+
+  // Delete task
+  const handleGoalTaskDelete = async (taskId: string, goalId: string, taskDeletingIndex: number) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/deleteTask`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, taskId, goalId }),
+      });
+      if (!response.ok) throw new Error("Failed to delete task");
+      setToast({ open: true, message: 'Task deleted successfully!', severity: 'success' });
+      setGoalTasks((prevGoalTasks) => {
+        const updatedTasks = [...prevGoalTasks[expandingGoalIndex]];
+        // This filters out the task to be deleted
+        const filteredTasks = updatedTasks.filter((_, i) => i !== taskDeletingIndex);
+        // Now, update the specific goal's tasks
+        return prevGoalTasks.map((tasks, idx) => idx === expandingGoalIndex ? filteredTasks : tasks);
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      setToast({ open: true, message: 'Failed to delete task', severity: 'error' });
     }
   };
 
@@ -339,10 +404,10 @@ export default function GoalsPage() {
                   <ListItem key={taskIndex} sx={{ pl: 4 }}>
                     <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`} />
                     <ListItemSecondaryAction>
-                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { console.log('edit task') }}>
+                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { setTaskEditModalOpen(true); setTaskEditingIndex(taskIndex); }}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { console.log('delete task') }}>
+                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { handleGoalTaskDelete(task.id, goal.id, taskIndex); }}>
                         <DeleteIcon />
                       </IconButton>
                     </ListItemSecondaryAction>
@@ -389,6 +454,17 @@ export default function GoalsPage() {
         onCreate={handleGoalTaskCreate}
         userTasks={goalTasks[expandingGoalIndex]}
       />
+      {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
+        <TaskEditDialog
+          open={taskEditModalOpen}
+          onClose={() => { setTaskEditModalOpen(false); setTaskEditingIndex(-1); }}
+          onSave={handleGoalTaskEdit}
+          initialTitle={goalTasks[expandingGoalIndex][taskEditingIndex].title}
+          initialDescription={goalTasks[expandingGoalIndex][taskEditingIndex].description}
+          initialFrequency={goalTasks[expandingGoalIndex][taskEditingIndex].frequency}
+          userTasks={goalTasks[expandingGoalIndex]}
+        />
+      )}
     </div>
   );
 };

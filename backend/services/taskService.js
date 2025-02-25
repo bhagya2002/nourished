@@ -43,10 +43,13 @@ module.exports.getGoalTasks = async function getGoalTasks(goalId) {
     } else return result;
 }
 
-module.exports.deleteTask = async function deleteTask(uid, taskId) {
+module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
     const removeResult = await db.removeFromFieldArray("users", uid, "tasks", taskId);
     if (!removeResult.success) {
         return { success: false, error: removeResult.error };
+    }
+    if (goalId) {
+        await db.removeFromFieldArray("goals", goalId, "taskIds", taskId);
     }
     const deleteResult = await db.deleteSingleDoc("tasks", taskId);
     return deleteResult;
