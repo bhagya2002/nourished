@@ -113,6 +113,23 @@ function addEditTask(app) {
     });
 }
 
+function addCompleteTask(app) {
+    app.post("/completeTask", async (req, res) => {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).send(`Authentication failed! ${authResult.message}`);
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+      const result = await taskService.completeTask(authResult.uid, req.body.taskId);
+      if (result.success) res.sendStatus(200);
+      else res.sendStatus(500);
+    });
+}  
+
 function addGetUserTasks(app) {
     app.post("/getUserTasks", async (req, res) => {
         let authResult = {};
@@ -273,6 +290,7 @@ module.exports = function injectRoutes(app) {
     addCreateTask(app);
     addDeleteTask(app);
     addEditTask(app);
+    addCompleteTask(app);
     addGetUserTasks(app);
     addGetGoalTasks(app);
 

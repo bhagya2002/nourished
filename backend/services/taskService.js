@@ -51,3 +51,14 @@ module.exports.deleteTask = async function deleteTask(uid, taskId) {
     const deleteResult = await db.deleteSingleDoc("tasks", taskId);
     return deleteResult;
 }
+
+module.exports.completeTask = async function completeTask(uid, taskId) {
+    try {
+      const update1 = await db.updateField("tasks", taskId, "completed", true);
+      if (!update1.success) return update1;
+      const update2 = await db.updateField("tasks", taskId, "completedAt", new Date().toISOString());
+      return update2;
+    } catch (err) {
+      return { success: false, error: err };
+    }
+  };
