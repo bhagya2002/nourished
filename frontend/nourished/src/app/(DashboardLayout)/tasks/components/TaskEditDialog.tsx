@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogTitle, 
@@ -43,6 +43,16 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  
+  // Reset form fields when dialog opens with new initial values
+  useEffect(() => {
+    if (open) {
+      setTitle(initialTitle);
+      setDescription(initialDescription);
+      setFrequency(initialFrequency);
+      setErrorMsg(null);
+    }
+  }, [open, initialTitle, initialDescription, initialFrequency]);
 
   const handleSaveClick = async () => {
     setErrorMsg(null);
