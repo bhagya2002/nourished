@@ -40,115 +40,211 @@ function addGetFriendRecommendation(app) {
 
 function addCreateTask(app) {
     app.post("/createTask", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            if (!req.body.task) {
+                return res.status(400).json({ success: false, error: "Task data is required" });
             }
-        } else {
-            // Debug header bypass
-            authResult.uid = req.body.token;
-        }
+            
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({ 
+                        success: false, 
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}` 
+                    });
+                }
+            } else {
+                // Debug header bypass
+                authResult.uid = req.body.token;
+            }
 
-        const result = await taskService.createTask(authResult.uid, req.body.task, req.body.goalId ?? null);
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
+            const result = await taskService.createTask(authResult.uid, req.body.task, req.body.goalId ?? null);
+            if (result.success) {
+                return res.status(200).json({ success: true, message: "Task created successfully" });
+            } else {
+                return res.status(500).json({ 
+                    success: false, 
+                    error: result.error || "Failed to create task" 
+                });
+            }
+        } catch (err) {
+            console.error("Error in createTask endpoint:", err);
+            return res.status(500).json({ 
+                success: false, 
+                error: err.message || "Server error occurred" 
+            });
         }
     });
 }
 
 function addDeleteTask(app) {
     app.post("/deleteTask", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({ 
+                        success: false, 
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await taskService.deleteTask(authResult.uid, req.body.taskId);
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
+            const result = await taskService.deleteTask(authResult.uid, req.body.taskId);
+            if (result.success) {
+                return res.status(200).json({ success: true, message: "Task deleted successfully" });
+            } else {
+                return res.status(500).json({ success: false, error: result.error || "Failed to delete task" });
+            }
+        } catch (err) {
+            console.error("Error in deleteTask endpoint:", err);
+            return res.status(500).json({ success: false, error: err.message || "Server error occurred" });
         }
     });
 }
 
 function addEditTask(app) {
     app.post("/editTask", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({ 
+                        success: false, 
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await taskService.editTask(
-            authResult.uid,
-            req.body.taskId,
-            req.body.fieldToChange,
-            req.body.newValue
-        );
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
+            const result = await taskService.editTask(
+                authResult.uid,
+                req.body.taskId,
+                req.body.fieldToChange,
+                req.body.newValue
+            );
+            
+            if (result.success) {
+                return res.status(200).json({ success: true, message: "Task updated successfully" });
+            } else {
+                return res.status(500).json({ success: false, error: result.error || "Failed to update task" });
+            }
+        } catch (err) {
+            console.error("Error in editTask endpoint:", err);
+            return res.status(500).json({ success: false, error: err.message || "Server error occurred" });
         }
     });
 }
 
-function addCompleteTask(app) {
-    app.post("/completeTask", async (req, res) => {
+function addToggleTaskCompletion(app) {
+  app.post("/toggleTaskCompletion", async (req, res) => {
+    try {
+      // Validate required fields
+      if (!req.body.taskId) {
+        return res.status(400).json({ success: false, error: "Task ID is required" });
+      }
+      
+      // Ensure completed status is provided
+      if (req.body.completed === undefined) {
+        return res.status(400).json({ success: false, error: "Completed status is required" });
+      }
+
       let authResult = {};
       if (!req.headers.debug) {
         authResult = await authService.authenticateToken(req.body.token);
         if (!authResult.uid) {
-          return res.status(401).send(`Authentication failed! ${authResult.message}`);
+          return res.status(401).json({ 
+            success: false, 
+            error: `Authentication failed! ${authResult.message || "Invalid token"}` 
+          });
         }
       } else {
         authResult.uid = req.body.token;
       }
-      const result = await taskService.completeTask(authResult.uid, req.body.taskId);
-      if (result.success) res.sendStatus(200);
-      else res.sendStatus(500);
-    });
-}  
+      
+      console.log(`Processing toggle task completion. UID: ${authResult.uid}, TaskID: ${req.body.taskId}, Completed: ${req.body.completed}`);
+      
+      try {
+        const result = await taskService.toggleTaskCompletion(
+          authResult.uid, 
+          req.body.taskId, 
+          req.body.completed
+        );
+        
+        console.log(`Toggle task completion result:`, result);
+        
+        if (result.success) {
+          return res.status(200).json({ 
+            success: true, 
+            message: req.body.completed ? "Task marked as complete" : "Task marked as incomplete" 
+          });
+        } else {
+          // Always return JSON format
+          return res.status(500).json({ 
+            success: false, 
+            error: result.error || "Failed to update task completion"
+          });
+        }
+      } catch (serviceErr) {
+        console.error("Service error in toggleTaskCompletion:", serviceErr);
+        // Ensure we send a properly formatted JSON response
+        return res.status(500).json({
+          success: false,
+          error: typeof serviceErr === 'object' ? 
+            (serviceErr.message || "Service error occurred") : 
+            String(serviceErr)
+        });
+      }
+    } catch (err) {
+      console.error("Error in toggleTaskCompletion endpoint:", err);
+      // Ensure all errors are converted to JSON responses
+      return res.status(500).json({ 
+        success: false, 
+        error: typeof err === 'object' ? 
+          (err.message || "Server error occurred") : 
+          String(err)
+      });
+    }
+  });
+}
 
 function addGetUserTasks(app) {
     app.post("/getUserTasks", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await taskService.getUserTasks(authResult.uid);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.sendStatus(500);
+            const result = await taskService.getUserTasks(authResult.uid);
+            if (result.success) {
+                return res.status(200).json(result.data);
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to fetch tasks"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getUserTasks endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
@@ -278,6 +374,47 @@ function addGetUserGoals(app) {
     });
 }
 
+function addGetTaskHistory(app) {
+  app.post("/getTaskHistory", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await taskService.getTaskHistory(
+        authResult.uid,
+        req.body.startDate,
+        req.body.endDate,
+        req.body.lastDoc
+      );
+      
+      if (result.success) {
+        return res.status(200).json(result.data);
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to fetch task history"
+        });
+      }
+    } catch (err) {
+      console.error("Error in getTaskHistory endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred"
+      });
+    }
+  });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -290,9 +427,10 @@ module.exports = function injectRoutes(app) {
     addCreateTask(app);
     addDeleteTask(app);
     addEditTask(app);
-    addCompleteTask(app);
+    addToggleTaskCompletion(app);
     addGetUserTasks(app);
     addGetGoalTasks(app);
+    addGetTaskHistory(app);
 
     // Goals
     addCreateGoal(app);
