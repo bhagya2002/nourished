@@ -12,7 +12,10 @@ import CommentIcon from '@mui/icons-material/Comment';
 // Define a type for the posts
 type Post = {
   id: number;
+  name: string;
+  email: string;
   content: string;
+  createdAt: string;
   likes: number;
   comments: string[];  // Assuming comments are just strings for simplicity
 };
