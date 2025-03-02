@@ -9,9 +9,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
-import PageContainer from '../components/container/PageContainer';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -447,24 +447,27 @@ export default function GoalsPage() {
           <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
+
       {/* add/edit task form dialog */}
-      <TaskCreateDialog
-        open={taskCreateModalOpen}
-        onClose={() => setTaskCreateModalOpen(false)}
-        onCreate={handleGoalTaskCreate}
-        userTasks={goalTasks[expandingGoalIndex]}
-      />
-      {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
-        <TaskEditDialog
-          open={taskEditModalOpen}
-          onClose={() => { setTaskEditModalOpen(false); setTaskEditingIndex(-1); }}
-          onSave={handleGoalTaskEdit}
-          initialTitle={goalTasks[expandingGoalIndex][taskEditingIndex].title}
-          initialDescription={goalTasks[expandingGoalIndex][taskEditingIndex].description}
-          initialFrequency={goalTasks[expandingGoalIndex][taskEditingIndex].frequency}
+      <div>
+        <TaskCreateDialog
+          open={taskCreateModalOpen}
+          onClose={() => setTaskCreateModalOpen(false)}
+          onCreate={handleGoalTaskCreate}
           userTasks={goalTasks[expandingGoalIndex]}
         />
-      )}
+        {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
+          <TaskEditDialog
+            open={taskEditModalOpen}
+            onClose={() => { setTaskEditModalOpen(false); setTaskEditingIndex(-1); }}
+            onSave={handleGoalTaskEdit}
+            initialTitle={goalTasks[expandingGoalIndex][taskEditingIndex].title}
+            initialDescription={goalTasks[expandingGoalIndex][taskEditingIndex].description}
+            initialFrequency={goalTasks[expandingGoalIndex][taskEditingIndex].frequency}
+            userTasks={goalTasks[expandingGoalIndex]}
+          />
+        )}
+      </div>
     </PageContainer>
   );
 };
