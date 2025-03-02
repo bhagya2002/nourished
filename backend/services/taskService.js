@@ -16,7 +16,7 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
         if (goalId) {
             await db.updateFieldArray("goals", goalId, "taskIds", taskResult.id);
         }
-        return { success: true };
+        return { success: true, data: { id: taskResult.id } };
     } catch (err) {
         return { success: false, error: err };
     }
@@ -36,17 +36,20 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
     } else return result;
 }
 
-module.exports.getGoalTasks = async function getGoalTasks(uid) {
-    const result = await db.queryDatabaseSingle(uid, "goals");
+module.exports.getGoalTasks = async function getGoalTasks(goalId) {
+    const result = await db.queryDatabaseSingle(goalId, "goals");
     if (result.success) {
         return await db.queryMultiple(result.data.taskIds, "tasks");
     } else return result;
 }
 
-module.exports.deleteTask = async function deleteTask(uid, taskId) {
+module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
     const removeResult = await db.removeFromFieldArray("users", uid, "tasks", taskId);
     if (!removeResult.success) {
         return { success: false, error: removeResult.error };
+    }
+    if (goalId) {
+        await db.removeFromFieldArray("goals", goalId, "taskIds", taskId);
     }
     const deleteResult = await db.deleteSingleDoc("tasks", taskId);
     return deleteResult;
