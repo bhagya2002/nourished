@@ -11,6 +11,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
+import PageContainer from '../components/container/PageContainer';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -372,7 +373,7 @@ export default function GoalsPage() {
   }, [user, token]);
 
   return (
-    <div className="goals-container">
+    <PageContainer title="Goals" description="Create and manage your goals">
       {/* popup toast message */}
       <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
         <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
@@ -446,7 +447,6 @@ export default function GoalsPage() {
           <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Update' : 'Create'}</Button>
         </DialogActions>
       </Dialog>
-
       {/* add/edit task form dialog */}
       <TaskCreateDialog
         open={taskCreateModalOpen}
@@ -465,6 +465,6 @@ export default function GoalsPage() {
           userTasks={goalTasks[expandingGoalIndex]}
         />
       )}
-    </div>
+    </PageContainer>
   );
 };
