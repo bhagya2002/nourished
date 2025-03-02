@@ -11,15 +11,33 @@ function addHeartbeatRoute(app) {
 
 function addGetUserInfo(app) {
     app.post("/userInfo", async (req, res) => {
-        const authResult = await authService.authenticateToken(req.body.token);
-        if (!authResult.uid) {
-            return res.status(401).send(`Authentication failed: ${authResult.message}`);
-        }
-        const result = await userService.getUserInfo(authResult.uid);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.status(500).send(result.message);
+        try {
+            const authResult = await authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                return res.status(401).json({
+                    success: false,
+                    error: `Authentication failed: ${authResult.message || "Invalid token"}`
+                });
+            }
+            
+            const result = await userService.getUserInfo(authResult.uid);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    data: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.message || "Failed to fetch user information"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getUserInfo endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
@@ -232,7 +250,10 @@ function addGetUserTasks(app) {
 
             const result = await taskService.getUserTasks(authResult.uid);
             if (result.success) {
-                return res.status(200).json(result.data);
+                return res.status(200).json({
+                    success: true,
+                    data: result.data
+                });
             } else {
                 return res.status(500).json({
                     success: false,
@@ -251,23 +272,38 @@ function addGetUserTasks(app) {
 
 function addGetGoalTasks(app) {
     app.post("/getGoalTasks", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({ 
+                        success: false, 
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}` 
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await taskService.getGoalTasks(req.body.goalId);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.sendStatus(500);
+            const result = await taskService.getGoalTasks(req.body.goalId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    data: result.data
+                });
+            } else {
+                return res.status(500).json({ 
+                    success: false, 
+                    error: result.error || "Failed to fetch goal tasks" 
+                });
+            }
+        } catch (err) {
+            console.error("Error in getGoalTasks endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
@@ -275,23 +311,39 @@ function addGetGoalTasks(app) {
 
 function addCreateGoal(app) {
     app.post("/createGoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await goalService.createGoal(authResult.uid, req.body.goal);
-        if (result.success) {
-            res.status(200).send(result.data);
-        } else {
-            res.sendStatus(500);
+            const result = await goalService.createGoal(authResult.uid, req.body.goal);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    data: result.data,
+                    message: "Goal created successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to create goal"
+                });
+            }
+        } catch (err) {
+            console.error("Error in createGoal endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
@@ -299,77 +351,120 @@ function addCreateGoal(app) {
 
 function addDeleteGoal(app) {
     app.post("/deletegoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await goalService.deleteGoal(
-            authResult.uid,
-            req.body.goalId
-        );
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
+            const result = await goalService.deleteGoal(authResult.uid, req.body.goalId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Goal deleted successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to delete goal"
+                });
+            }
+        } catch (err) {
+            console.error("Error in deleteGoal endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
 
 function addEditGoal(app) {
     app.post("/editgoal", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await goalService.editGoal(
-            authResult.uid,
-            req.body.goalId,
-            req.body.fieldToChange,
-            req.body.newValue
-        );
-        if (result.success) {
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(500);
+            const result = await goalService.editGoal(
+                authResult.uid,
+                req.body.goalId,
+                req.body.fieldToChange,
+                req.body.newValue
+            );
+            
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Goal updated successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to update goal"
+                });
+            }
+        } catch (err) {
+            console.error("Error in editGoal endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
 
 function addGetUserGoals(app) {
     app.post("/getUsergoals", async (req, res) => {
-        let authResult = {};
-        if (!req.headers.debug) {
-            authResult = await authService.authenticateToken(req.body.token);
-            if (!authResult.uid) {
-                return res
-                    .status(401)
-                    .send(`Authentication failed! Error message: ${authResult.message}`);
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
             }
-        } else {
-            authResult.uid = req.body.token;
-        }
 
-        const result = await goalService.getUserGoals(authResult.uid);
-        if (result.success) {
-            res.send(result.data);
-        } else {
-            res.sendStatus(500);
+            const result = await goalService.getUserGoals(authResult.uid);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    data: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to fetch user goals"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getUserGoals endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
         }
     });
 }
@@ -398,7 +493,10 @@ function addGetTaskHistory(app) {
       );
       
       if (result.success) {
-        return res.status(200).json(result.data);
+        return res.status(200).json({
+          success: true,
+          data: result.data
+        });
       } else {
         return res.status(500).json({
           success: false,

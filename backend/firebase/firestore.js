@@ -104,3 +104,34 @@ module.exports.removeFromFieldArray = async function removeFromFieldArray(collec
         return { success: false, error: error };
     });
 }
+
+// Add queryDatabase function to query where a field equals a value
+module.exports.queryDatabase = async function queryDatabase(fieldValue, collectionName, fieldName) {
+    try {
+        const collectionRef = db.collection(collectionName);
+        const query = collectionRef.where(fieldName, '==', fieldValue);
+        
+        const querySnapshot = await query.get();
+        
+        if (querySnapshot.empty) {
+            return { success: true, data: [] };
+        }
+        
+        // Convert the query results to an array of documents
+        const docs = [];
+        querySnapshot.forEach(doc => {
+            docs.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        return { success: true, data: docs };
+    } catch (error) {
+        logger.error("Error in queryDatabase:", error);
+        return { 
+            success: false, 
+            error: typeof error === 'object' ? error.message : String(error) 
+        };
+    }
+};

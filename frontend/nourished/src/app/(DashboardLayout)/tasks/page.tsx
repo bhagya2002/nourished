@@ -45,8 +45,9 @@ type NotificationSeverity = 'error' | 'warning' | 'info' | 'success';
 
 export default function TasksPage() {
   const router = useRouter();
-  const { user, token, loading, refreshToken } = useAuth();
+  const { user, token, loading: authLoading, refreshToken } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -61,10 +62,10 @@ export default function TasksPage() {
 
   // Redirect if not logged in
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push("/authentication/login");
     }
-  }, [loading, user, router]);
+  }, [authLoading, user, router]);
 
   // Fetch tasks on mount (if logged in)
   useEffect(() => {
@@ -79,27 +80,65 @@ export default function TasksPage() {
       return;
     }
 
+    // Update loading state
+    setIsLoading(true);
+    
+    // Clear any previous error messages
+    setNotification({
+      open: true,
+      message: "Loading tasks...",
+      severity: "info"
+    });
+
     try {
       const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/getUserTasks`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token: currentToken }),
-        });
+        try {
+          // Add timeout to prevent long-hanging requests
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+          
+          const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token: currentToken }),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            const text = await response.text();
+            console.error(`Server responded with ${response.status}: ${text}`);
+            
+            if (response.status === 401) {
+              throw new Error("token_expired");
+            }
+            
+            throw new Error(`Server error: ${response.status}`);
+          }
+          
+          return response;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            throw new Error("Request timed out. Server might be overloaded.");
+          }
+          if (error instanceof TypeError && error.message === 'Failed to fetch') {
+            // Network error - server might be down
+            throw new Error("Cannot connect to server. Please ensure the backend server is running.");
+          }
+          throw error;
+        }
       };
       
       // First attempt with the current token
-      let response = await makeRequest(token);
-      
-      // Check if we got a token expiration error
-      if (response.status === 401) {
-        const responseText = await response.text();
-        console.log("Auth error response:", responseText);
-        
-        // If token has expired, try refreshing and retrying once
-        if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
+      let response;
+      try {
+        response = await makeRequest(token);
+      } catch (error: any) {
+        // Token expiration handling
+        if (error.message === "token_expired" && refreshToken) {
           console.log("Token expired, attempting to refresh...");
           const freshToken = await refreshToken();
           
@@ -107,38 +146,48 @@ export default function TasksPage() {
             console.log("Token refreshed, retrying request");
             response = await makeRequest(freshToken);
           } else {
-            // If token refresh failed, redirect to login
+            console.error("Failed to refresh token");
             router.push("/authentication/login");
             return;
           }
         } else {
-          // Other auth error - redirect to login
-          router.push("/authentication/login");
-          return;
+          // Re-throw other errors
+          throw error;
         }
       }
       
       const data = await response.json();
-      console.log("Fetched tasks data:", data);
-
-      if (!data) {
-        throw new Error("No data received from server");
-      }
-
-      // Handle both cases: when data is wrapped in data property and when it's direct
-      const tasksArray = Array.isArray(data) ? data : 
-                        (data.data && Array.isArray(data.data)) ? data.data :
-                        [];
       
-      console.log("Setting tasks to:", tasksArray);
-      setTasks(tasksArray);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
+      if (!data.success) {
+        throw new Error(data.error || "Failed to load tasks");
+      }
+      
+      // Update tasks state with the data
+      setTasks(data.data || []);
+      
+      // Show success notification
       setNotification({
         open: true,
-        message: "Failed to fetch tasks. Please try again.",
+        message: "Tasks loaded successfully",
+        severity: "success"
+      });
+      
+      // Auto-hide the success message after 3 seconds
+      setTimeout(() => {
+        setNotification(prev => ({ ...prev, open: false }));
+      }, 3000);
+      
+    } catch (err) {
+      console.error("Error fetching tasks:", err);
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: err instanceof Error ? err.message : "Failed to load tasks",
         severity: "error"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -339,6 +388,9 @@ export default function TasksPage() {
 
   // Toggle Task Completion (complete/incomplete)
   const handleComplete = async (taskId: string) => {
+    // Make sure we're not already processing another request
+    if (isLoading) return;
+
     try {
       if (!taskId) {
         console.warn("Invalid task ID provided");
@@ -524,7 +576,7 @@ export default function TasksPage() {
           </Box>
         </Box>
         
-        {loading ? (
+        {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <CircularProgress />
           </Box>
@@ -625,7 +677,7 @@ export default function TasksPage() {
                                 color="primary"
                                 icon={<RadioButtonUncheckedIcon />}
                                 checkedIcon={<CheckCircleIcon />}
-                                disabled={loading}
+                                disabled={isLoading}
                               />
                             }
                             label={

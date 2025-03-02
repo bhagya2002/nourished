@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Grid, Box, CircularProgress, Typography } from '@mui/material';
+import { Grid, Box, CircularProgress, Typography, Button } from '@mui/material';
 import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 // components
@@ -13,6 +13,7 @@ import ProductPerformance from '@/app/(DashboardLayout)/components/dashboard/Pro
 import Blog from '@/app/(DashboardLayout)/components/dashboard/Blog';
 import MonthlyEarnings from '@/app/(DashboardLayout)/components/dashboard/MonthlyEarnings';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -20,6 +21,8 @@ const Dashboard = () => {
   console.log('🔥 Dashboard.tsx is rendering...');
 
   const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const { user, token, loading } = useAuth();
   const router = useRouter();
 
@@ -39,17 +42,53 @@ const Dashboard = () => {
   }, [user, token]);
 
   const fetchTasks = async () => {
+    setIsLoadingTasks(true);
+    setTaskError(null);
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-      if (!response.ok) throw new Error("Failed to fetch tasks");
-      const tasksData = await response.json();
-      setTasks(tasksData);
+      try {
+        // Add timeout to prevent long-hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+        
+        const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          const text = await response.text();
+          console.error(`Server responded with ${response.status}: ${text}`);
+          throw new Error(`Server error: ${response.status}`);
+        }
+        
+        const tasksData = await response.json();
+        
+        if (!tasksData.success) {
+          throw new Error(tasksData.error || "Failed to load tasks");
+        }
+        
+        setTasks(tasksData.data || []);
+      } catch (fetchError) {
+        if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
+          console.error("Request timed out. Server might be overloaded.");
+          throw new Error("Request timed out. The server might be overloaded. Please try again later.");
+        }
+        if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+          console.error("Cannot connect to server. Please ensure the backend is running.");
+          throw new Error("Cannot connect to the server. Please check if the backend server is running.");
+        }
+        throw fetchError;
+      }
     } catch (error) {
       console.error("Error fetching tasks:", error);
+      setTaskError(error instanceof Error ? error.message : "Failed to load tasks");
+    } finally {
+      setIsLoadingTasks(false);
     }
   };
 
@@ -67,17 +106,73 @@ const Dashboard = () => {
       </PageContainer>
     );
   }
-
-  if (!user) {
+  
+  // Show task loading state
+  if (isLoadingTasks) {
     return (
-      <PageContainer title='Unauthorized' description='Access denied'>
-        <Box
-          display='flex'
-          justifyContent='center'
-          alignItems='center'
-          height='80vh'
-        >
-          <Typography variant='h5'>Redirecting to login...</Typography>
+      <PageContainer title='Dashboard' description='Your personal dashboard'>
+        <Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box 
+                sx={{ 
+                  p: 4, 
+                  textAlign: 'center',
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  boxShadow: 1 
+                }}
+              >
+                <CircularProgress size={40} />
+                <Typography variant="h6" sx={{ mt: 2 }}>
+                  Loading your tasks...
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  This should only take a few seconds
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </PageContainer>
+    );
+  }
+  
+  // Show error state
+  if (taskError) {
+    return (
+      <PageContainer title='Dashboard' description='Your personal dashboard'>
+        <Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Box 
+                sx={{ 
+                  p: 4, 
+                  textAlign: 'center',
+                  bgcolor: 'error.light',
+                  color: 'error.contrastText',
+                  borderRadius: 2,
+                  boxShadow: 1 
+                }}
+              >
+                <ErrorOutlineIcon sx={{ fontSize: 48 }} />
+                <Typography variant="h6" sx={{ mt: 2 }}>
+                  Error Loading Tasks
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  {taskError}
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  sx={{ mt: 2 }}
+                  onClick={() => fetchTasks()}
+                >
+                  Try Again
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
       </PageContainer>
     );

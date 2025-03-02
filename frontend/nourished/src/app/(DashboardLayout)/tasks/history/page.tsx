@@ -103,31 +103,66 @@ export default function TaskHistoryPage() {
     setErrorMsg(null);
 
     try {
+      // Add a loading message if this is the first load
+      if (!isLoadMore) {
+        setErrorMsg("Loading task history...");
+      }
+      
       const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/getTaskHistory`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token: currentToken,
-            startDate,
-            endDate,
-            lastDoc: isLoadMore ? lastDoc : null,
-          }),
-        });
+        try {
+          // Add timeout to prevent long-hanging requests
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+          
+          const response = await fetch(`${API_BASE_URL}/getTaskHistory`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: currentToken,
+              startDate,
+              endDate,
+              lastDoc: isLoadMore ? lastDoc : null,
+            }),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          // Check if response is ok immediately to avoid potential issues
+          if (!response.ok) {
+            const responseText = await response.text();
+            console.log("Error response:", responseText);
+            
+            // Handle different error scenarios
+            if (response.status === 401 && (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired'))) {
+              throw new Error("token_expired");
+            } else {
+              throw new Error(`Server error: ${response.status} - ${responseText || 'Failed to fetch task history'}`);
+            }
+          }
+          
+          return response;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            throw new Error("Request timed out. Server might be overloaded.");
+          }
+          if (error instanceof TypeError && error.message === 'Failed to fetch') {
+            // This is a network error - server might be down
+            throw new Error("Cannot connect to server. Please ensure the backend server is running.");
+          }
+          throw error;
+        }
       };
       
       // First attempt with current token
-      let response = await makeRequest(token);
-      
-      // Check if we got a token expiration error
-      if (response.status === 401) {
-        const responseText = await response.text();
-        console.log("Auth error response:", responseText);
-        
-        // If token has expired, try refreshing and retrying once
-        if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
+      let response;
+      try {
+        response = await makeRequest(token);
+      } catch (error: any) {
+        // Only attempt to refresh token if the error is due to token expiration
+        if (error.message === "token_expired" && refreshToken) {
           console.log("Token expired, attempting to refresh...");
           const freshToken = await refreshToken();
           
@@ -135,18 +170,20 @@ export default function TaskHistoryPage() {
             console.log("Token refreshed, retrying request");
             response = await makeRequest(freshToken);
           } else {
+            console.error("Failed to refresh token");
             router.push("/authentication/login");
             return;
           }
         } else {
-          router.push("/authentication/login");
-          return;
+          // Re-throw for other errors
+          throw error;
         }
       }
       
-      if (!response.ok) throw new Error("Failed to fetch task history");
-      
       const data = await response.json();
+      
+      // Clear any loading message
+      setErrorMsg(null);
       
       // Handle streaks and statistics
       if (data.streaks) {
@@ -160,7 +197,7 @@ export default function TaskHistoryPage() {
       setCompletions(isLoadMore ? [...completions, ...newData] : newData);
     } catch (err) {
       console.error("Error fetching history:", err);
-      setErrorMsg("Failed to load task history.");
+      setErrorMsg(err instanceof Error ? err.message : "Failed to load task history.");
     } finally {
       setLoading(false);
     }
@@ -359,9 +396,42 @@ export default function TaskHistoryPage() {
             severity="error" 
             sx={{ mb: 3 }}
             onClose={() => setErrorMsg(null)}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                onClick={() => fetchHistory()}
+              >
+                Retry
+              </Button>
+            }
           >
             {errorMsg}
           </Alert>
+        )}
+
+        {/* No Data Message */}
+        {!loading && completions.length === 0 && !errorMsg && (
+          <DashboardCard>
+            <CardContent>
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <EventNoteIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h5" gutterBottom>No Completed Tasks Found</Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                  {startDate || endDate ? 
+                    "No completed tasks found in the selected date range." : 
+                    "You haven't completed any tasks yet."}
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  component={Link} 
+                  href="/tasks"
+                >
+                  Go to Tasks
+                </Button>
+              </Box>
+            </CardContent>
+          </DashboardCard>
         )}
 
         {/* Date Range Filters */}
