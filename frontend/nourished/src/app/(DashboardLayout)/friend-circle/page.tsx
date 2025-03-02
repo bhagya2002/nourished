@@ -51,10 +51,13 @@ export default function FriendCirclePage() {
   };
 
   const handlePost = () => {
-    if (postContent.trim()) {
+    if (postContent.trim() && user && token) {
       const newPost: Post = {
+        id: -1,
+        name: user.displayName || "Unknown",
+        email: user.email || "Unknown",
         content: postContent,
-        id: posts.length,
+        createdAt: new Date().toISOString(),
         likes: 0,
         comments: []
       };
