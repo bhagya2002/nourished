@@ -6,8 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, Divider, CardHeader, Avatar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
-import CommentIcon from '@mui/icons-material/Comment';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
 
 // Define a type for the posts
 type Post = {
@@ -116,10 +116,10 @@ export default function FriendCirclePage() {
               </CardContent>
               <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
                 <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
-                  <ThumbUpAltIcon />
+                  <FavoriteBorderIcon />
                 </IconButton>
                 <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary">
-                  <CommentIcon />
+                  <CommentOutlinedIcon />
                 </IconButton>
               </CardActions>
             </Card>
