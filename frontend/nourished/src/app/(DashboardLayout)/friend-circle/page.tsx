@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, Divider } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, Divider, CardHeader, Avatar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import CommentIcon from '@mui/icons-material/Comment';
@@ -39,6 +39,7 @@ export default function FriendCirclePage() {
   useEffect(() => {
     if (user && token) {
       // TODO: Fetch posts from the server
+      console.log(user);
     }
   }, [user, token]);
 
@@ -102,6 +103,15 @@ export default function FriendCirclePage() {
         {posts.map(post => (
           <ListItem key={post.id} sx={{ display: 'block' }}>
             <Card sx={{ position: 'relative', marginBottom: 2 }}>
+              <CardHeader
+                avatar={
+                  <Avatar>
+                    {post.name.charAt(0)}
+                  </Avatar>
+                }
+                title={post.name}
+                subheader={post.createdAt}
+              />
               <CardContent>
                 <Typography variant="body1">{post.content}</Typography>
               </CardContent>
