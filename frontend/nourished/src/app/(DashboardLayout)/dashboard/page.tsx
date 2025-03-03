@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 // components
 import TaskOverview from '@/app/(DashboardLayout)/components/dashboard/TaskOverview';
-import HappinessOverview from '@/app/(DashboardLayout)/components/dashboard/HappinessOverview';
 import TaskCompletionTrends from '@/app/(DashboardLayout)/components/dashboard/TaskCompletionTrends';
 import HappinessTrends from '@/app/(DashboardLayout)/components/dashboard/HappinessTrends';
 import StreakCounter from '@/app/(DashboardLayout)/components/dashboard/StreakCounter';
@@ -370,105 +369,88 @@ const Dashboard = () => {
     <PageContainer title='Nourished' description='Welcome to Nourished'>
       <Box>
         <Grid container spacing={3}>
-          {/* Task Overview */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <TaskOverview 
-              completedCount={tasks.filter(t => t.completed).length} 
-              totalCount={tasks.length} 
-            />
-          </Grid>
-          
-          {/* Welcome Card */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <DashboardCard>
-              <Box sx={{ p: 3, textAlign: 'center' }}>
-                <Typography variant="h5" gutterBottom>
-                  Welcome Back!
-                </Typography>
-                <Typography variant="body1">
-                  {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </Typography>
-              </Box>
-            </DashboardCard>
-          </Grid>
-          
-          {/* Recent Activity */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <DashboardCard title="Recent Activity">
-              <Box sx={{ p: 2 }}>
-                {completedTasks.length > 0 ? (
-                  completedTasks.slice(0, 3).map((task, index) => (
-                    <Box key={index} sx={{ 
-                      py: 1.5, 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      borderBottom: index < completedTasks.slice(0, 3).length - 1 ? '1px solid' : 'none',
-                      borderColor: 'divider'
-                    }}>
-                      <CheckCircleIcon color="success" sx={{ mr: 1.5, fontSize: '1rem' }} />
-                      <Box>
-                        <Typography variant="body2" noWrap sx={{ maxWidth: '140px' }}>
-                          {task.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatDate(task.completedAt)}
+          {/* First Row: Combined Key Metrics & Welcome */}
+          <Grid item xs={12}>
+            <Grid container spacing={3}>
+              {/* Task Overview */}
+              <Grid item xs={12} sm={4}>
+                <TaskOverview 
+                  completedCount={tasks.filter(t => t.completed).length} 
+                  totalCount={tasks.length} 
+                />
+              </Grid>
+              
+              {/* Streak Counter */}
+              <Grid item xs={12} sm={4}>
+                <StreakCounter 
+                  taskHistory={completedTasks}
+                  isLoading={isLoadingHistory}
+                />
+              </Grid>
+
+              {/* Recent Activity - More prominent placement */}
+              <Grid item xs={12} sm={4}>
+                <DashboardCard title="Recent Activity">
+                  <Box sx={{ p: 2 }}>
+                    {completedTasks.length > 0 ? (
+                      completedTasks.slice(0, 3).map((task, index) => (
+                        <Box key={index} sx={{ 
+                          py: 1.5, 
+                          display: 'flex', 
+                          alignItems: 'center',
+                          borderBottom: index < completedTasks.slice(0, 3).length - 1 ? '1px solid' : 'none',
+                          borderColor: 'divider'
+                        }}>
+                          <CheckCircleIcon color="success" sx={{ mr: 1.5, fontSize: '1rem' }} />
+                          <Box>
+                            <Typography variant="body2" noWrap sx={{ maxWidth: '140px' }}>
+                              {task.title}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatDate(task.completedAt)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))
+                    ) : (
+                      <Box sx={{ py: 2, textAlign: 'center' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No completed tasks yet
                         </Typography>
                       </Box>
-                    </Box>
-                  ))
-                ) : (
-                  <Box sx={{ py: 2, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No completed tasks yet
-                    </Typography>
+                    )}
                   </Box>
-                )}
-              </Box>
-            </DashboardCard>
+                </DashboardCard>
+              </Grid>
+            </Grid>
           </Grid>
           
-          {/* Streak Counter */}
-          <Grid item xs={12} sm={6} lg={3}>
-            <StreakCounter 
-              taskHistory={completedTasks}
-              isLoading={isLoadingHistory}
-            />
-          </Grid>
-          
-          {/* Task Completion Trends Chart */}
-          <Grid item xs={12} lg={8}>
-            <TaskCompletionTrends 
-              taskHistory={completedTasks}
-              isLoading={isLoadingHistory}
-              error={historyError}
-            />
-          </Grid>
-          
-          {/* Happiness Overview */}
-          <Grid item xs={12} lg={4}>
-            <HappinessOverview 
-              happinessData={happinessData}
-              isLoading={isLoadingHappiness}
-              error={happinessError}
-            />
-          </Grid>
-          
-          {/* Happiness Trends Chart */}
-          <Grid item xs={12} lg={8}>
-            <HappinessTrends
-              happinessData={happinessData}
-              isLoading={isLoadingHappiness}
-              error={happinessError}
-            />
+          {/* Second Row: Main Dashboard Content */}
+          <Grid item xs={12} md={8}>
+            <Grid container spacing={3}>
+              {/* Task Completion Trends Chart */}
+              <Grid item xs={12}>
+                <TaskCompletionTrends 
+                  taskHistory={completedTasks}
+                  isLoading={isLoadingHistory}
+                  error={historyError}
+                />
+              </Grid>
+              
+              {/* Simplified Happiness Trends (without redundant overview) */}
+              <Grid item xs={12}>
+                <HappinessTrends
+                  happinessData={happinessData}
+                  isLoading={isLoadingHappiness}
+                  error={happinessError}
+                  showOverview={true}
+                />
+              </Grid>
+            </Grid>
           </Grid>
           
           {/* Wellness Categories */}
-          <Grid item xs={12} lg={4}>
+          <Grid item xs={12} md={4}>
             <WellnessCategories 
               tasks={tasks}
               isLoading={isLoadingTasks}

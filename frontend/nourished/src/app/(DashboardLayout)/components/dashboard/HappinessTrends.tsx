@@ -9,12 +9,16 @@ import {
   Paper, 
   Chip,
   ToggleButtonGroup,
-  ToggleButton
+  ToggleButton,
+  Grid
 } from '@mui/material';
 import DashboardCard from '../shared/DashboardCard';
 import { ApexOptions } from "apexcharts";
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
 import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
+import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
+import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral';
+import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied';
 
 // Dynamically import ApexCharts to prevent SSR issues
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -28,7 +32,15 @@ interface HappinessTrendsProps {
   }> | null;
   isLoading: boolean;
   error: string | null;
+  showOverview?: boolean; // Make it optional with default value
 }
+
+// Helper function to calculate average happiness
+const calculateAverageHappiness = (data: Array<{ rating: number }>) => {
+  if (data.length === 0) return 0;
+  const sum = data.reduce((total, item) => total + item.rating, 0);
+  return parseFloat((sum / data.length).toFixed(1));
+};
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -38,7 +50,8 @@ const formatDate = (dateString: string) => {
 const HappinessTrends: React.FC<HappinessTrendsProps> = ({ 
   happinessData, 
   isLoading, 
-  error 
+  error,
+  showOverview = true // Default to true
 }) => {
   const theme = useTheme();
   const [timeframe, setTimeframe] = useState<'week' | 'month'>('week');
@@ -250,9 +263,41 @@ const HappinessTrends: React.FC<HappinessTrendsProps> = ({
     );
   }
   
+  if (!happinessData || happinessData.length === 0) {
+    return (
+      <DashboardCard title="Happiness Trends">
+        <Box sx={{ p: 3, textAlign: 'center', height: '350px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Typography variant="body1" color="text.secondary">
+            No happiness data available yet.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Complete tasks and rate your happiness to see trends here.
+          </Typography>
+        </Box>
+      </DashboardCard>
+    );
+  }
+  
+  // Sort data by date
+  const sortedData = [...happinessData].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
+  // Calculate average happiness
+  const averageHappiness = calculateAverageHappiness(happinessData);
+  
+  // Get emotion icon based on happiness rating
+  const getEmotionIcon = (rating: number) => {
+    if (rating >= 4.5) return <SentimentSatisfiedAltIcon sx={{ color: theme.palette.success.main, fontSize: 40 }} />;
+    if (rating >= 3.5) return <SentimentSatisfiedIcon sx={{ color: theme.palette.success.light, fontSize: 40 }} />;
+    if (rating >= 2.5) return <SentimentNeutralIcon sx={{ color: theme.palette.warning.main, fontSize: 40 }} />;
+    if (rating >= 1.5) return <SentimentDissatisfiedIcon sx={{ color: theme.palette.warning.dark, fontSize: 40 }} />;
+    return <SentimentVeryDissatisfiedIcon sx={{ color: theme.palette.error.main, fontSize: 40 }} />;
+  };
+  
   return (
     <DashboardCard 
-      title="Happiness Trends" 
+      title="Happiness Insights"
       action={
         <ToggleButtonGroup
           size="small"
@@ -270,48 +315,68 @@ const HappinessTrends: React.FC<HappinessTrendsProps> = ({
         </ToggleButtonGroup>
       }
     >
-      <Box sx={{ p: 3, height: '350px' }}>
-        {(!happinessData || happinessData.length === 0) ? (
-          <Box sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
-            justifyContent: 'center', 
-            alignItems: 'center',
-            textAlign: 'center',
-            p: 2
-          }}>
-            <Typography variant="body1" color="text.secondary">
-              No happiness data available yet.
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Complete tasks and rate your happiness to see trends over time.
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-              <Chip 
-                icon={<SentimentSatisfiedAltIcon />} 
-                label="Happy" 
-                color="success" 
-                variant="outlined"
-              />
-              <Chip 
-                icon={<SentimentVeryDissatisfiedIcon />} 
-                label="Unhappy" 
-                color="error" 
-                variant="outlined"
-              />
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={2}>
+          {/* Happiness Overview Card - only shown if showOverview is true */}
+          {showOverview && (
+            <Grid item xs={12} md={3}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  height: '100%',
+                  borderRadius: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: theme.palette.background.default
+                }}
+              >
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  Average Rating
+                </Typography>
+                {getEmotionIcon(averageHappiness)}
+                <Typography variant="h4" fontWeight="bold" sx={{ mt: 1, mb: 0.5 }}>
+                  {averageHappiness}/5
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  from {happinessData.length} ratings
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+          
+          {/* Happiness Trends Chart */}
+          <Grid item xs={12} md={showOverview ? 9 : 12}>
+            <Box sx={{ height: '350px' }}>
+              {series[0].data.length > 0 ? (
+                <Chart
+                  options={chartOptions}
+                  series={series}
+                  type="line"
+                  height="350px"
+                />
+              ) : (
+                <Box sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  color: 'text.secondary'
+                }}>
+                  <Typography variant="body1">
+                    Not enough data for this time period
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    Try changing to a different timeframe or complete more tasks
+                  </Typography>
+                </Box>
+              )}
             </Box>
-            <Chart
-              options={chartOptions}
-              series={series}
-              type="line"
-              height="280"
-            />
-          </>
-        )}
+          </Grid>
+        </Grid>
       </Box>
     </DashboardCard>
   );
