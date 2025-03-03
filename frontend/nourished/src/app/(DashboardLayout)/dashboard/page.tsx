@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Grid, Box, CircularProgress, Typography, Button } from '@mui/material';
+import { Grid, Box, CircularProgress, Typography, Button, Card, CardContent, CardHeader, Chip, Divider, Stack } from '@mui/material';
 import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 // components
@@ -14,16 +14,42 @@ import Blog from '@/app/(DashboardLayout)/components/dashboard/Blog';
 import MonthlyEarnings from '@/app/(DashboardLayout)/components/dashboard/MonthlyEarnings';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Link from 'next/link';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+
+// Helper function to format dates
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'short',
+    month: 'short', 
+    day: 'numeric'
+  });
+};
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', { 
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 const Dashboard = () => {
   console.log('🔥 Dashboard.tsx is rendering...');
 
   const [tasks, setTasks] = useState<any[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
-  const { user, token, loading } = useAuth();
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const { user, token, loading, refreshToken } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -34,12 +60,6 @@ const Dashboard = () => {
       router.push('/login');
     }
   }, [user, token, loading, router]);
-
-  useEffect(() => {
-    if (user && token) {
-      fetchTasks();
-    }
-  }, [user, token]);
 
   const fetchTasks = async () => {
     setIsLoadingTasks(true);
@@ -91,6 +111,95 @@ const Dashboard = () => {
       setIsLoadingTasks(false);
     }
   };
+
+  // Function to fetch recent completed tasks
+  const fetchRecentCompletions = async () => {
+    if (!token) return;
+    
+    setIsLoadingHistory(true);
+    setHistoryError(null);
+    
+    try {
+      // Add timeout to prevent long-hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      
+      // Call the getTaskHistory endpoint to get recent completions
+      const makeRequest = async (currentToken: string) => {
+        const response = await fetch(`${API_BASE_URL}/getTaskHistory`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: currentToken }),
+          signal: controller.signal
+        });
+        
+        if (!response.ok) {
+          const responseText = await response.text();
+          console.log("Error response:", responseText);
+          
+          // Handle token expiration
+          if (response.status === 401 && (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired'))) {
+            throw new Error("token_expired");
+          } else {
+            throw new Error(`Server error: ${response.status} - ${responseText || 'Failed to fetch task history'}`);
+          }
+        }
+        
+        return response;
+      };
+      
+      let response;
+      try {
+        response = await makeRequest(token);
+      } catch (error: any) {
+        if (error.message === "token_expired" && refreshToken) {
+          console.log("Token expired, attempting to refresh...");
+          const freshToken = await refreshToken();
+          
+          if (freshToken) {
+            console.log("Token refreshed, retrying request");
+            response = await makeRequest(freshToken);
+          } else {
+            console.error("Failed to refresh token");
+            throw new Error("Authentication error. Please log in again.");
+          }
+        } else if (error instanceof DOMException && error.name === 'AbortError') {
+          throw new Error("Request timed out. The server might be overloaded. Please try again later.");
+        } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          throw new Error("Cannot connect to the server. Please check if the backend server is running.");
+        } else {
+          throw error;
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "Failed to load task history data");
+      }
+      
+      // Take only the first 5 for the dashboard
+      const recentCompletions = data.data && data.data.completions 
+        ? data.data.completions.slice(0, 5) 
+        : [];
+        
+      setCompletedTasks(recentCompletions);
+    } catch (error) {
+      console.error("Error fetching recent completions:", error);
+      setHistoryError(error instanceof Error ? error.message : "Failed to load recent completions");
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user && token) {
+      fetchTasks();
+      fetchRecentCompletions();
+    }
+  }, [user, token]);
 
   if (loading) {
     return (
@@ -258,6 +367,87 @@ const Dashboard = () => {
                   </Grid>
                 </Grid>
               </Box>
+            </DashboardCard>
+          </Grid>
+          <Grid item xs={12} lg={6}>
+            <DashboardCard title="Recent Completions">
+              {isLoadingHistory ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : historyError ? (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <ErrorOutlineIcon color="error" sx={{ fontSize: 40, mb: 2 }} />
+                  <Typography color="error">{historyError}</Typography>
+                  <Button 
+                    variant="outlined" 
+                    sx={{ mt: 2 }} 
+                    onClick={fetchRecentCompletions}
+                  >
+                    Retry
+                  </Button>
+                </Box>
+              ) : completedTasks.length === 0 ? (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography variant="body1" color="textSecondary">
+                    No completed tasks yet.
+                  </Typography>
+                  <Button 
+                    variant="contained" 
+                    component={Link} 
+                    href="/tasks" 
+                    sx={{ mt: 2 }}
+                  >
+                    Go to Tasks
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  {completedTasks.map((task, index) => (
+                    <Box key={task.id}>
+                      <Box sx={{ p: 2 }}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight="medium">
+                              {task.title}
+                            </Typography>
+                            <Stack direction="row" spacing={2} alignItems="center">
+                              <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                                <CalendarTodayIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                                <Typography variant="caption">
+                                  {formatDate(task.completedAt)}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary' }}>
+                                <AccessTimeIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                                <Typography variant="caption">
+                                  {formatTime(task.completedAt)}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </Box>
+                          <Chip 
+                            label="Completed" 
+                            size="small" 
+                            color="success"
+                            icon={<CheckCircleIcon />}
+                          />
+                        </Stack>
+                      </Box>
+                      {index < completedTasks.length - 1 && <Divider />}
+                    </Box>
+                  ))}
+                  <Box sx={{ p: 2, textAlign: 'center' }}>
+                    <Button 
+                      component={Link}
+                      href="/tasks/history"
+                      variant="text"
+                    >
+                      View All History
+                    </Button>
+                  </Box>
+                </Box>
+              )}
             </DashboardCard>
           </Grid>
         </Grid>

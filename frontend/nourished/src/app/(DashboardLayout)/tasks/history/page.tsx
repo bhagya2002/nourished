@@ -89,6 +89,10 @@ export default function TaskHistoryPage() {
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [noMoreData, setNoMoreData] = useState(false);
 
+  // Polling
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [firstLoad, setFirstLoad] = useState(true);
+
   // Redirect if user is not logged in
   useEffect(() => {
     if (!authLoading && !user) {
@@ -100,14 +104,13 @@ export default function TaskHistoryPage() {
     if (!token) return;
 
     setLoading(true);
-    setErrorMsg(null);
+    if (firstLoad) {
+      setErrorMsg("Loading task history...");
+      setFirstLoad(false);
+    }
 
     try {
       // Add a loading message if this is the first load
-      if (!isLoadMore) {
-        setErrorMsg("Loading task history...");
-      }
-      
       const makeRequest = async (currentToken: string) => {
         try {
           // Add timeout to prevent long-hanging requests
@@ -185,15 +188,19 @@ export default function TaskHistoryPage() {
       // Clear any loading message
       setErrorMsg(null);
       
+      if (!data.success) {
+        throw new Error(data.error || "Failed to load task history data");
+      }
+      
       // Handle streaks and statistics
-      if (data.streaks) {
-        setStats(data.streaks);
+      if (data.data && data.data.streaks) {
+        setStats(data.data.streaks);
       }
       
       // Handle task completions
-      const newData = data.completions || [];
-      setLastDoc(data.lastDoc || null);
-      setNoMoreData(newData.length === 0 || !data.lastDoc);
+      const newData = data.data && data.data.completions ? data.data.completions : [];
+      setLastDoc(data.data && data.data.lastDoc ? data.data.lastDoc : null);
+      setNoMoreData(newData.length === 0 || !(data.data && data.data.lastDoc));
       setCompletions(isLoadMore ? [...completions, ...newData] : newData);
     } catch (err) {
       console.error("Error fetching history:", err);
@@ -203,11 +210,28 @@ export default function TaskHistoryPage() {
     }
   };
 
+  // Set up polling to periodically check for new task completions
   useEffect(() => {
     if (token) {
       fetchHistory();
+      
+      // Set up polling interval (every 30 seconds) to get updates
+      if (!pollingInterval) {
+        const interval = setInterval(() => {
+          if (!loading) fetchHistory();
+        }, 30000); // 30 seconds
+        setPollingInterval(interval);
+      }
+      
+      // Cleanup
+      return () => {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          setPollingInterval(null);
+        }
+      };
     }
-  }, [token]);
+  }, [token, startDate, endDate]); // Re-run when filters change
 
   // Group completions by date
   const completionsByDate = completions.reduce((groups, item) => {

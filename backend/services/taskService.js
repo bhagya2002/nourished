@@ -2,6 +2,8 @@ const db = require("../firebase/firestore");
 
 // Simple in-memory cache for tasks
 const taskCache = {};
+const historyCache = {};
+const HISTORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 module.exports.createTask = async function createTask(uid, task, goalId) {
     try {
@@ -152,6 +154,10 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
                 }
+                
+                // Clear the history cache for this user to ensure fresh data on next request
+                clearHistoryCache(uid);
+                
                 return { success: true };
             } else {
                 // If marked as incomplete, remove completedAt
@@ -162,6 +168,10 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
                 }
+                
+                // Clear the history cache for this user
+                clearHistoryCache(uid);
+                
                 return { success: true };
             }
         } catch (timestampErr) {
@@ -178,8 +188,39 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
     }
 };
 
+// Helper function to clear history cache for a user
+function clearHistoryCache(uid) {
+    if (historyCache[uid]) {
+        console.log(`Clearing history cache for user ${uid}`);
+        delete historyCache[uid];
+    }
+}
+
+// Helper function to get cache key for history
+function getHistoryCacheKey(uid, startDate, endDate) {
+    return `${uid}:${startDate || ""}:${endDate || ""}`;
+}
+
 module.exports.getTaskHistory = async function getTaskHistory(uid, startDate, endDate, lastDoc) {
     try {
+        const cacheKey = getHistoryCacheKey(uid, startDate, endDate);
+        
+        // Check if we have a valid cache entry for this query
+        if (!lastDoc && historyCache[cacheKey] && historyCache[cacheKey].timestamp > Date.now() - HISTORY_CACHE_TTL) {
+            console.log(`Using cached task history for ${cacheKey}`);
+            
+            // Apply pagination if lastDoc provided
+            const cachedResults = historyCache[cacheKey].data;
+            
+            return {
+                success: true,
+                data: cachedResults
+            };
+        }
+        
+        // No valid cache entry, proceed with database query
+        console.log(`Fetching task history from database for ${cacheKey}`);
+        
         // Verify user exists
         const userResult = await db.queryDatabaseSingle(uid, "users");
         if (!userResult.success) {
@@ -219,6 +260,20 @@ module.exports.getTaskHistory = async function getTaskHistory(uid, startDate, en
             new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
         );
         
+        // Create full result set for caching
+        const fullResults = {
+            completions: completedTasks,
+            streaks: calculateStreaks(completedTasks)
+        };
+        
+        // Cache the full results (not paginated)
+        if (!lastDoc) {
+            historyCache[cacheKey] = {
+                timestamp: Date.now(),
+                data: fullResults
+            };
+        }
+        
         // Apply pagination
         const pageSize = 10;
         let paginatedTasks = completedTasks;
@@ -245,16 +300,16 @@ module.exports.getTaskHistory = async function getTaskHistory(uid, startDate, en
             }
         }
         
-        // Calculate streak data
-        const streakData = calculateStreaks(completedTasks);
+        // Prepare paginated response
+        const paginatedResults = {
+            completions: paginatedTasks,
+            lastDoc: nextLastDoc,
+            streaks: fullResults.streaks
+        };
         
         return { 
             success: true, 
-            data: {
-                completions: paginatedTasks,
-                lastDoc: nextLastDoc,
-                streaks: streakData
-            } 
+            data: paginatedResults
         };
     } catch (err) {
         console.error("Error getting task history:", err);

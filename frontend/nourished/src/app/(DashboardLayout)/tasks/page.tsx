@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
@@ -45,6 +45,7 @@ type NotificationSeverity = 'error' | 'warning' | 'info' | 'success';
 
 export default function TasksPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, token, loading: authLoading, refreshToken } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -250,18 +251,27 @@ export default function TasksPage() {
           }
         }
       }
+
+      // Get the response data
+      data = await response.json();
       
-      data = await response.json().catch(() => null);
-      
-      if (!response.ok) {
-        const errorMessage = data?.error || "Failed to create task";
-        throw new Error(errorMessage);
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to create task");
       }
       
-      console.log("Create task response:", data); // Debug log
+      // Add the new task to local state instead of refreshing
+      const newTask = data.data; // Assuming the API returns the created task
+      setTasks([...tasks, newTask]);
       
-      setNotification({ open: true, message: "Task created successfully!", severity: "success" });
-      await fetchTasks(); // Added await to ensure tasks are fetched after creation
+      // Show success notification
+      setNotification({
+        open: true,
+        message: "Task created successfully!",
+        severity: "success"
+      });
+      
+      // No need to refresh the page
+      return data;
     } catch (error: any) {
       console.error("Error creating task:", error);
       setNotification({ 
@@ -275,25 +285,41 @@ export default function TasksPage() {
   // Delete task
   const handleDelete = async (taskId: string) => {
     try {
+      if (!taskId) return;
+      
+      // Optimistically update UI
+      const taskToDelete = tasks.find(t => t.id === taskId);
+      const taskName = taskToDelete?.title || 'Task';
+      
+      // Optimistically remove from UI
+      setTasks(tasks.filter(task => task.id !== taskId));
+      
+      // Show notification
+      setNotification({ 
+        open: true, 
+        message: `Deleting "${taskName}"...`, 
+        severity: "info" 
+      });
+      
       const makeRequest = async (currentToken: string) => {
         return await fetch(`${API_BASE_URL}/deleteTask`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ token: currentToken, taskId }),
+          body: JSON.stringify({
+            token: currentToken,
+            taskId: taskId,
+          }),
         });
       };
       
-      // First attempt with current token
       let response = await makeRequest(token!);
       
-      // Check if we got a token expiration error
+      // Check for token expiration
       if (response.status === 401) {
         const responseText = await response.text();
-        console.log("Auth error response:", responseText);
         
-        // If token has expired, try refreshing and retrying once
         if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
           console.log("Token expired, attempting to refresh...");
           const freshToken = await refreshToken();
@@ -304,16 +330,32 @@ export default function TasksPage() {
           }
         }
       }
-
-      const data = await response.json().catch(() => null);
       
-      if (!response.ok) {
-        const errorMessage = data?.error || "Failed to delete task";
-        throw new Error(errorMessage);
+      // Process the response
+      if (response.ok) {
+        // Success! Show success notification
+        setNotification({ 
+          open: true, 
+          message: `"${taskName}" deleted successfully`, 
+          severity: "success" 
+        });
+        
+        // No need to refresh, we've already updated optimistically
+        return;
       }
-
-      setNotification({ open: true, message: "Task deleted successfully!", severity: "success" });
-      fetchTasks();
+      
+      // If we get here, something went wrong
+      const data = await response.json().catch(() => ({}));
+      
+      // Show error and revert the optimistic update
+      setNotification({ 
+        open: true, 
+        message: data.error || "Failed to delete task", 
+        severity: "error" 
+      });
+      
+      // Revert the optimistic update
+      setTasks(prev => [...prev, taskToDelete]);
     } catch (error: any) {
       console.error("Error deleting task:", error);
       setNotification({ open: true, message: error.message || "Failed to delete task", severity: "error" });
@@ -326,63 +368,103 @@ export default function TasksPage() {
     description: string;
     frequency: string;
   }) => {
+    if (!currentEditTask) return;
+    
     try {
+      // Show notification
+      setNotification({
+        open: true,
+        message: "Saving changes...",
+        severity: "info"
+      });
+      
+      // Save original state in case we need to revert
+      const originalTask = { ...currentEditTask };
+      
+      // Optimistically update the UI immediately
+      setTasks(tasks.map(task => 
+        task.id === currentEditTask.id 
+          ? { ...task, ...updatedData } 
+          : task
+      ));
+
+      const taskId = currentEditTask.id;
+      
+      // Update each field separately for robustness
       const updateField = async (field: string, value: string) => {
         const makeRequest = async (currentToken: string) => {
-          return await fetch(`${API_BASE_URL}/editTask`, {
+          return await fetch(`${API_BASE_URL}/updateTask`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ 
-              token: currentToken, 
-              taskId: currentEditTask.id, 
-              fieldToChange: field, 
-              newValue: value 
+            body: JSON.stringify({
+              token: currentToken,
+              taskId,
+              updateField: field,
+              updateValue: value,
             }),
           });
         };
         
         // First attempt with current token
-        let res = await makeRequest(token!);
+        let response = await makeRequest(token!);
         
         // Check if we got a token expiration error
-        if (res.status === 401) {
-          const responseText = await res.text();
-          console.log("Auth error response:", responseText);
+        if (response.status === 401) {
+          const responseText = await response.text();
           
           // If token has expired, try refreshing and retrying once
           if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
-            console.log("Token expired, attempting to refresh...");
+            console.log("Token expired for update, refreshing...");
             const freshToken = await refreshToken();
             
             if (freshToken) {
-              console.log("Token refreshed, retrying request");
-              res = await makeRequest(freshToken);
+              console.log("Token refreshed, retrying update");
+              response = await makeRequest(freshToken);
             }
           }
         }
         
-        const data = await res.json().catch(() => null);
-        
-        if (!res.ok) {
-          const errorMessage = data?.error || `Failed to update ${field}`;
-          throw new Error(errorMessage);
+        if (!response.ok) {
+          throw new Error(`Failed to update ${field}`);
         }
         
-        return data;
+        return response;
       };
-
-      await Promise.all([
-        updateField("title", updatedData.title),
-        updateField("description", updatedData.description),
-        updateField("frequency", updatedData.frequency),
+      
+      // Update all fields in parallel for efficiency
+      const results = await Promise.all([
+        updateField('title', updatedData.title),
+        updateField('description', updatedData.description),
+        updateField('frequency', updatedData.frequency || ""),
       ]);
-      setNotification({ open: true, message: "Task updated successfully!", severity: "success" });
-      fetchTasks();
-    } catch (error: any) {
+      
+      // All updates were successful
+      setNotification({
+        open: true,
+        message: "Task updated successfully!",
+        severity: "success"
+      });
+      
+      // No need to refresh
+      
+    } catch (error) {
       console.error("Error updating task:", error);
-      setNotification({ open: true, message: error.message || "Failed to update task", severity: "error" });
+      
+      // Revert optimistic update in case of error
+      if (currentEditTask) {
+        setTasks(tasks.map(task => 
+          task.id === currentEditTask.id ? currentEditTask : task
+        ));
+      }
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : "Failed to update task",
+        severity: "error"
+      });
     }
   };
 
@@ -469,6 +551,11 @@ export default function TasksPage() {
             message: newCompletedState ? "Task marked complete!" : "Task marked incomplete", 
             severity: "success" 
           });
+          
+          // Task was already optimistically updated, no need to refresh
+          // Removed: fetchTasks();
+          
+          // No need for redirects or refreshes
           return;
         }
         
@@ -479,65 +566,59 @@ export default function TasksPage() {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
           try {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorMessage;
-          } catch (jsonError) {
-            console.error("Error parsing JSON response:", jsonError);
+            const freshToken = await refreshToken();
+            if (freshToken) {
+              const result = await makeRequest(freshToken);
+              if (!result.success) {
+                throw new Error(result.error || "Failed to update task status");
+              }
+              return result;
+            } else {
+              throw new Error("Failed to refresh authentication token");
+            }
+          } catch (refreshError) {
+            console.error("Error refreshing token:", refreshError);
+            // Revert the optimistic update
+            setTasks(tasks.map(task => 
+              task.id === taskId ? { ...task, completed: !newCompletedState } : task
+            ));
+            setNotification({
+              open: true,
+              message: "Authentication error. Please log in again.",
+              severity: "error"
+            });
+            router.push("/authentication/login");
+            throw refreshError;
           }
         } else {
-          // Not JSON, try to get text
-          try {
-            const textError = await response.text();
-            if (textError && textError.length > 0) {
-              errorMessage = textError;
-            }
-          } catch (textError) {
-            console.error("Error getting response text:", textError);
-          }
+          // Revert the optimistic update for other errors
+          setTasks(tasks.map(task => 
+            task.id === taskId ? { ...task, completed: !newCompletedState } : task
+          ));
+          setNotification({
+            open: true,
+            message: "Failed to update task status",
+            severity: "error"
+          });
+          throw error;
         }
+      } catch (err) {
+        console.error("Error toggling task completion:", err);
         
-        console.error("Server returned error:", errorMessage);
-        
-        // Revert optimistic update
+        // Revert the optimistic update
         setTasks(tasks.map(task => 
-          task.id === taskId ? { ...task, completed: currentTask.completed } : task
+          task.id === taskId ? { ...task, completed: !newCompletedState } : task
         ));
         
-        // Show error notification
-        setNotification({ 
-          open: true, 
-          message: errorMessage, 
-          severity: "error" 
-        });
-      } catch (fetchError) {
-        // Handle network errors
-        console.error("Network error during toggle task completion:", fetchError);
-        
-        // Revert optimistic update
-        setTasks(tasks.map(task => 
-          task.id === taskId ? { ...task, completed: currentTask.completed } : task
-        ));
-        
-        // Show appropriate error message
-        const errorMessage = fetchError instanceof Error && fetchError.name === 'AbortError'
-          ? 'Request timed out. Please try again.'
-          : (fetchError instanceof Error ? fetchError.message : 'Network error');
-        
-        setNotification({ 
-          open: true, 
-          message: errorMessage, 
-          severity: "error" 
+        setNotification({
+          open: true,
+          message: "Failed to update task status",
+          severity: "error"
         });
       }
-    } catch (error) {
-      console.error("Unexpected error in handleComplete:", error);
-      
-      // Ensure tasks remain visible even on error
-      setNotification({ 
-        open: true, 
-        message: error instanceof Error ? error.message : "An unexpected error occurred", 
-        severity: "error" 
-      });
+    } catch (err) {
+      console.error("Error toggling task completion:", err);
+      // Already handled in the inner catch blocks
     }
   };
 
@@ -583,11 +664,24 @@ export default function TasksPage() {
         ) : notification.open ? (
           <Snackbar
             open={notification.open}
-            autoHideDuration={3000}
+            autoHideDuration={6000}
             onClose={() => setNotification({ ...notification, open: false })}
-            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
-            <Alert onClose={() => setNotification({ ...notification, open: false })} severity={notification.severity} sx = {{ width: "100%" }}>
+            <Alert 
+              onClose={() => setNotification({ ...notification, open: false })} 
+              severity={notification.severity}
+              sx={{ width: '100%' }}
+              action={
+                <Button 
+                  color="inherit" 
+                  size="small" 
+                  onClick={() => setNotification({ ...notification, open: false })}
+                >
+                  Dismiss
+                </Button>
+              }
+            >
               {notification.message}
             </Alert>
           </Snackbar>
@@ -678,6 +772,24 @@ export default function TasksPage() {
                                 icon={<RadioButtonUncheckedIcon />}
                                 checkedIcon={<CheckCircleIcon />}
                                 disabled={isLoading}
+                                sx={{
+                                  '& .MuiSwitch-switchBase': {
+                                    transitionDuration: '300ms',
+                                    '&.Mui-checked': {
+                                      transform: 'translateX(16px)',
+                                      '& + .MuiSwitch-track': {
+                                        backgroundColor: 'success.main',
+                                        opacity: 1,
+                                      },
+                                    },
+                                  },
+                                  '& .MuiSwitch-thumb': {
+                                    transition: 'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                  },
+                                  '& .MuiSwitch-track': {
+                                    transition: 'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                  },
+                                }}
                               />
                             }
                             label={
