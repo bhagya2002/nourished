@@ -981,15 +981,17 @@ export default function TasksPage() {
         onCreate={handleCreate}
         userTasks={tasks}
       />
-      <TaskEditDialog
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        onSave={handleSaveEdit}
-        initialTitle={currentEditTask?.title || ""}
-        initialDescription={currentEditTask?.description || ""}
-        initialFrequency={currentEditTask?.frequency || ""}
-        userTasks={tasks}
-      />
+      {currentEditTask && (
+        <TaskEditDialog
+          open={editDialogOpen}
+          onClose={() => {setEditDialogOpen(false); setCurrentEditTask(null);}}
+          onSave={handleSaveEdit}
+          initialTitle={currentEditTask.title || ""}
+          initialDescription={currentEditTask.description || ""}
+          initialFrequency={currentEditTask.frequency || ""}
+          userTasks={tasks}
+        />
+      )}
       <HappinessDialog
         open={happinessDialogOpen}
         taskId={ratingTaskId || ""}

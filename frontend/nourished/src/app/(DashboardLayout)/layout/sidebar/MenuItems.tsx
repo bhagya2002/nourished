@@ -55,13 +55,13 @@ const Menuitems = [
   },
   {
     navlabel: true,
-    subheader: 'For Future',
+    subheader: 'Community',
   },
   {
     id: uniqueId(),
-    title: 'Future Pages',
+    title: 'Friend Circle',
     icon: IconAperture,
-    href: '/sample-page',
+    href: '/friend-circle',
   },
   {
     navlabel: true,

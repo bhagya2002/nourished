@@ -79,7 +79,11 @@ function addCreateTask(app) {
 
             const result = await taskService.createTask(authResult.uid, req.body.task, req.body.goalId ?? null);
             if (result.success) {
-                return res.status(200).json({ success: true, message: "Task created successfully" });
+                return res.status(200).json({ 
+                    success: true, 
+                    message: "Task created successfully",
+                    data: result.data
+                });
             } else {
                 return res.status(500).json({ 
                     success: false, 
@@ -112,7 +116,7 @@ function addDeleteTask(app) {
                 authResult.uid = req.body.token;
             }
 
-            const result = await taskService.deleteTask(authResult.uid, req.body.taskId);
+            const result = await taskService.deleteTask(authResult.uid, req.body.taskId, req.body.goalId ?? null);
             if (result.success) {
                 return res.status(200).json({ success: true, message: "Task deleted successfully" });
             } else {
