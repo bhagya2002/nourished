@@ -477,3 +477,166 @@ function calculateStreaks(completedTasks) {
         totalCompletions: completedTasks.length
     };
 }
+
+/**
+ * Submit a happiness rating for a completed task
+ * @param {string} uid - User ID
+ * @param {string} taskId - Task ID
+ * @param {number} rating - Happiness rating (1-5)
+ * @param {string} date - ISO date string when the rating was submitted
+ * @returns {Object} Result object with success flag
+ */
+module.exports.submitHappinessRating = async function submitHappinessRating(uid, taskId, rating, date) {
+    try {
+        // Validate inputs
+        if (!uid || !taskId) {
+            return { success: false, error: "User ID and Task ID are required" };
+        }
+        
+        if (!rating || rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+            return { success: false, error: "Valid happiness rating (1-5) is required" };
+        }
+        
+        // Ensure the task exists and belongs to the user
+        const task = await db.queryDatabaseSingle(taskId, "tasks");
+        if (!task.success || !task.data) {
+            return { success: false, error: "Task not found" };
+        }
+        
+        if (task.data.uid !== uid) {
+            return { success: false, error: "You don't have permission to rate this task" };
+        }
+        
+        // Verify the task is completed
+        if (!task.data.completed) {
+            return { success: false, error: "Cannot rate an incomplete task" };
+        }
+        
+        // Check for duplicate rating (same task, same day)
+        const existingRatings = await db.queryDatabase(uid, "happiness", "uid");
+        
+        if (existingRatings.success && existingRatings.data && existingRatings.data.length > 0) {
+            const today = new Date(date).toISOString().split('T')[0]; // Get YYYY-MM-DD part
+            
+            const duplicateRating = existingRatings.data.find(rating => {
+                // Same task and same day
+                const ratingDate = new Date(rating.date).toISOString().split('T')[0];
+                return rating.taskId === taskId && ratingDate === today;
+            });
+            
+            if (duplicateRating) {
+                // Update existing rating instead of creating a new one
+                const updateResult = await db.updateField("happiness", duplicateRating.id, "rating", rating);
+                if (!updateResult.success) {
+                    return { success: false, error: "Failed to update existing happiness rating" };
+                }
+                return { success: true, data: { id: duplicateRating.id, updated: true } };
+            }
+        }
+        
+        // Create a new happiness rating document
+        const happinessData = {
+            uid,
+            taskId,
+            taskTitle: task.data.title || '',
+            rating,
+            date,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Add to happiness collection
+        const addResult = await db.addSingleDoc("happiness", happinessData);
+        
+        if (!addResult.success) {
+            return { success: false, error: "Failed to save happiness rating" };
+        }
+        
+        // Add the rating ID to the user's happiness array
+        const updateResult = await db.updateFieldArray("users", uid, "happiness", addResult.id);
+        
+        if (!updateResult.success) {
+            // Clean up the orphaned happiness document
+            await db.deleteSingleDoc("happiness", addResult.id);
+            return { success: false, error: "Failed to update user with happiness rating" };
+        }
+        
+        return { success: true, data: { id: addResult.id, updated: false } };
+        
+    } catch (error) {
+        console.error("Error in submitHappinessRating:", error);
+        return { 
+            success: false, 
+            error: typeof error === 'object' ? error.message : String(error) 
+        };
+    }
+};
+
+/**
+ * Get a user's happiness rating data
+ * @param {string} uid - User ID
+ * @param {string} startDate - Optional start date for filtering (ISO date string)
+ * @param {string} endDate - Optional end date for filtering (ISO date string)
+ * @returns {Object} Result object with happiness data
+ */
+module.exports.getHappinessData = async function getHappinessData(uid, startDate, endDate) {
+    try {
+        // Validate user
+        const userResult = await db.queryDatabaseSingle(uid, "users");
+        if (!userResult.success) {
+            return { success: false, error: "User not found" };
+        }
+        
+        // Get all happiness ratings for the user
+        const happinessResult = await db.queryDatabase(uid, "happiness", "uid");
+        
+        if (!happinessResult.success) {
+            return { success: false, error: happinessResult.error || "Failed to fetch happiness data" };
+        }
+        
+        let happinessData = happinessResult.data || [];
+        
+        // Apply date filtering if provided
+        if (startDate) {
+            const startDateTime = new Date(startDate).getTime();
+            happinessData = happinessData.filter(item => 
+                new Date(item.date).getTime() >= startDateTime
+            );
+        }
+        
+        if (endDate) {
+            // Add one day to include the end date fully
+            const endDateTime = new Date(endDate);
+            endDateTime.setDate(endDateTime.getDate() + 1);
+            
+            happinessData = happinessData.filter(item => 
+                new Date(item.date).getTime() < endDateTime.getTime()
+            );
+        }
+        
+        // Sort by date (newest first)
+        happinessData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        // Calculate average happiness
+        let averageHappiness = 0;
+        if (happinessData.length > 0) {
+            const sum = happinessData.reduce((acc, item) => acc + item.rating, 0);
+            averageHappiness = sum / happinessData.length;
+        }
+        
+        return {
+            success: true,
+            data: {
+                ratings: happinessData,
+                averageHappiness,
+                count: happinessData.length
+            }
+        };
+        
+    } catch (error) {
+        console.error("Error in getHappinessData:", error);
+        return { 
+            success: false, 
+            error: typeof error === 'object' ? error.message : String(error) 
+        };
+    }
+};

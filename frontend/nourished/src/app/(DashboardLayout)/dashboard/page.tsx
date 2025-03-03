@@ -1,17 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Grid, Box, CircularProgress, Typography, Button, Card, CardContent, CardHeader, Chip, Divider, Stack } from '@mui/material';
+import { Grid, Box, CircularProgress, Typography, Button, Chip, Divider, Stack } from '@mui/material';
 import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 // components
 import TaskOverview from '@/app/(DashboardLayout)/components/dashboard/TaskOverview';
-import SalesOverview from '@/app/(DashboardLayout)/components/dashboard/SalesOverview';
-import YearlyBreakup from '@/app/(DashboardLayout)/components/dashboard/YearlyBreakup';
-import RecentTransactions from '@/app/(DashboardLayout)/components/dashboard/RecentTransactions';
-import ProductPerformance from '@/app/(DashboardLayout)/components/dashboard/ProductPerformance';
-import Blog from '@/app/(DashboardLayout)/components/dashboard/Blog';
-import MonthlyEarnings from '@/app/(DashboardLayout)/components/dashboard/MonthlyEarnings';
+import HappinessOverview from '@/app/(DashboardLayout)/components/dashboard/HappinessOverview';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -51,6 +46,9 @@ const Dashboard = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const { user, token, loading, refreshToken } = useAuth();
   const router = useRouter();
+  const [happinessData, setHappinessData] = useState<any[]>([]);
+  const [isLoadingHappiness, setIsLoadingHappiness] = useState(false);
+  const [happinessError, setHappinessError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🚀 Dashboard Auth Debug:', { user, token, loading });
@@ -194,10 +192,87 @@ const Dashboard = () => {
     }
   };
 
+  // Function to fetch happiness data
+  const fetchHappinessData = async () => {
+    if (!token) return;
+    
+    setIsLoadingHappiness(true);
+    setHappinessError(null);
+    
+    try {
+      // Add timeout to prevent long-hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      
+      // Call the getHappinessData endpoint
+      const makeRequest = async (currentToken: string) => {
+        const response = await fetch(`${API_BASE_URL}/getHappinessData`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: currentToken }),
+          signal: controller.signal
+        });
+        
+        if (!response.ok) {
+          const responseText = await response.text();
+          
+          // Handle token expiration
+          if (response.status === 401 && (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired'))) {
+            throw new Error("token_expired");
+          } else {
+            throw new Error(`Server error: ${response.status} - ${responseText || 'Failed to fetch happiness data'}`);
+          }
+        }
+        
+        return response;
+      };
+      
+      let response;
+      try {
+        response = await makeRequest(token);
+      } catch (error: any) {
+        if (error.message === "token_expired" && refreshToken) {
+          console.log("Token expired, attempting to refresh...");
+          const freshToken = await refreshToken();
+          
+          if (freshToken) {
+            console.log("Token refreshed, retrying request");
+            response = await makeRequest(freshToken);
+          } else {
+            console.error("Failed to refresh token");
+            throw new Error("Authentication error. Please log in again.");
+          }
+        } else if (error instanceof DOMException && error.name === 'AbortError') {
+          throw new Error("Request timed out. The server might be overloaded. Please try again later.");
+        } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          throw new Error("Cannot connect to the server. Please check if the backend server is running.");
+        } else {
+          throw error;
+        }
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || "Failed to load happiness data");
+      }
+      
+      setHappinessData(data.data?.ratings || []);
+    } catch (error) {
+      console.error("Error fetching happiness data:", error);
+      setHappinessError(error instanceof Error ? error.message : "Failed to load happiness data");
+    } finally {
+      setIsLoadingHappiness(false);
+    }
+  };
+
   useEffect(() => {
     if (user && token) {
       fetchTasks();
       fetchRecentCompletions();
+      fetchHappinessData();
     }
   }, [user, token]);
 
@@ -449,6 +524,13 @@ const Dashboard = () => {
                 </Box>
               )}
             </DashboardCard>
+          </Grid>
+          <Grid item xs={12} lg={12}>
+            <HappinessOverview
+              happinessData={happinessData}
+              isLoading={isLoadingHappiness}
+              error={happinessError}
+            />
           </Grid>
         </Grid>
       </Box>

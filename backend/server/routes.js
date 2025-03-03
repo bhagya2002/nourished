@@ -513,6 +513,113 @@ function addGetTaskHistory(app) {
   });
 }
 
+function addSubmitHappinessRating(app) {
+  app.post("/submitHappinessRating", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+        });
+      }
+
+      // Validate inputs
+      const { taskId, rating, date } = req.body;
+      
+      if (!taskId) {
+        return res.status(400).json({
+          success: false,
+          error: "Task ID is required"
+        });
+      }
+      
+      if (!rating || rating < 1 || rating > 5 || !Number.isInteger(rating)) {
+        return res.status(400).json({
+          success: false,
+          error: "Valid happiness rating (1-5) is required"
+        });
+      }
+      
+      const parsedDate = date ? new Date(date) : new Date();
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid date format"
+        });
+      }
+
+      // Submit the happiness rating
+      const result = await taskService.submitHappinessRating(
+        authResult.uid,
+        taskId,
+        rating,
+        parsedDate.toISOString()
+      );
+
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to submit happiness rating"
+        });
+      }
+    } catch (err) {
+      console.error("Error in submitHappinessRating endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred"
+      });
+    }
+  });
+}
+
+function addGetHappinessData(app) {
+  app.post("/getHappinessData", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+        });
+      }
+
+      // Optional date filtering parameters
+      const { startDate, endDate } = req.body;
+      
+      // Get happiness data
+      const result = await taskService.getHappinessData(
+        authResult.uid,
+        startDate,
+        endDate
+      );
+
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to fetch happiness data"
+        });
+      }
+    } catch (err) {
+      console.error("Error in getHappinessData endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred"
+      });
+    }
+  });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -535,4 +642,8 @@ module.exports = function injectRoutes(app) {
     addDeleteGoal(app);
     addEditGoal(app);
     addGetUserGoals(app);
+
+    // Happiness
+    addSubmitHappinessRating(app);
+    addGetHappinessData(app);
 };

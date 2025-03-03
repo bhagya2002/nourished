@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from "@/context/AuthContext";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import TaskEditDialog from "./components/TaskEditDialog";
 import TaskCreateDialog from "./components/TaskCreateDialog";
+import HappinessDialog from "./components/HappinessDialog";
 import {
   Alert,
   Box,
@@ -60,6 +60,11 @@ export default function TasksPage() {
     message: string;
     severity: NotificationSeverity;
   }>({ open: false, message: '', severity: 'success' });
+
+  // Add happiness dialog states
+  const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
+  const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
+  const [ratingTaskTitle, setRatingTaskTitle] = useState<string>("");
 
   // Redirect if not logged in
   useEffect(() => {
@@ -261,7 +266,33 @@ export default function TasksPage() {
       
       // Add the new task to local state instead of refreshing
       const newTask = data.data; // Assuming the API returns the created task
-      setTasks([...tasks, newTask]);
+      
+      // Ensure newTask has required properties before adding to state
+      if (newTask && newTask.id) {
+        // Create a structured task object to ensure all required fields exist
+        const validTask = {
+          id: newTask.id,
+          title: newTask.title || title,
+          description: newTask.description || description,
+          frequency: newTask.frequency || frequency,
+          completed: newTask.completed !== undefined ? newTask.completed : false,
+          createdAt: newTask.createdAt || new Date().toISOString()
+        };
+        
+        setTasks([...tasks, validTask]);
+      } else {
+        console.warn('Created task returned from API does not have expected properties', newTask);
+        // Add a local placeholder task with generated ID in case API doesn't return proper data
+        const placeholderTask = {
+          id: `local-${Date.now()}`,
+          title,
+          description,
+          frequency,
+          completed: false,
+          createdAt: new Date().toISOString()
+        };
+        setTasks([...tasks, placeholderTask]);
+      }
       
       // Show success notification
       setNotification({
@@ -368,13 +399,33 @@ export default function TasksPage() {
     description: string;
     frequency: string;
   }) => {
-    if (!currentEditTask) return;
-    
     try {
-      // Show notification
+      if (!currentEditTask) {
+        console.error("No task selected for editing");
+        setNotification({
+          open: true,
+          message: "Error: No task selected for editing",
+          severity: "error"
+        });
+        return;
+      }
+
+      console.log("Updating task:", currentEditTask.id, "with data:", updatedData);
+      
+      // Validate input
+      if (!updatedData.title || updatedData.title.trim() === '') {
+        setNotification({
+          open: true,
+          message: "Title cannot be empty",
+          severity: "error"
+        });
+        return;
+      }
+      
+      // Show loading notification
       setNotification({
         open: true,
-        message: "Saving changes...",
+        message: "Updating task...",
         severity: "info"
       });
       
@@ -393,7 +444,7 @@ export default function TasksPage() {
       // Update each field separately for robustness
       const updateField = async (field: string, value: string) => {
         const makeRequest = async (currentToken: string) => {
-          return await fetch(`${API_BASE_URL}/updateTask`, {
+          return await fetch(`${API_BASE_URL}/editTask`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -401,8 +452,8 @@ export default function TasksPage() {
             body: JSON.stringify({
               token: currentToken,
               taskId,
-              updateField: field,
-              updateValue: value,
+              fieldToChange: field,
+              newValue: value,
             }),
           });
         };
@@ -427,18 +478,37 @@ export default function TasksPage() {
         }
         
         if (!response.ok) {
-          throw new Error(`Failed to update ${field}`);
+          // Try to get more detailed error information
+          let errorDetail = '';
+          try {
+            const errorResponse = await response.json();
+            errorDetail = errorResponse.error || '';
+          } catch (e) {
+            // If we can't parse JSON, try to get plain text
+            try {
+              errorDetail = await response.text();
+            } catch (textError) {
+              // If even that fails, just use the status
+              errorDetail = `Status ${response.status}`;
+            }
+          }
+          
+          console.error(`Failed to update ${field}:`, errorDetail);
+          throw new Error(`Failed to update ${field}${errorDetail ? ': ' + errorDetail : ''}`);
         }
         
         return response;
       };
       
       // Update all fields in parallel for efficiency
+      console.log("Sending task update requests...");
       const results = await Promise.all([
         updateField('title', updatedData.title),
         updateField('description', updatedData.description),
         updateField('frequency', updatedData.frequency || ""),
       ]);
+      
+      console.log("Task update results:", results);
       
       // All updates were successful
       setNotification({
@@ -527,7 +597,6 @@ export default function TasksPage() {
         // Check if we got a token expiration error
         if (response.status === 401) {
           const responseText = await response.text();
-          console.log("Auth error response:", responseText);
           
           // If token has expired, try refreshing and retrying once
           if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
@@ -552,10 +621,17 @@ export default function TasksPage() {
             severity: "success" 
           });
           
-          // Task was already optimistically updated, no need to refresh
-          // Removed: fetchTasks();
+          // If marked as complete, open the happiness rating dialog
+          if (newCompletedState) {
+            setRatingTaskId(taskId);
+            setRatingTaskTitle(currentTask.title);
+            // Small delay to allow notification to be seen before showing happiness dialog
+            setTimeout(() => {
+              setHappinessDialogOpen(true);
+            }, 500);
+          }
           
-          // No need for redirects or refreshes
+          // Task was already optimistically updated, no need to refresh
           return;
         }
         
@@ -569,10 +645,12 @@ export default function TasksPage() {
             const freshToken = await refreshToken();
             if (freshToken) {
               const result = await makeRequest(freshToken);
-              if (!result.success) {
-                throw new Error(result.error || "Failed to update task status");
+              // Convert response to JSON to access properties
+              const resultData = await result.json().catch(() => ({}));
+              if (!resultData.success) {
+                throw new Error(resultData.error || "Failed to update task status");
               }
-              return result;
+              return resultData;
             } else {
               throw new Error("Failed to refresh authentication token");
             }
@@ -600,7 +678,7 @@ export default function TasksPage() {
             message: "Failed to update task status",
             severity: "error"
           });
-          throw error;
+          throw new Error("Failed to update task status");
         }
       } catch (err) {
         console.error("Error toggling task completion:", err);
@@ -630,6 +708,69 @@ export default function TasksPage() {
   const handleOpenEditDialog = (task: any) => {
     setCurrentEditTask(task);
     setEditDialogOpen(true);
+  };
+
+  // Add handleSubmitHappiness handler
+  const handleSubmitHappiness = async (taskId: string, rating: number) => {
+    try {
+      // Show notification
+      setNotification({
+        open: true,
+        message: "Submitting happiness rating...",
+        severity: "info"
+      });
+      
+      const makeRequest = async (currentToken: string) => {
+        return await fetch(`${API_BASE_URL}/submitHappinessRating`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            token: currentToken,
+            taskId,
+            rating,
+            date: new Date().toISOString()
+          }),
+        });
+      };
+      
+      // First attempt with current token
+      let response = await makeRequest(token!);
+      
+      // Check if we got a token expiration error
+      if (response.status === 401) {
+        const responseText = await response.text();
+        
+        // If token has expired, try refreshing and retrying once
+        if (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired')) {
+          console.log("Token expired, attempting to refresh...");
+          const freshToken = await refreshToken();
+          
+          if (freshToken) {
+            console.log("Token refreshed, retrying request");
+            response = await makeRequest(freshToken);
+          }
+        }
+      }
+      
+      if (!response.ok) {
+        throw new Error("Failed to submit happiness rating");
+      }
+      
+      // Show success notification
+      setNotification({
+        open: true,
+        message: "Happiness rating submitted. Thank you!",
+        severity: "success"
+      });
+      
+    } catch (error) {
+      console.error("Error submitting happiness rating:", error);
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : "Failed to submit happiness rating",
+        severity: "error"
+      });
+    }
   };
 
   return (
@@ -664,7 +805,7 @@ export default function TasksPage() {
         ) : notification.open ? (
           <Snackbar
             open={notification.open}
-            autoHideDuration={6000}
+            autoHideDuration={1500}
             onClose={() => setNotification({ ...notification, open: false })}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
@@ -848,6 +989,13 @@ export default function TasksPage() {
         initialDescription={currentEditTask?.description || ""}
         initialFrequency={currentEditTask?.frequency || ""}
         userTasks={tasks}
+      />
+      <HappinessDialog
+        open={happinessDialogOpen}
+        taskId={ratingTaskId || ""}
+        taskTitle={ratingTaskTitle}
+        onClose={() => setHappinessDialogOpen(false)}
+        onSubmit={handleSubmitHappiness}
       />
     </PageContainer>
   );
