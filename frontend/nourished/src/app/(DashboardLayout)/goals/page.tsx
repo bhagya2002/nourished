@@ -47,7 +47,7 @@ export default function GoalsPage() {
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
+      const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,10 +56,17 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch goals");
       const goalsData = await response.json();
-      setGoals(goalsData);
+      
+      // Ensure we're setting an array even if the API returns something else
+      if (goalsData && goalsData.data) {
+        setGoals(Array.isArray(goalsData.data) ? goalsData.data : []);
+      } else {
+        setGoals([]);
+      }
     } catch (error) {
       console.error("Error fetching goals:", error);
       setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+      setGoals([]); // Ensure goals is always an array even on error
     }
   };
 
