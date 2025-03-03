@@ -39,7 +39,6 @@ export default function FriendCirclePage() {
   useEffect(() => {
     if (user && token) {
       // TODO: Fetch posts from the server
-      console.log(user);
     }
   }, [user, token]);
 
@@ -100,8 +99,8 @@ export default function FriendCirclePage() {
       </Dialog>
 
       <List sx={{ width: '100%' }}>
-        {posts.map(post => (
-          <ListItem key={post.id} sx={{ display: 'block' }}>
+        {posts.map((post, index) => (
+          <ListItem key={index} sx={{ display: 'block' }}>
             <Card sx={{ position: 'relative', marginBottom: 2 }}>
               <CardHeader
                 avatar={
