@@ -14,7 +14,18 @@ module.exports.createPost = async function createPost(uid, post) {
     if (!updateResult.success) {
       return { success: false, error: updateResult.error };
     }
-    return { success: true, data: { id: result.id } };
+    // Get the goal document data if required and exists
+    if (post.goalId) {
+      const getGoalRes = await db.queryDatabaseSingle(post.goalId, "goals");
+      if (!getGoalRes.success) {
+        return { success: false, error: getGoalRes.error };
+      }
+      post.goal = getGoalRes.data;
+    } else {
+      post.goal = undefined;
+    }
+    delete post.goalId;
+    return { success: true, data: { post: {...post, id: result.id } } };
   } catch (err) {
     return { success: false, error: err };
   }

@@ -240,7 +240,11 @@ export default function GoalsPage() {
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
-        const goalId = (await response.json()).id;
+        const goalData = await response.json();
+        if (!(goalData && goalData.data)) {
+          throw new Error("Failed to create post");
+        }
+        const goalId = goalData.data.id;
         // Update the goals array with the new goal (avoiding redundant fetches)
         setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createdAt: goalCreatedAt }]);
         setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });

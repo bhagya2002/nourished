@@ -583,6 +583,48 @@ function addSubmitHappinessRating(app) {
   });
 }
 
+function addGetHappinessData(app) {
+  app.post("/getHappinessData", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+        });
+      }
+
+      // Optional date filtering parameters
+      const { startDate, endDate } = req.body;
+      
+      // Get happiness data
+      const result = await taskService.getHappinessData(
+        authResult.uid,
+        startDate,
+        endDate
+      );
+
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to fetch happiness data"
+        });
+      }
+    } catch (err) {
+      console.error("Error in getHappinessData endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred"
+      });
+    }
+  });
+}
+
 function addCreatePost(app) {
   app.post("/createPost", async (req, res) => {
       try {

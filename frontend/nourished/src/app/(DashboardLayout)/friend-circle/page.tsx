@@ -18,7 +18,7 @@ export type Post = {
   name: string;
   email: string;
   content: string;
-  goal: string;
+  goal: Goal;
   createdAt: string;
   likes: number;
   comments: string[];  // Assuming comments are just strings for simplicity
@@ -81,7 +81,7 @@ export default function FriendCirclePage() {
     setOpen(false);
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!postContent.trim()) {
       setValidationError('Post content must be filled out');
       return;
@@ -95,17 +95,38 @@ export default function FriendCirclePage() {
       return;
     }
 
-    const newPost: Post = {
-      id: "",
-      name: user.displayName || "",
-      email: user.email || "",
-      content: postContent,
-      goal: postGoalLinkId,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      comments: []
-    };
-    setPosts(prevPosts => [...prevPosts, newPost]);
+    // create a new post in the database
+    const postCreatedAt = new Date().toISOString();
+    try {
+      const response = await fetch(`${API_BASE_URL}/createPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          post: {
+            name: user.displayName || "",
+            email: user.email || "",
+            content: postContent,
+            goalId: postGoalLinkId,
+            createdAt: postCreatedAt,
+            likes: 0,
+            comments: []
+          }
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to create post");
+      const postData = await response.json();
+      if (!(postData && postData.data)) {
+        throw new Error("Failed to create post");
+      }
+      console.log(postData.data.post);
+      setPosts(prevPosts => [...prevPosts, postData.data.post]);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      setToast({ open: true, message: 'Failed to create post', severity: 'error' });
+    }
     setOpen(false);
     setPostContent('');
     setPostGoalLinkId('');
@@ -151,6 +172,7 @@ export default function FriendCirclePage() {
                 />
                 <CardContent>
                   <Typography variant="body1">{post.content}</Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>
                 </CardContent>
                 <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
                   <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
