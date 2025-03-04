@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
@@ -31,8 +31,9 @@ export default function FriendCirclePage() {
 
   const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const [open, setOpen] = useState(false);
-  const [expandedPostId, setExpandedPostId] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const postMoreOpen = Boolean(anchorEl);
   const [postContent, setPostContent] = useState('');
   const [postGoalLinkId, setPostGoalLinkId] = useState('');
   const [validationError, setValidationError] = useState('');
@@ -157,6 +158,14 @@ export default function FriendCirclePage() {
     setToast({ ...toast, open: false });
   };
 
+  const handlePostMoreClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handlePostMoreClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <Box sx={{ mt: 2 }}>
@@ -187,8 +196,8 @@ export default function FriendCirclePage() {
                       {post.name.charAt(0)}
                     </Avatar>
                   }
-                  action={post.name === user?.displayName && 
-                    <IconButton aria-label='settings'>
+                  action={post.name === user?.displayName &&
+                    <IconButton aria-label='settings' aria-haspopup='true' aria-expanded={postMoreOpen ? 'true' : undefined} id='post-more-button' onClick={handlePostMoreClick}>
                       <MoreVert />
                     </IconButton>
                   }
@@ -199,6 +208,20 @@ export default function FriendCirclePage() {
                   <Typography variant="body1">{post.content}</Typography>
                   {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
+                <Menu id='post-more-menu' anchorEl={anchorEl} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
+                  <MenuItem onClick={handlePostMoreClose}>
+                    <ListItemIcon>
+                      <Edit fontSize='small' />
+                    </ListItemIcon>
+                    <ListItemText>Edit</ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={handlePostMoreClose}>
+                    <ListItemIcon>
+                      <Delete fontSize='small' />
+                    </ListItemIcon>
+                    <ListItemText>Delete</ListItemText>
+                  </MenuItem>
+                </Menu>
                 <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
                   <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
                     <FavoriteBorderIcon />
