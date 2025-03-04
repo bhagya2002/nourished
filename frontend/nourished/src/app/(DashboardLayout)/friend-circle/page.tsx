@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
+import { Delete, Edit, MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -30,6 +31,7 @@ export default function FriendCirclePage() {
 
   const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const [open, setOpen] = useState(false);
+  const [expandedPostId, setExpandedPostId] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
   const [postContent, setPostContent] = useState('');
   const [postGoalLinkId, setPostGoalLinkId] = useState('');
@@ -176,8 +178,8 @@ export default function FriendCirclePage() {
         </Box>
 
         <List sx={{ width: '100%' }}>
-          {posts.map((post, index) => (
-            <ListItem key={index} sx={{ display: 'block' }}>
+          {posts.map((post) => (
+            <ListItem key={post.id} sx={{ display: 'block' }}>
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
@@ -185,8 +187,13 @@ export default function FriendCirclePage() {
                       {post.name.charAt(0)}
                     </Avatar>
                   }
+                  action={post.name === user?.displayName && 
+                    <IconButton aria-label='settings'>
+                      <MoreVert />
+                    </IconButton>
+                  }
                   title={post.name}
-                  subheader={post.createdAt}
+                  subheader={new Date(post.createdAt).toLocaleString()}
                 />
                 <CardContent>
                   <Typography variant="body1">{post.content}</Typography>
