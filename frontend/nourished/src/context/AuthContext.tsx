@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   token: string | null;
+  refreshToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +20,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   console.log('🔥 AuthProvider is mounted');
+
+  const refreshToken = async (): Promise<string | null> => {
+    if (!user) return null;
+    
+    try {
+      console.log('🔄 Manually refreshing token...');
+      const newToken = await user.getIdToken(true);
+      setToken(newToken);
+      localStorage.setItem('authToken', newToken);
+      console.log('✅ Token refreshed successfully');
+      return newToken;
+    } catch (error) {
+      console.error('❌ Failed to refresh token:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     console.log('🛠 Listening for Firebase Auth changes...');
@@ -40,14 +57,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
+    const unsubscribeToken = onIdTokenChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          console.log('🔄 Token changed, updating...');
+          const newToken = await firebaseUser.getIdToken();
+          setToken(newToken);
+          localStorage.setItem('authToken', newToken);
+        } catch (error) {
+          console.error('❌ Failed to get new token:', error);
+        }
+      }
+    });
+
     return () => {
       console.log('🛑 Unsubscribing from Firebase Auth...');
       unsubscribeAuth();
+      unsubscribeToken();
     };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading }}>
+    <AuthContext.Provider value={{ user, token, loading, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );
@@ -55,6 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };

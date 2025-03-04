@@ -47,7 +47,7 @@ export default function GoalsPage() {
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
+      const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,10 +56,17 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch goals");
       const goalsData = await response.json();
-      setGoals(goalsData);
+      
+      // Ensure we're setting an array even if the API returns something else
+      if (goalsData && goalsData.data) {
+        setGoals(Array.isArray(goalsData.data) ? goalsData.data : []);
+      } else {
+        setGoals([]);
+      }
     } catch (error) {
       console.error("Error fetching goals:", error);
       setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+      setGoals([]); // Ensure goals is always an array even on error
     }
   };
 
@@ -75,18 +82,27 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const tasksData = await response.json();
+      
+      // Ensure tasksData is an array
+      const tasksArray = Array.isArray(tasksData) ? tasksData : 
+                         (tasksData && Array.isArray(tasksData.data)) ? tasksData.data : [];
+      
       setGoalTasks((prevGoalTasks) => {
-        // Ensure the index exists in the array by initializing it if necessary
-        if (!Array.isArray(prevGoalTasks[index])) {
-          prevGoalTasks[index] = [];
-        }
-        return prevGoalTasks.map((tasks, idx) =>
-          idx === index ? tasksData : tasks
-        )
+        // Create a new array to avoid mutation
+        const newGoalTasks = [...prevGoalTasks];
+        // Ensure the index exists in the array
+        newGoalTasks[index] = tasksArray;
+        return newGoalTasks;
       });
     } catch (error) {
       console.error("Error fetching tasks:", error);
       setToast({ open: true, message: 'Failed to fetch tasks', severity: 'error' });
+      // Set an empty array for this index on error
+      setGoalTasks((prevGoalTasks) => {
+        const newGoalTasks = [...prevGoalTasks];
+        newGoalTasks[index] = [];
+        return newGoalTasks;
+      });
     }
   };
 
@@ -233,8 +249,22 @@ export default function GoalsPage() {
     } else {
       setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
     }
-    if (goalTasks[index] === undefined) {
-      fetchGoalTasks(index);
+    
+    // Initialize an empty array for this index if it doesn't exist
+    if (index !== -1) {
+      setGoalTasks(prevGoalTasks => {
+        if (!prevGoalTasks[index]) {
+          const newGoalTasks = [...prevGoalTasks];
+          newGoalTasks[index] = [];
+          return newGoalTasks;
+        }
+        return prevGoalTasks;
+      });
+      
+      // Fetch goal tasks if needed
+      if (index !== -1 && (!goalTasks[index] || goalTasks[index].length === 0)) {
+        fetchGoalTasks(index);
+      }
     }
   }
 
@@ -401,7 +431,7 @@ export default function GoalsPage() {
             </ListItem>
             <Collapse in={index === expandingGoalIndex} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                {goalTasks[index] !== undefined && goalTasks[index].map((task: any, taskIndex: number) => (
+                {goalTasks[index] !== undefined && Array.isArray(goalTasks[index]) && goalTasks[index].map((task: any, taskIndex: number) => (
                   <ListItem key={taskIndex} sx={{ pl: 4 }}>
                     <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`} />
                     <ListItemSecondaryAction>
@@ -454,9 +484,10 @@ export default function GoalsPage() {
           open={taskCreateModalOpen}
           onClose={() => setTaskCreateModalOpen(false)}
           onCreate={handleGoalTaskCreate}
-          userTasks={goalTasks[expandingGoalIndex]}
+          userTasks={Array.isArray(goalTasks[expandingGoalIndex]) ? goalTasks[expandingGoalIndex] : []}
         />
-        {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
+        {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && 
+         Array.isArray(goalTasks[expandingGoalIndex]) && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
           <TaskEditDialog
             open={taskEditModalOpen}
             onClose={() => { setTaskEditModalOpen(false); setTaskEditingIndex(-1); }}
@@ -464,7 +495,7 @@ export default function GoalsPage() {
             initialTitle={goalTasks[expandingGoalIndex][taskEditingIndex].title}
             initialDescription={goalTasks[expandingGoalIndex][taskEditingIndex].description}
             initialFrequency={goalTasks[expandingGoalIndex][taskEditingIndex].frequency}
-            userTasks={goalTasks[expandingGoalIndex]}
+            userTasks={Array.isArray(goalTasks[expandingGoalIndex]) ? goalTasks[expandingGoalIndex] : []}
           />
         )}
       </div>
