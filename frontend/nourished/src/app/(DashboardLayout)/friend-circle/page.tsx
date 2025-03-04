@@ -4,17 +4,21 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, Divider, CardHeader, Avatar } from '@mui/material';
+import { Goal } from "../goals/page"
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+
 // Define a type for the posts
-type Post = {
-  id: number;
+export type Post = {
+  id: string;
   name: string;
   email: string;
   content: string;
+  goal: string;
   createdAt: string;
   likes: number;
   comments: string[];  // Assuming comments are just strings for simplicity
@@ -24,9 +28,14 @@ export default function FriendCirclePage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
 
+  const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const [open, setOpen] = useState(false);
-  const [postContent, setPostContent] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
+  const [postContent, setPostContent] = useState('');
+  const [postGoalLinkId, setPostGoalLinkId] = useState("");
+  const [validationError, setValidationError] = useState("");
+
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   // Redirects to login if not authenticated
   useEffect(() => {
@@ -38,9 +47,28 @@ export default function FriendCirclePage() {
   // Fetches posts while initializing the posts page
   useEffect(() => {
     if (user && token) {
-      // TODO: Fetch posts from the server
+      fetchGoals();
     }
   }, [user, token]);
+
+  // Fetches user's goals from the database to populate the list
+  const fetchGoals = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch goals");
+      const goalsData = await response.json();
+      setGoals(goalsData);
+    } catch (error) {
+      console.error("Error fetching goals:", error);
+      setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+    }
+  };
 
   const handleAddPostClick = () => {
     setOpen(true);
@@ -53,10 +81,11 @@ export default function FriendCirclePage() {
   const handlePost = () => {
     if (postContent.trim() && user && token) {
       const newPost: Post = {
-        id: -1,
-        name: user.displayName || "Unknown",
-        email: user.email || "Unknown",
+        id: "",
+        name: user.displayName || "",
+        email: user.email || "",
         content: postContent,
+        goal: postGoalLinkId,
         createdAt: new Date().toISOString(),
         likes: 0,
         comments: []
@@ -67,9 +96,22 @@ export default function FriendCirclePage() {
     }
   };
 
+  // Handle closing the toast box
+  const handleToastClose = () => {
+    setToast({ ...toast, open: false });
+  };
+
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <h2 style={{ padding: "0 16px" }}>Friend Circle</h2>
+
+      {/* popup toast message */}
+      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
+        <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
+          {toast.message}
+        </Alert>
+      </Snackbar>
+
       <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
         <Fab color="primary" onClick={handleAddPostClick} aria-label="Add Post">
           <AddIcon />
@@ -79,6 +121,7 @@ export default function FriendCirclePage() {
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Create a New Post</DialogTitle>
         <DialogContent dividers>
+          {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
           <TextField
             autoFocus
             multiline
@@ -91,6 +134,16 @@ export default function FriendCirclePage() {
             onChange={(e) => setPostContent(e.target.value)}
             size="small"
           />
+          <FormControl fullWidth margin='normal'>
+            <InputLabel id='link-select-label' size='small'>For which goal?</InputLabel>
+            <Select labelId='link-select-label' id='link-select' label="For which goal?"
+              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => setPostGoalLinkId(e.target.value)} size='small'>
+              <MenuItem value={""}>None</MenuItem>
+              {goals.map((goal, index) => (
+                <MenuItem key={index} value={goal.id}>{goal.title}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>

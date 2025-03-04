@@ -15,13 +15,23 @@ import TaskEditDialog from '../tasks/components/TaskEditDialog';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
+// Define a type for the goals
+export type Goal = {
+  id: string;
+  title: string;
+  description: string;
+  deadline: string;
+  createdAt: string;
+  taskIds: string[];
+};
+
 export default function GoalsPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
 
-  const [goals, setGoals] = useState<any[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
+  const [newGoal, setNewGoal] = useState<Goal>({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
