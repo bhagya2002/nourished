@@ -11,9 +11,11 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CustomTextField from '@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/firebaseConfig';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
 interface LoginProps {
   title?: string;
@@ -58,6 +60,19 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
 
       // Store token in localStorage (optional but useful for API requests)
       localStorage.setItem('authToken', token);
+
+      // Check if auth user has a displayName, if not update the user profile
+      if (!user.displayName) {
+        const fetchUserInfo = await fetch(`${API_BASE_URL}/userInfo`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token, uid: user.uid }),
+        });
+        const { name } = await fetchUserInfo.json();
+        await updateProfile(user, { displayName: name });
+      }
 
       // Send token to the backend
       await fetch('/api/auth/verifyToken', {

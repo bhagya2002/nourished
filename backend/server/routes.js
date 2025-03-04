@@ -2,6 +2,7 @@ const userService = require("../services/userService");
 const taskService = require("../services/taskService");
 const goalService = require("../services/goalService");
 const authService = require("../services/authService");
+const postService = require("../services/postService");
 
 function addHeartbeatRoute(app) {
     app.get("/heartbeat", (req, res) => {
@@ -354,7 +355,7 @@ function addCreateGoal(app) {
 
 
 function addDeleteGoal(app) {
-    app.post("/deletegoal", async (req, res) => {
+    app.post("/deleteGoal", async (req, res) => {
         try {
             let authResult = {};
             if (!req.headers.debug) {
@@ -392,7 +393,7 @@ function addDeleteGoal(app) {
 }
 
 function addEditGoal(app) {
-    app.post("/editgoal", async (req, res) => {
+    app.post("/editGoal", async (req, res) => {
         try {
             let authResult = {};
             if (!req.headers.debug) {
@@ -624,6 +625,170 @@ function addGetHappinessData(app) {
   });
 }
 
+function addCreatePost(app) {
+  app.post("/createPost", async (req, res) => {
+      try {
+          if (!req.body.post) {
+              return res.status(400).json({ success: false, error: "Post data is required" });
+          }
+          
+          let authResult = {};
+          if (!req.headers.debug) {
+              authResult = await authService.authenticateToken(req.body.token);
+              if (!authResult.uid) {
+                  return res.status(401).json({ 
+                      success: false, 
+                      error: `Authentication failed! ${authResult.message || "Invalid token"}` 
+                  });
+              }
+          } else {
+              // Debug header bypass
+              authResult.uid = req.body.token;
+          }
+
+          const result = await postService.createPost(authResult.uid, req.body.post);
+          if (result.success) {
+              return res.status(200).json({ 
+                  success: true, 
+                  message: "Post created successfully",
+                  data: result.data
+              });
+          } else {
+              return res.status(500).json({ 
+                  success: false, 
+                  error: result.error || "Failed to create post" 
+              });
+          }
+      } catch (err) {
+          console.error("Error in createPost endpoint:", err);
+          return res.status(500).json({ 
+              success: false, 
+              error: err.message || "Server error occurred" 
+          });
+      }
+  });
+}
+
+function addGetUserPosts(app) {
+  app.post("/getUserPosts", async (req, res) => {
+    try {
+        let authResult = {};
+        if (!req.headers.debug) {
+            authResult = await authService.authenticateToken(req.body.token);
+            if (!authResult.uid) {
+                return res.status(401).json({
+                    success: false,
+                    error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                });
+            }
+        } else {
+            authResult.uid = req.body.token;
+        }
+
+        const result = await postService.getUserPosts(authResult.uid);
+        if (result.success) {
+            return res.status(200).json({
+                success: true,
+                data: result.data
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                error: result.error || "Failed to fetch user posts"
+            });
+        }
+    } catch (err) {
+        console.error("Error in getUserPosts endpoint:", err);
+        return res.status(500).json({
+            success: false,
+            error: err.message || "Server error occurred"
+        });
+    }
+  });
+}
+
+function addEditPost(app) {
+  app.post("/editPost", async (req, res) => {
+      try {
+          let authResult = {};
+          if (!req.headers.debug) {
+              authResult = await authService.authenticateToken(req.body.token);
+              if (!authResult.uid) {
+                  return res.status(401).json({
+                      success: false,
+                      error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                  });
+              }
+          } else {
+              authResult.uid = req.body.token;
+          }
+
+          const result = await postService.editPost(
+              authResult.uid,
+              req.body.postId,
+              req.body.fieldToChange,
+              req.body.newValue
+          );
+          
+          if (result.success) {
+              return res.status(200).json({
+                  success: true,
+                  message: "Post updated successfully"
+              });
+          } else {
+              return res.status(500).json({
+                  success: false,
+                  error: result.error || "Failed to update post"
+              });
+          }
+      } catch (err) {
+          console.error("Error in editPost endpoint:", err);
+          return res.status(500).json({
+              success: false,
+              error: err.message || "Server error occurred"
+          });
+      }
+  });
+}
+
+function addDeletePost(app) {
+  app.post("/deletePost", async (req, res) => {
+      try {
+          let authResult = {};
+          if (!req.headers.debug) {
+              authResult = await authService.authenticateToken(req.body.token);
+              if (!authResult.uid) {
+                  return res.status(401).json({
+                      success: false,
+                      error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                  });
+              }
+          } else {
+              authResult.uid = req.body.token;
+          }
+
+          const result = await postService.deletePost(authResult.uid, req.body.postId);
+          if (result.success) {
+              return res.status(200).json({
+                  success: true,
+                  message: "Post deleted successfully"
+              });
+          } else {
+              return res.status(500).json({
+                  success: false,
+                  error: result.error || "Failed to delete post"
+              });
+          }
+      } catch (err) {
+          console.error("Error in deletePost endpoint:", err);
+          return res.status(500).json({
+              success: false,
+              error: err.message || "Server error occurred"
+          });
+      }
+  });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -650,4 +815,10 @@ module.exports = function injectRoutes(app) {
     // Happiness
     addSubmitHappinessRating(app);
     addGetHappinessData(app);
+
+    // Posts
+    addCreatePost(app);
+    addGetUserPosts(app);
+    addEditPost(app);
+    addDeletePost(app);
 };

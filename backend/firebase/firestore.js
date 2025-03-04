@@ -12,7 +12,7 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
         .get()
         .then((docSnapshot) => {
             if (docSnapshot.exists) {
-                return { success: true, data: docSnapshot.data() };
+                return { success: true, data: {id: docSnapshot.id, ...docSnapshot.data()} };
             } else {
                 const message = `Failed to find document with uid:${docName} in ${collectionName} collection`;
                 logger.error(`Failed to find document with uid:${docName} in ${collectionName} collection`);
