@@ -230,6 +230,31 @@ export default function FriendCirclePage() {
     setOpen(true);
   }
 
+  const handleDeletePostClick = async () => {
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/deletePost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, postId: editingPostId }),
+      });
+      if (!response.ok) throw new Error("Failed to delete post");
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== editingPostId));
+      setToast({ open: true, message: 'Post deleted successfully', severity:'success' })
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      setToast({ open: true, message: 'Failed to delete post', severity: 'error' });
+    }
+    setPostContent('');
+    setPostGoalLinkId('');
+    setEditingPostId('');
+  }
+
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <Box sx={{ mt: 2 }}>
@@ -279,7 +304,7 @@ export default function FriendCirclePage() {
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                   </MenuItem>
-                  <MenuItem onClick={handlePostMoreClose}>
+                  <MenuItem onClick={() => { handleDeletePostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
                       <Delete fontSize='small' />
                     </ListItemIcon>
