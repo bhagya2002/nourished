@@ -47,9 +47,31 @@ export default function FriendCirclePage() {
   // Fetches posts while initializing the posts page
   useEffect(() => {
     if (user && token) {
+      fetchPosts();
       fetchGoals();
     }
   }, [user, token]);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getUserPosts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch posts");
+      const postsData = await response.json();
+      // Ensure postsData is an array
+      const postsArray = Array.isArray(postsData) ? postsData :
+        (postsData && Array.isArray(postsData.data)) ? postsData.data : [];
+      setPosts(postsArray);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      setToast({ open: true, message: 'Failed to fetch posts', severity: 'error' });
+    }
+  }
 
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
@@ -84,10 +106,6 @@ export default function FriendCirclePage() {
   const handlePost = async () => {
     if (!postContent.trim()) {
       setValidationError('Post content must be filled out');
-      return;
-    }
-    if (!postGoalLinkId) {
-      setValidationError('Please select a goal for this post');
       return;
     }
     if (!(user && token)) {
@@ -163,7 +181,7 @@ export default function FriendCirclePage() {
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
-                    <Avatar>
+                    <Avatar sx={{ width: 32, height: 32, }} variant='rounded'>
                       {post.name.charAt(0)}
                     </Avatar>
                   }
@@ -172,7 +190,7 @@ export default function FriendCirclePage() {
                 />
                 <CardContent>
                   <Typography variant="body1">{post.content}</Typography>
-                  <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>
+                  {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
                 <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
                   <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
@@ -207,7 +225,7 @@ export default function FriendCirclePage() {
           <FormControl fullWidth margin='normal'>
             <InputLabel id='link-select-label' size='small'>For which goal?</InputLabel>
             <Select labelId='link-select-label' id='link-select' label="For which goal?"
-              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => { setPostGoalLinkId(e.target.value); setValidationError(''); }} size='small'>
+              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => { setPostGoalLinkId(e.target.value); }} size='small'>
               <MenuItem value={""}>None</MenuItem>
               {goals.map((goal, index) => (
                 <MenuItem key={index} value={goal.id}>{goal.title}</MenuItem>
