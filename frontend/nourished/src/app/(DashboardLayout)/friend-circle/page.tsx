@@ -32,8 +32,8 @@ export default function FriendCirclePage() {
   const [open, setOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
   const [postContent, setPostContent] = useState('');
-  const [postGoalLinkId, setPostGoalLinkId] = useState("");
-  const [validationError, setValidationError] = useState("");
+  const [postGoalLinkId, setPostGoalLinkId] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   const [goals, setGoals] = useState<Goal[]>([]);
 
@@ -64,8 +64,8 @@ export default function FriendCirclePage() {
       if (!response.ok) throw new Error("Failed to fetch goals");
       const goalsData = await response.json();
       // Ensure goalsData is an array
-      const goalsArray = Array.isArray(goalsData) ? goalsData : 
-                         (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
+      const goalsArray = Array.isArray(goalsData) ? goalsData :
+        (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
       setGoals(goalsArray);
     } catch (error) {
       console.error("Error fetching goals:", error);
@@ -82,21 +82,33 @@ export default function FriendCirclePage() {
   };
 
   const handlePost = () => {
-    if (postContent.trim() && user && token) {
-      const newPost: Post = {
-        id: "",
-        name: user.displayName || "",
-        email: user.email || "",
-        content: postContent,
-        goal: postGoalLinkId,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        comments: []
-      };
-      setPosts(prevPosts => [...prevPosts, newPost]);
-      setOpen(false);
-      setPostContent('');
+    if (!postContent.trim()) {
+      setValidationError('Post content must be filled out');
+      return;
     }
+    if (!postGoalLinkId) {
+      setValidationError('Please select a goal for this post');
+      return;
+    }
+    if (!(user && token)) {
+      router.push("/authentication/login");
+      return;
+    }
+
+    const newPost: Post = {
+      id: "",
+      name: user.displayName || "",
+      email: user.email || "",
+      content: postContent,
+      goal: postGoalLinkId,
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      comments: []
+    };
+    setPosts(prevPosts => [...prevPosts, newPost]);
+    setOpen(false);
+    setPostContent('');
+    setPostGoalLinkId('');
   };
 
   // Handle closing the toast box
@@ -106,19 +118,52 @@ export default function FriendCirclePage() {
 
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
-      <h2 style={{ padding: "0 16px" }}>Friend Circle</h2>
+      <Box sx={{ mt: 2 }}>
+        {/* popup toast message */}
+        <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
+          <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
+            {toast.message}
+          </Alert>
+        </Snackbar>
 
-      {/* popup toast message */}
-      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
-        <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
-          {toast.message}
-        </Alert>
-      </Snackbar>
+        <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+          <Fab color="primary" onClick={handleAddPostClick} aria-label="Add Post">
+            <AddIcon />
+          </Fab>
+        </Box>
 
-      <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-        <Fab color="primary" onClick={handleAddPostClick} aria-label="Add Post">
-          <AddIcon />
-        </Fab>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2 }}>
+          <Typography variant="h4">Friend Circle</Typography>
+        </Box>
+
+        <List sx={{ width: '100%' }}>
+          {posts.map((post, index) => (
+            <ListItem key={index} sx={{ display: 'block' }}>
+              <Card sx={{ position: 'relative', marginBottom: 2 }}>
+                <CardHeader
+                  avatar={
+                    <Avatar>
+                      {post.name.charAt(0)}
+                    </Avatar>
+                  }
+                  title={post.name}
+                  subheader={post.createdAt}
+                />
+                <CardContent>
+                  <Typography variant="body1">{post.content}</Typography>
+                </CardContent>
+                <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
+                  <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
+                    <FavoriteBorderIcon />
+                  </IconButton>
+                  <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary">
+                    <CommentOutlinedIcon />
+                  </IconButton>
+                </CardActions>
+              </Card>
+            </ListItem>
+          ))}
+        </List>
       </Box>
 
       <Dialog open={open} onClose={handleClose}>
@@ -134,13 +179,13 @@ export default function FriendCirclePage() {
             type="text"
             fullWidth
             value={postContent}
-            onChange={(e) => setPostContent(e.target.value)}
+            onChange={(e) => { setPostContent(e.target.value); setValidationError(''); }}
             size="small"
           />
           <FormControl fullWidth margin='normal'>
             <InputLabel id='link-select-label' size='small'>For which goal?</InputLabel>
             <Select labelId='link-select-label' id='link-select' label="For which goal?"
-              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => setPostGoalLinkId(e.target.value)} size='small'>
+              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => { setPostGoalLinkId(e.target.value); setValidationError(''); }} size='small'>
               <MenuItem value={""}>None</MenuItem>
               {goals.map((goal, index) => (
                 <MenuItem key={index} value={goal.id}>{goal.title}</MenuItem>
@@ -153,35 +198,6 @@ export default function FriendCirclePage() {
           <Button variant='contained' onClick={handlePost}>Post</Button>
         </DialogActions>
       </Dialog>
-
-      <List sx={{ width: '100%' }}>
-        {posts.map((post, index) => (
-          <ListItem key={index} sx={{ display: 'block' }}>
-            <Card sx={{ position: 'relative', marginBottom: 2 }}>
-              <CardHeader
-                avatar={
-                  <Avatar>
-                    {post.name.charAt(0)}
-                  </Avatar>
-                }
-                title={post.name}
-                subheader={post.createdAt}
-              />
-              <CardContent>
-                <Typography variant="body1">{post.content}</Typography>
-              </CardContent>
-              <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
-                <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
-                  <FavoriteBorderIcon />
-                </IconButton>
-                <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary">
-                  <CommentOutlinedIcon />
-                </IconButton>
-              </CardActions>
-            </Card>
-          </ListItem>
-        ))}
-      </List>
     </PageContainer>
   );
 }
