@@ -63,7 +63,10 @@ export default function FriendCirclePage() {
       });
       if (!response.ok) throw new Error("Failed to fetch goals");
       const goalsData = await response.json();
-      setGoals(goalsData);
+      // Ensure goalsData is an array
+      const goalsArray = Array.isArray(goalsData) ? goalsData : 
+                         (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
+      setGoals(goalsArray);
     } catch (error) {
       console.error("Error fetching goals:", error);
       setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
