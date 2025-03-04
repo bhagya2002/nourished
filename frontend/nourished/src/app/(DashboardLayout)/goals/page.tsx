@@ -479,7 +479,7 @@ export default function GoalsPage() {
 
       {/* add/edit goal form dialog */}
       <Dialog open={goalModalOpen} onClose={handleClose}>
-        <DialogTitle>{isEditing ? 'Edit Goal' : 'Add a New Goal'}</DialogTitle>
+        <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
         <DialogContent dividers>
           {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
           <TextField autoFocus margin='normal' label="Title" type="text" fullWidth name="title" value={newGoal.title} onChange={handleInputChange} size="small" />

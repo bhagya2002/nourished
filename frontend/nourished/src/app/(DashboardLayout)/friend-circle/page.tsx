@@ -31,6 +31,8 @@ export default function FriendCirclePage() {
 
   const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
   const [open, setOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPostId, setEditingPostId] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const postMoreOpen = Boolean(anchorEl);
@@ -70,6 +72,7 @@ export default function FriendCirclePage() {
       const postsArray = Array.isArray(postsData) ? postsData :
         (postsData && Array.isArray(postsData.data)) ? postsData.data : [];
       setPosts(postsArray);
+      setToast({ open: true, message: 'Posts fetched successfully', severity:'success' })
     } catch (error) {
       console.error("Error fetching posts:", error);
       setToast({ open: true, message: 'Failed to fetch posts', severity: 'error' });
@@ -91,6 +94,7 @@ export default function FriendCirclePage() {
       // Ensure goalsData is an array
       const goalsArray = Array.isArray(goalsData) ? goalsData :
         (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
+      console.log(goalsArray);
       setGoals(goalsArray);
     } catch (error) {
       console.error("Error fetching goals:", error);
@@ -99,11 +103,16 @@ export default function FriendCirclePage() {
   };
 
   const handleAddPostClick = () => {
+    setIsEditing(false);
+    setPostContent('');
+    setPostGoalLinkId('');
+    setEditingPostId('');
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
+    setValidationError('');
   };
 
   const handlePost = async () => {
@@ -116,55 +125,110 @@ export default function FriendCirclePage() {
       return;
     }
 
-    // create a new post in the database
-    const postCreatedAt = new Date().toISOString();
-    try {
-      const response = await fetch(`${API_BASE_URL}/createPost`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          post: {
-            name: user.displayName || "",
-            email: user.email || "",
-            content: postContent,
-            goalId: postGoalLinkId,
-            createdAt: postCreatedAt,
-            likes: 0,
-            comments: []
-          }
-        }),
-      });
-      if (!response.ok) throw new Error("Failed to create post");
-      const postData = await response.json();
-      if (!(postData && postData.data)) {
-        throw new Error("Failed to create post");
+    if (!isEditing) {
+      // create a new post in the database
+      const postCreatedAt = new Date().toISOString();
+      try {
+        const response = await fetch(`${API_BASE_URL}/createPost`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            token,
+            post: {
+              name: user.displayName || "",
+              email: user.email || "",
+              content: postContent,
+              goalId: postGoalLinkId,
+              createdAt: postCreatedAt,
+              likes: 0,
+              comments: []
+            }
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to create post");
+        const postData = await response.json();
+        if (!(postData && postData.data)) {
+          throw new Error("Failed to create post");
+        }
+        console.log(postData.data.post);
+        setPosts(prevPosts => [...prevPosts, postData.data.post]);
+        setToast({ open: true, message: 'Post created successfully', severity:'success' })
+      } catch (error) {
+        console.error("Error creating post:", error);
+        setToast({ open: true, message: 'Failed to create post', severity: 'error' });
       }
-      console.log(postData.data.post);
-      setPosts(prevPosts => [...prevPosts, postData.data.post]);
-    } catch (error) {
-      console.error("Error creating post:", error);
-      setToast({ open: true, message: 'Failed to create post', severity: 'error' });
-    }
-    setOpen(false);
-    setPostContent('');
-    setPostGoalLinkId('');
-  };
+      setOpen(false);
+      setPostContent('');
+      setPostGoalLinkId('');
+    } else {
+      // update an existing post in the database
+      try {
+        const updateField = async (field: string, value: string) => {
+          const response = await fetch(`${API_BASE_URL}/editPost`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              token,
+              postId: editingPostId,
+              fieldToChange: field,
+              newValue: value,
+            }),
+          });
+        }
+
+        await Promise.all([
+          updateField('content', postContent),
+          updateField('goalId', postGoalLinkId),
+        ]);
+        // Update the post Array
+        const updatedPosts = posts.map((post) => {
+          if (post.id === editingPostId) {
+            return {
+              ...post,
+              content: postContent,
+              goal: goals.find((goal) => goal.id === postGoalLinkId) || post.goal,
+            };
+          }
+          return post;
+        });
+        setPosts(updatedPosts);
+        setToast({ open: true, message: 'Post updated successfully', severity: 'success' })
+      } catch (error) {
+        console.error("Error updating goal:", error);
+        setToast({ open: true, message: 'Failed to update goal', severity: 'error' });
+      }
+      setOpen(false);
+      setPostContent('');
+      setPostGoalLinkId('');
+      setEditingPostId('');
+    };
+  }
 
   // Handle closing the toast box
   const handleToastClose = () => {
     setToast({ ...toast, open: false });
   };
 
-  const handlePostMoreClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handlePostMoreClick = (event: React.MouseEvent<HTMLButtonElement>, post: Post) => {
+    console.log(post);
     setAnchorEl(event.currentTarget);
+    setPostContent(post.content);
+    setPostGoalLinkId(post.goal?.id || '');
+    setEditingPostId(post.id);
   };
 
   const handlePostMoreClose = () => {
     setAnchorEl(null);
   };
+
+  const handleEditPostClick = () => {
+    setIsEditing(true);
+    setOpen(true);
+  }
 
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
@@ -197,7 +261,7 @@ export default function FriendCirclePage() {
                     </Avatar>
                   }
                   action={post.name === user?.displayName &&
-                    <IconButton aria-label='settings' aria-haspopup='true' aria-expanded={postMoreOpen ? 'true' : undefined} id='post-more-button' onClick={handlePostMoreClick}>
+                    <IconButton aria-label='settings' aria-haspopup='true' aria-expanded={postMoreOpen ? 'true' : undefined} id='post-more-button' onClick={(e) => handlePostMoreClick(e, post)}>
                       <MoreVert />
                     </IconButton>
                   }
@@ -209,7 +273,7 @@ export default function FriendCirclePage() {
                   {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
                 <Menu id='post-more-menu' anchorEl={anchorEl} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
-                  <MenuItem onClick={handlePostMoreClose}>
+                  <MenuItem onClick={() => { handleEditPostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
                       <Edit fontSize='small' />
                     </ListItemIcon>
@@ -237,7 +301,7 @@ export default function FriendCirclePage() {
       </Box>
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Create a New Post</DialogTitle>
+        <DialogTitle>{isEditing ? 'Edit Post' : 'Create New Post'}</DialogTitle>
         <DialogContent dividers>
           {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
           <TextField
