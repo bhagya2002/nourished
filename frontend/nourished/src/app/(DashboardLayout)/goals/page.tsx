@@ -1,9 +1,29 @@
-"use client";
+'use client';
 
 import React, { FC, useEffect, useState } from 'react';
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
-import { Fab, Box, Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button, List, ListItem, ListItemText, IconButton, ListItemSecondaryAction, Alert, Snackbar, AlertColor, Collapse, ListItemButton, ListItemIcon } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import {
+  Fab,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
+  ListItemSecondaryAction,
+  Alert,
+  Snackbar,
+  AlertColor,
+  Collapse,
+  ListItemButton,
+  ListItemIcon,
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,7 +33,8 @@ import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
 
 // Define a type for the goals
 export type Goal = {
@@ -31,11 +52,22 @@ export default function GoalsPage() {
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
-  const [newGoal, setNewGoal] = useState<Goal>({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
+  const [newGoal, setNewGoal] = useState<Goal>({
+    id: '',
+    title: '',
+    description: '',
+    deadline: '',
+    createdAt: '',
+    taskIds: [],
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
-  const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
+  const [toast, setToast] = useState({
+    open: false,
+    message: 'nothing',
+    severity: 'info',
+  });
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
 
@@ -46,8 +78,15 @@ export default function GoalsPage() {
 
   // reset the form to initial state
   const resetNewGoal = () => {
-    setNewGoal({ id: '', title: '', description: '', deadline: '', createdAt: '', taskIds: [] });
-  }
+    setNewGoal({
+      id: '',
+      title: '',
+      description: '',
+      deadline: '',
+      createdAt: '',
+      taskIds: [],
+    });
+  };
 
   // Handle closing the toast box
   const handleToastClose = () => {
@@ -58,15 +97,15 @@ export default function GoalsPage() {
   const fetchGoals = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token }),
       });
-      if (!response.ok) throw new Error("Failed to fetch goals");
+      if (!response.ok) throw new Error('Failed to fetch goals');
       const goalsData = await response.json();
-      
+
       // Ensure we're setting an array even if the API returns something else
       if (goalsData && goalsData.data) {
         setGoals(Array.isArray(goalsData.data) ? goalsData.data : []);
@@ -74,8 +113,12 @@ export default function GoalsPage() {
         setGoals([]);
       }
     } catch (error) {
-      console.error("Error fetching goals:", error);
-      setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+      console.error('Error fetching goals:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch goals',
+        severity: 'error',
+      });
       setGoals([]); // Ensure goals is always an array even on error
     }
   };
@@ -84,19 +127,22 @@ export default function GoalsPage() {
     const goalId = goals[index].id;
     try {
       const response = await fetch(`${API_BASE_URL}/getGoalTasks`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token, goalId: goalId }),
       });
-      if (!response.ok) throw new Error("Failed to fetch tasks");
+      if (!response.ok) throw new Error('Failed to fetch tasks');
       const tasksData = await response.json();
-      
+
       // Ensure tasksData is an array
-      const tasksArray = Array.isArray(tasksData) ? tasksData : 
-                         (tasksData && Array.isArray(tasksData.data)) ? tasksData.data : [];
-      
+      const tasksArray = Array.isArray(tasksData)
+        ? tasksData
+        : tasksData && Array.isArray(tasksData.data)
+        ? tasksData.data
+        : [];
+
       setGoalTasks((prevGoalTasks) => {
         // Create a new array to avoid mutation
         const newGoalTasks = [...prevGoalTasks];
@@ -105,8 +151,12 @@ export default function GoalsPage() {
         return newGoalTasks;
       });
     } catch (error) {
-      console.error("Error fetching tasks:", error);
-      setToast({ open: true, message: 'Failed to fetch tasks', severity: 'error' });
+      console.error('Error fetching tasks:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch tasks',
+        severity: 'error',
+      });
       // Set an empty array for this index on error
       setGoalTasks((prevGoalTasks) => {
         const newGoalTasks = [...prevGoalTasks];
@@ -138,18 +188,26 @@ export default function GoalsPage() {
     if (window.confirm('Are you sure you want to delete this goal?')) {
       try {
         const response = await fetch(`${API_BASE_URL}/deleteGoal`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({ token, goalId: goals[index].id }),
         });
-        if (!response.ok) throw new Error("Failed to delete goal");
-        setGoals(prevGoals => prevGoals.filter((_, i) => i !== index));
-        setToast({ open: true, message: 'Goal deleted successfully!', severity: 'success' });
+        if (!response.ok) throw new Error('Failed to delete goal');
+        setGoals((prevGoals) => prevGoals.filter((_, i) => i !== index));
+        setToast({
+          open: true,
+          message: 'Goal deleted successfully!',
+          severity: 'success',
+        });
       } catch (error) {
-        console.error("Error deleting goal:", error);
-        setToast({ open: true, message: 'Failed to delete goal', severity: 'error' });
+        console.error('Error deleting goal:', error);
+        setToast({
+          open: true,
+          message: 'Failed to delete goal',
+          severity: 'error',
+        });
       }
     }
   };
@@ -169,15 +227,15 @@ export default function GoalsPage() {
   // Submits the form, adding or updating a goal
   const handleSubmit = async () => {
     if (!newGoal.title.trim()) {
-      setValidationError("Title must be filled out.");
+      setValidationError('Title must be filled out.');
       return;
     }
     if (!newGoal.description.trim()) {
-      setValidationError("Description must be filled out.");
+      setValidationError('Description must be filled out.');
       return;
     }
     if (!newGoal.deadline) {
-      setValidationError("Deadline must be filled out.");
+      setValidationError('Deadline must be filled out.');
       return;
     }
     if (new Date(newGoal.deadline) < new Date(today)) {
@@ -203,7 +261,7 @@ export default function GoalsPage() {
               newValue: value,
             }),
           });
-        }
+        };
 
         await Promise.all([
           updateField('title', newGoal.title),
@@ -211,11 +269,21 @@ export default function GoalsPage() {
           updateField('deadline', newGoal.deadline),
         ]);
         // Update the goals array with the new goal (avoiding redundant fetches)
-        setGoals(prevGoals => prevGoals.map((goal, idx) => idx === editingIndex ? newGoal : goal));
-        setToast({ open: true, message: 'Goal updated successfully!', severity: 'success' });
+        setGoals((prevGoals) =>
+          prevGoals.map((goal, idx) => (idx === editingIndex ? newGoal : goal))
+        );
+        setToast({
+          open: true,
+          message: 'Goal updated successfully!',
+          severity: 'success',
+        });
       } catch (error) {
-        console.error("Error updating goal:", error);
-        setToast({ open: true, message: 'Failed to update goal', severity: 'error' });
+        console.error('Error updating goal:', error);
+        setToast({
+          open: true,
+          message: 'Failed to update goal',
+          severity: 'error',
+        });
       }
       setGoalModalOpen(false);
       resetNewGoal();
@@ -242,15 +310,26 @@ export default function GoalsPage() {
         if (!response.ok) throw new Error('Failed to create goal');
         const goalData = await response.json();
         if (!(goalData && goalData.data)) {
-          throw new Error("Failed to create post");
+          throw new Error('Failed to create post');
         }
         const goalId = goalData.data.id;
         // Update the goals array with the new goal (avoiding redundant fetches)
-        setGoals(prevGoals => [...prevGoals, { ...newGoal, id: goalId, createdAt: goalCreatedAt }]);
-        setToast({ open: true, message: 'Goal created successfully!', severity: 'success' });
+        setGoals((prevGoals) => [
+          ...prevGoals,
+          { ...newGoal, id: goalId, createdAt: goalCreatedAt },
+        ]);
+        setToast({
+          open: true,
+          message: 'Goal created successfully!',
+          severity: 'success',
+        });
       } catch (error) {
-        console.error("Error creating goal:", error);
-        setToast({ open: true, message: 'Failed to create goal', severity: 'error' });
+        console.error('Error creating goal:', error);
+        setToast({
+          open: true,
+          message: 'Failed to create goal',
+          severity: 'error',
+        });
       }
       setGoalModalOpen(false);
       resetNewGoal();
@@ -263,10 +342,10 @@ export default function GoalsPage() {
     } else {
       setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
     }
-    
+
     // Initialize an empty array for this index if it doesn't exist
     if (index !== -1) {
-      setGoalTasks(prevGoalTasks => {
+      setGoalTasks((prevGoalTasks) => {
         if (!prevGoalTasks[index]) {
           const newGoalTasks = [...prevGoalTasks];
           newGoalTasks[index] = [];
@@ -274,13 +353,16 @@ export default function GoalsPage() {
         }
         return prevGoalTasks;
       });
-      
+
       // Fetch goal tasks if needed
-      if (index !== -1 && (!goalTasks[index] || goalTasks[index].length === 0)) {
+      if (
+        index !== -1 &&
+        (!goalTasks[index] || goalTasks[index].length === 0)
+      ) {
         fetchGoalTasks(index);
       }
     }
-  }
+  };
 
   // Create a new task
   const handleGoalTaskCreate = async ({
@@ -296,17 +378,23 @@ export default function GoalsPage() {
     // save the task to the database
     try {
       const response = await fetch(`${API_BASE_URL}/createTask`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           token,
-          task: { title, description, frequency, createdAt: taskCreatedAt, goalId: goals[expandingGoalIndex].id },
+          task: {
+            title,
+            description,
+            frequency,
+            createdAt: taskCreatedAt,
+            goalId: goals[expandingGoalIndex].id,
+          },
           goalId: goals[expandingGoalIndex].id,
         }),
       });
-      if (!response.ok) throw new Error("Failed to create task");
+      if (!response.ok) throw new Error('Failed to create task');
       const taskId = (await response.json()).id;
       // Update the goal tasks array with the new task (avoiding redundant fetches)
       setGoalTasks((prevGoalTasks) => {
@@ -317,23 +405,31 @@ export default function GoalsPage() {
         return prevGoalTasks.map((tasks, idx) =>
           idx === expandingGoalIndex
             ? [
-              ...tasks,
-              {
-                id: taskId,
-                title,
-                description,
-                frequency,
-                createdAt: taskCreatedAt,
-                goalId: goals[expandingGoalIndex]?.id || "",
-              },
-            ]
+                ...tasks,
+                {
+                  id: taskId,
+                  title,
+                  description,
+                  frequency,
+                  createdAt: taskCreatedAt,
+                  goalId: goals[expandingGoalIndex]?.id || '',
+                },
+              ]
             : tasks
-        )
+        );
       });
-      setToast({ open: true, message: 'Task created successfully!', severity: 'success' });
+      setToast({
+        open: true,
+        message: 'Task created successfully!',
+        severity: 'success',
+      });
     } catch (error) {
-      console.error("Error creating task:", error);
-      setToast({ open: true, message: 'Failed to create task', severity: 'error' });
+      console.error('Error creating task:', error);
+      setToast({
+        open: true,
+        message: 'Failed to create task',
+        severity: 'error',
+      });
     }
   };
 
@@ -346,19 +442,24 @@ export default function GoalsPage() {
     try {
       const updateField = async (field: string, value: string) => {
         const res = await fetch(`${API_BASE_URL}/editTask`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ token, taskId: goalTasks[expandingGoalIndex][taskEditingIndex].id, fieldToChange: field, newValue: value }),
+          body: JSON.stringify({
+            token,
+            taskId: goalTasks[expandingGoalIndex][taskEditingIndex].id,
+            fieldToChange: field,
+            newValue: value,
+          }),
         });
-        if (!res.ok) throw new Error(`Failed to update ${field}`)
+        if (!res.ok) throw new Error(`Failed to update ${field}`);
       };
 
       await Promise.all([
-        updateField("title", updatedData.title),
-        updateField("description", updatedData.description),
-        updateField("frequency", updatedData.frequency),
+        updateField('title', updatedData.title),
+        updateField('description', updatedData.description),
+        updateField('frequency', updatedData.frequency),
       ]);
       // Update the goal tasks array with the new task (avoiding redundant fetches)
       setGoalTasks((prevGoalTasks) => {
@@ -370,42 +471,66 @@ export default function GoalsPage() {
         prevGoalTasks[expandingGoalIndex] = updatedTasks;
         return prevGoalTasks;
       });
-      setToast({ open: true, message: 'Task updated successfully!', severity: 'success' });
+      setToast({
+        open: true,
+        message: 'Task updated successfully!',
+        severity: 'success',
+      });
     } catch (error) {
-      console.error("Error updating task:", error);
-      setToast({ open: true, message: 'Failed to update task', severity: 'error' });
+      console.error('Error updating task:', error);
+      setToast({
+        open: true,
+        message: 'Failed to update task',
+        severity: 'error',
+      });
     }
   };
 
   // Delete task
-  const handleGoalTaskDelete = async (taskId: string, goalId: string, taskDeletingIndex: number) => {
+  const handleGoalTaskDelete = async (
+    taskId: string,
+    goalId: string,
+    taskDeletingIndex: number
+  ) => {
     try {
       const response = await fetch(`${API_BASE_URL}/deleteTask`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token, taskId, goalId }),
       });
-      if (!response.ok) throw new Error("Failed to delete task");
-      setToast({ open: true, message: 'Task deleted successfully!', severity: 'success' });
+      if (!response.ok) throw new Error('Failed to delete task');
+      setToast({
+        open: true,
+        message: 'Task deleted successfully!',
+        severity: 'success',
+      });
       setGoalTasks((prevGoalTasks) => {
         const updatedTasks = [...prevGoalTasks[expandingGoalIndex]];
         // This filters out the task to be deleted
-        const filteredTasks = updatedTasks.filter((_, i) => i !== taskDeletingIndex);
+        const filteredTasks = updatedTasks.filter(
+          (_, i) => i !== taskDeletingIndex
+        );
         // Now, update the specific goal's tasks
-        return prevGoalTasks.map((tasks, idx) => idx === expandingGoalIndex ? filteredTasks : tasks);
+        return prevGoalTasks.map((tasks, idx) =>
+          idx === expandingGoalIndex ? filteredTasks : tasks
+        );
       });
     } catch (error) {
-      console.error("Error deleting task:", error);
-      setToast({ open: true, message: 'Failed to delete task', severity: 'error' });
+      console.error('Error deleting task:', error);
+      setToast({
+        open: true,
+        message: 'Failed to delete task',
+        severity: 'error',
+      });
     }
   };
 
   // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/authentication/login");
+      router.push('/authentication/login');
     }
   }, [loading, user, router]);
 
@@ -417,10 +542,20 @@ export default function GoalsPage() {
   }, [user, token]);
 
   return (
-    <PageContainer title="Goals" description="Create and manage your goals">
+    <PageContainer title='Goals' description='Create and manage your goals'>
       {/* popup toast message */}
-      <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
-        <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={3000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}
+      >
+        <Alert
+          onClose={handleToastClose}
+          severity={toast.severity as AlertColor}
+          sx={{ width: '100%' }}
+        >
           {toast.message}
         </Alert>
       </Snackbar>
@@ -430,39 +565,79 @@ export default function GoalsPage() {
         {goals.map((goal, index) => (
           <div key={index}>
             <ListItem>
-              <ListItemText primary={goal.title} secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`} />
+              <ListItemText
+                primary={goal.title}
+                secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`}
+              />
               <ListItemSecondaryAction>
-                <IconButton edge="end" onClick={() => handleEditGoalClick(index)}>
+                <IconButton
+                  edge='end'
+                  onClick={() => handleEditGoalClick(index)}
+                >
                   <EditIcon />
                 </IconButton>
-                <IconButton edge="end" onClick={() => handleDeleteGoalClick(index)}>
+                <IconButton
+                  edge='end'
+                  onClick={() => handleDeleteGoalClick(index)}
+                >
                   <DeleteIcon />
                 </IconButton>
-                <IconButton edge="end" onClick={() => handleGoalExpand(index)}>
-                  {index === expandingGoalIndex ? <ExpandLess /> : <ExpandMore />}
+                <IconButton edge='end' onClick={() => handleGoalExpand(index)}>
+                  {index === expandingGoalIndex ? (
+                    <ExpandLess />
+                  ) : (
+                    <ExpandMore />
+                  )}
                 </IconButton>
               </ListItemSecondaryAction>
             </ListItem>
-            <Collapse in={index === expandingGoalIndex} timeout="auto" unmountOnExit>
-              <List component="div" disablePadding>
-                {goalTasks[index] !== undefined && Array.isArray(goalTasks[index]) && goalTasks[index].map((task: any, taskIndex: number) => (
-                  <ListItem key={taskIndex} sx={{ pl: 4 }}>
-                    <ListItemText primary={task.title} secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`} />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { setTaskEditModalOpen(true); setTaskEditingIndex(taskIndex); }}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton edge="end" sx={{ right: 24 }} onClick={() => { handleGoalTaskDelete(task.id, goal.id, taskIndex); }}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-                <ListItemButton sx={{ pl: 4 }} dense key={-1} onClick={() => setTaskCreateModalOpen(true)}>
+            <Collapse
+              in={index === expandingGoalIndex}
+              timeout='auto'
+              unmountOnExit
+            >
+              <List component='div' disablePadding>
+                {goalTasks[index] !== undefined &&
+                  Array.isArray(goalTasks[index]) &&
+                  goalTasks[index].map((task: any, taskIndex: number) => (
+                    <ListItem key={taskIndex} sx={{ pl: 4 }}>
+                      <ListItemText
+                        primary={task.title}
+                        secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge='end'
+                          sx={{ right: 24 }}
+                          onClick={() => {
+                            setTaskEditModalOpen(true);
+                            setTaskEditingIndex(taskIndex);
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          edge='end'
+                          sx={{ right: 24 }}
+                          onClick={() => {
+                            handleGoalTaskDelete(task.id, goal.id, taskIndex);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                <ListItemButton
+                  sx={{ pl: 4 }}
+                  dense
+                  key={-1}
+                  onClick={() => setTaskCreateModalOpen(true)}
+                >
                   <ListItemIcon sx={{ minWidth: 40 }}>
                     <AddIcon fontSize='small' />
                   </ListItemIcon>
-                  <ListItemText primary="Add a Task" />
+                  <ListItemText primary='Add a Task' />
                 </ListItemButton>
               </List>
             </Collapse>
@@ -471,8 +646,8 @@ export default function GoalsPage() {
       </List>
 
       {/* add goal button */}
-      <Box sx={{ position: "fixed", bottom: 16, right: 16 }}>
-        <Fab color="primary" onClick={handleAddGoalClick} aria-label="Add Goal">
+      <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
+        <Fab color='primary' onClick={handleAddGoalClick} aria-label='Add Goal'>
           <AddIcon />
         </Fab>
       </Box>
@@ -481,14 +656,50 @@ export default function GoalsPage() {
       <Dialog open={goalModalOpen} onClose={handleClose}>
         <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
         <DialogContent dividers>
-          {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
-          <TextField autoFocus margin='normal' label="Title" type="text" fullWidth name="title" value={newGoal.title} onChange={handleInputChange} size="small" />
-          <TextField margin='normal' label="Description" type="text" fullWidth name="description" value={newGoal.description} onChange={handleInputChange} size='small' />
-          <TextField margin='normal' label="Deadline" type="date" fullWidth name="deadline" value={newGoal.deadline} onChange={handleInputChange} InputLabelProps={{ shrink: true }} size='small' inputProps={{ min: today }} />
+          {validationError && (
+            <Alert severity='error' style={{ margin: '0px' }}>
+              {validationError}
+            </Alert>
+          )}
+          <TextField
+            autoFocus
+            margin='normal'
+            label='Title'
+            type='text'
+            fullWidth
+            name='title'
+            value={newGoal.title}
+            onChange={handleInputChange}
+            size='small'
+          />
+          <TextField
+            margin='normal'
+            label='Description'
+            type='text'
+            fullWidth
+            name='description'
+            value={newGoal.description}
+            onChange={handleInputChange}
+            size='small'
+          />
+          <TextField
+            margin='normal'
+            label='Deadline'
+            type='date'
+            fullWidth
+            name='deadline'
+            value={newGoal.deadline}
+            onChange={handleInputChange}
+            InputLabelProps={{ shrink: true }}
+            size='small'
+            inputProps={{ min: today }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant='contained' onClick={handleSubmit}>{isEditing ? 'Update' : 'Create'}</Button>
+          <Button variant='contained' onClick={handleSubmit}>
+            {isEditing ? 'Update' : 'Create'}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -498,21 +709,41 @@ export default function GoalsPage() {
           open={taskCreateModalOpen}
           onClose={() => setTaskCreateModalOpen(false)}
           onCreate={handleGoalTaskCreate}
-          userTasks={Array.isArray(goalTasks[expandingGoalIndex]) ? goalTasks[expandingGoalIndex] : []}
+          userTasks={
+            Array.isArray(goalTasks[expandingGoalIndex])
+              ? goalTasks[expandingGoalIndex]
+              : []
+          }
         />
-        {expandingGoalIndex >= 0 && taskEditingIndex >= 0 && goalTasks[expandingGoalIndex] !== undefined && 
-         Array.isArray(goalTasks[expandingGoalIndex]) && goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
-          <TaskEditDialog
-            open={taskEditModalOpen}
-            onClose={() => { setTaskEditModalOpen(false); setTaskEditingIndex(-1); }}
-            onSave={handleGoalTaskEdit}
-            initialTitle={goalTasks[expandingGoalIndex][taskEditingIndex].title}
-            initialDescription={goalTasks[expandingGoalIndex][taskEditingIndex].description}
-            initialFrequency={goalTasks[expandingGoalIndex][taskEditingIndex].frequency}
-            userTasks={Array.isArray(goalTasks[expandingGoalIndex]) ? goalTasks[expandingGoalIndex] : []}
-          />
-        )}
+        {expandingGoalIndex >= 0 &&
+          taskEditingIndex >= 0 &&
+          goalTasks[expandingGoalIndex] !== undefined &&
+          Array.isArray(goalTasks[expandingGoalIndex]) &&
+          goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
+            <TaskEditDialog
+              open={taskEditModalOpen}
+              onClose={() => {
+                setTaskEditModalOpen(false);
+                setTaskEditingIndex(-1);
+              }}
+              onSave={handleGoalTaskEdit}
+              initialTitle={
+                goalTasks[expandingGoalIndex][taskEditingIndex].title
+              }
+              initialDescription={
+                goalTasks[expandingGoalIndex][taskEditingIndex].description
+              }
+              initialFrequency={
+                goalTasks[expandingGoalIndex][taskEditingIndex].frequency
+              }
+              userTasks={
+                Array.isArray(goalTasks[expandingGoalIndex])
+                  ? goalTasks[expandingGoalIndex]
+                  : []
+              }
+            />
+          )}
       </div>
     </PageContainer>
   );
-};
+}
