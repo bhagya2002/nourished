@@ -2,7 +2,7 @@ const db = require("../firebase/firestore");
 
 module.exports.createChallenge = async function createChallenge(userId, data) {
     try {
-        data.owner = userId;
+        data.uid = userId;
         data.participants = [userId];
         data.progress = 0;
 
