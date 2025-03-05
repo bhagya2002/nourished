@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar, ListItemSecondaryAction } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
@@ -423,6 +423,42 @@ export default function FriendCirclePage() {
     setCommentDialogPostId('');
   }
 
+  const handleCommentDelete = async (commentId: string) => {
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/deleteCommentOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, data: { commentId, postId: commentDialogPostId } }),
+      });
+      if (!response.ok) throw new Error("Failed to delete comment");
+      setPosts(prevPosts => {
+        const updatedPost = prevPosts.find((post) => post.id === commentDialogPostId);
+        if (updatedPost) {
+          return prevPosts.map((post) => {
+            if (post.id === commentDialogPostId) {
+              return {
+                ...post,
+                comments: post.comments.filter(comment => comment.id !== commentId),
+              };
+            }
+            return post;
+          });
+        }
+        return prevPosts;
+      });
+      setToast({ open: true, message: 'Comment deleted successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      setToast({ open: true, message: 'Failed to delete comment', severity: 'error' });
+    }
+  }
+
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <Box sx={{ mt: 2 }}>
@@ -501,7 +537,7 @@ export default function FriendCirclePage() {
         <DialogContent dividers sx={{ padding: "0px 24px" }}>
           <List sx={{ width: '100%' }}>
             {posts.find((post) => post.id === commentDialogPostId)?.comments.map((comment, index) => (
-              <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, alignItems: 'flex-start' }}>
+              <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, pr: 4, alignItems: 'flex-start', '&.MuiListItem-secondaryAction': { right: 0 } }}>
                 <ListItemIcon sx={{ minWidth: 48, mt: 1 }}>
                   <Avatar sx={{ width: 32, height: 32, backgroundColor: 'primary.main' }} variant='rounded'>{comment.name?.charAt(0)}</Avatar>
                 </ListItemIcon>
@@ -510,6 +546,13 @@ export default function FriendCirclePage() {
                   <Typography variant="h5">{comment.comment}</Typography>
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>{new Date(comment.createdAt).toLocaleString().split(',')[0]}</Typography>
                 </ListItemText>
+                <ListItemSecondaryAction>
+                  {user && (comment.email === user.email || posts.find((post) => post.id === commentDialogPostId)?.email === user.email) &&
+                    <IconButton edge="end" aria-label="delete" onClick={() => { handleCommentDelete(comment.id) }} sx={{ padding: 0 }}>
+                      <Delete color='error' />
+                    </IconButton>
+                  }
+                </ListItemSecondaryAction>
               </ListItem>
             ))}
           </List>
