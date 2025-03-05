@@ -4,6 +4,7 @@ const goalService = require("../services/goalService");
 const authService = require("../services/authService");
 const postService = require("../services/postService");
 const commentService = require("../services/commentService");
+const challengeService = require("../services/challengeService");
 
 function addHeartbeatRoute(app) {
     app.get("/heartbeat", (req, res) => {
@@ -910,6 +911,234 @@ function addDeleteCommentOnPost(app) {
     });
 }
 
+function addCreateChallenge(app) {
+    app.post("/createChallenge", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.createChallenge(authResult.uid, req.body.data);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Challenge created successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to create challenge"
+                });
+            }
+        } catch (err) {
+            console.error("Error in createChallenge endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addDeleteChallenge(app) {
+    app.post("/deleteChallenge", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.deleteChallenge(authResult.uid, req.body.challengeId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Challenge deleted successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to delete challenge"
+                });
+            }
+        } catch (err) {
+            console.error("Error in deleteChallenge endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addAddUserToChallenge(app) {
+    app.post("/addUserToChallenge", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.addUserToChallenge(authResult.uid, req.body.challengeId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "User added successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to add user"
+                });
+            }
+        } catch (err) {
+            console.error("Error in addUserToChallenge endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addRemoveUserFromChallenge(app) {
+    app.post("/removeUserFromChallenge", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.removeUserFromChallenge(authResult.uid, req.body.challengeId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "User removed successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to remove user"
+                });
+            }
+        } catch (err) {
+            console.error("Error in removeUserFromChallenge endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addIncrementChallenge(app) {
+    app.post("/incrementChallenge", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.incrementChallenge(authResult.uid, req.body.challengeId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: "User removed successfully"
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to remove user"
+                });
+            }
+        } catch (err) {
+            console.error("Error in removeUserFromChallenge endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addGetChallengeInfo(app) {
+    app.post("/getChallengeInfo", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await challengeService.getChallengeInfo(req.body.challengeId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to get challenge info"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getChallengeInfo endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -946,4 +1175,12 @@ module.exports = function injectRoutes(app) {
     // Comments
     addCommentOnPost(app);
     addDeleteCommentOnPost(app);
+
+    // Challenges
+    addCreateChallenge(app);
+    addDeleteChallenge(app);
+    addAddUserToChallenge(app);
+    addRemoveUserFromChallenge(app);
+    addIncrementChallenge(app);
+    addGetChallengeInfo(app);
 };

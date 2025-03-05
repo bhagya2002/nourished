@@ -12,7 +12,7 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
         .get()
         .then((docSnapshot) => {
             if (docSnapshot.exists) {
-                return { success: true, data: {id: docSnapshot.id, ...docSnapshot.data()} };
+                return { success: true, data: { id: docSnapshot.id, ...docSnapshot.data() } };
             } else {
                 const message = `Failed to find document with uid:${docName} in ${collectionName} collection`;
                 logger.error(`Failed to find document with uid:${docName} in ${collectionName} collection`);
@@ -81,6 +81,18 @@ module.exports.updateField = async function updateField(collection, doc, fieldNa
     });
 }
 
+module.exports.updateField = async function updateField(collection, doc, fieldName, amount) {
+    const docRef = db.collection(collection).doc(doc);
+    let update = {};
+    update[fieldName] = FieldValue.increment(amount);
+    return await docRef.update(update).then(() => {
+        return { success: true };
+    }).catch((error) => {
+        logger.error(error);
+        return { success: false, error: error };
+    });
+}
+
 module.exports.updateFieldArray = async function updateFieldArray(collection, doc, fieldName, newValue) {
     const docRef = db.collection(collection).doc(doc);
     let update = {};
@@ -110,13 +122,13 @@ module.exports.queryDatabase = async function queryDatabase(fieldValue, collecti
     try {
         const collectionRef = db.collection(collectionName);
         const query = collectionRef.where(fieldName, '==', fieldValue);
-        
+
         const querySnapshot = await query.get();
-        
+
         if (querySnapshot.empty) {
             return { success: true, data: [] };
         }
-        
+
         // Convert the query results to an array of documents
         const docs = [];
         querySnapshot.forEach(doc => {
@@ -125,13 +137,34 @@ module.exports.queryDatabase = async function queryDatabase(fieldValue, collecti
                 ...doc.data()
             });
         });
-        
+
         return { success: true, data: docs };
     } catch (error) {
         logger.error("Error in queryDatabase:", error);
-        return { 
-            success: false, 
-            error: typeof error === 'object' ? error.message : String(error) 
+        return {
+            success: false,
+            error: typeof error === 'object' ? error.message : String(error)
         };
     }
 };
+
+module.exports.batch = function batch() {
+    return db.batch();
+}
+
+module.exports.getRef = function getRef(collectionName, docName) {
+    return db.collection(collectionName).doc(docName);
+}
+
+module.exports.commitBatch = async function commitBatch(batch) {
+    return await batch.commit().then(() => {
+        return { success: true };
+    }).catch((error) => {
+        logger.error(error);
+        return { success: false, error: error };
+    });
+};
+
+module.exports.getDeleteFromArray = function getDeleteFromArray(valueToRemove) {
+    return admin.firestore.FieldValue.arrayRemove(valueToRemove);
+}
