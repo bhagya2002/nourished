@@ -7,7 +7,7 @@ module.exports.createComment = async function createComment(userId, data) {
         if (result.success) {
             const updateResult = await db.updateFieldArray("posts", data.postId, "comments", result.id);
             if (updateResult.success) {
-                return { success: true, data: result.id };
+                return { success: true, data: { id: result.id } };
             } else {
                 return { success: false, error: updateResult.error };
             }

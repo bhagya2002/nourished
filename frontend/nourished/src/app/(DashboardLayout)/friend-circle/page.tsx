@@ -11,9 +11,17 @@ import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
-import { Delete, Edit, Favorite, MoreVert } from '@mui/icons-material';
+import { Comment, Delete, Edit, Favorite, ModeCommentOutlined, MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+
+export type Comment = {
+  id: string;
+  name: string;
+  email: string;
+  comment: string;
+  createdAt: string;
+}
 
 // Define a type for the posts
 export type Post = {
@@ -24,7 +32,7 @@ export type Post = {
   goal: Goal;
   createdAt: string;
   likes: string[];
-  comments: string[];  // Assuming comments are just strings for simplicity
+  comments: Comment[];
 };
 
 const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
@@ -83,6 +91,7 @@ export default function FriendCirclePage() {
       const postsArray = Array.isArray(postsData) ? postsData :
         (postsData && Array.isArray(postsData.data)) ? postsData.data : [];
       setPosts(postsArray);
+      console.log(postsArray);
       setToast({ open: true, message: 'Posts fetched successfully', severity: 'success' })
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -105,7 +114,6 @@ export default function FriendCirclePage() {
       // Ensure goalsData is an array
       const goalsArray = Array.isArray(goalsData) ? goalsData :
         (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
-      console.log(goalsArray);
       setGoals(goalsArray);
     } catch (error) {
       console.error("Error fetching goals:", error);
@@ -303,6 +311,54 @@ export default function FriendCirclePage() {
     }
   }
 
+  const handleAddComment = async (postId: string) => {
+    const comment = "I am a genius!";
+    const createdAt = new Date().toISOString();
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/commentOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          data: {
+            name: user.displayName,
+            email: user.email,
+            postId,
+            comment: comment,
+            createdAt,
+          }
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add comment");
+      const commentData = await response.json();
+      if (!(commentData && commentData.data)) {
+        throw new Error("Failed to create post");
+      }
+      const commentId = commentData.data.id;
+      const updatedPosts = posts.map((post) => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: [...post.comments, { id: commentId, name: user.displayName || "", email: user.email || "", comment, createdAt }],
+          };
+        }
+        return post;
+      });
+      console.log(updatedPosts);
+      setPosts(updatedPosts);
+      setToast({ open: true, message: 'Comment added successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setToast({ open: true, message: 'Failed to add comment', severity: 'error' });
+    }
+  }
+
   return (
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <Box sx={{ mt: 2 }}>
@@ -364,8 +420,9 @@ export default function FriendCirclePage() {
                     {post.likes.includes(user.uid) ? <Favorite /> : <FavoriteBorderIcon />}
                     <StyledBadge badgeContent={post.likes.length} color='secondary' overlap='circular' />
                   </IconButton>
-                  <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary" sx={{ mr: 1 }} >
-                    <CommentOutlinedIcon />
+                  <IconButton onClick={() => handleAddComment(post.id)} color="secondary" sx={{ mr: 1 }} >
+                    {post.comments.length > 0 ? <CommentOutlinedIcon /> : <ModeCommentOutlined />}
+                    <StyledBadge badgeContent={post.comments.length} color="secondary" overlap='circular' />
                   </IconButton>
                 </CardActions>
               </Card>

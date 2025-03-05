@@ -854,6 +854,7 @@ function addCommentOnPost(app) {
             if (result.success) {
                 return res.status(200).json({
                     success: true,
+                    data: result.data,
                     message: "Comment added successfully"
                 });
             } else {
