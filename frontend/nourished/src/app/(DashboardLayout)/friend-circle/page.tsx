@@ -484,9 +484,10 @@ export default function FriendCirclePage() {
           </Box>
         </Box>
 
+        {/* Posts List */}
         <List sx={{ width: '100%' }}>
           {user && posts.map((post) => (
-            <ListItem key={post.id} sx={{ display: 'block' }}>
+            <ListItem key={post.id} sx={{ display: 'block', pt: 0, pb: 0 }}>
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
@@ -502,7 +503,7 @@ export default function FriendCirclePage() {
                   title={post.name}
                   subheader={new Date(post.createdAt).toLocaleString()}
                 />
-                <CardContent>
+                <CardContent sx={{ padding: '0px 16px' }}>
                   <Typography variant="body1">{post.content}</Typography>
                   {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
