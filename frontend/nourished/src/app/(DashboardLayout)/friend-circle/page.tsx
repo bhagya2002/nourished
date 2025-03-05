@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar, ListItemSecondaryAction } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar, ListItemSecondaryAction, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
@@ -485,9 +485,9 @@ export default function FriendCirclePage() {
         </Box>
 
         {/* Posts List */}
-        <List sx={{ width: '100%' }}>
+        <Grid container columnSpacing={2} rowSpacing={0} sx={{ pl: 2, pr: 2 }}>
           {user && posts.map((post) => (
-            <ListItem key={post.id} sx={{ display: 'block', pt: 0, pb: 0 }}>
+            <Grid item xs={12} sm={6} key={post.id}>
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
@@ -532,9 +532,9 @@ export default function FriendCirclePage() {
                   </IconButton>
                 </CardActions>
               </Card>
-            </ListItem>
+            </Grid>
           ))}
-        </List>
+        </Grid>
       </Box>
 
       {/* Comment dialog */}
