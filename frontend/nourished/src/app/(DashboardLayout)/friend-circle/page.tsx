@@ -463,20 +463,25 @@ export default function FriendCirclePage() {
     <PageContainer title="Friend Circle" description="What are your friends doing?">
       <Box sx={{ mt: 2 }}>
         {/* popup toast message */}
-        <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }} sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}>
+        <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} sx={{ '&.MuiSnackbar-root': { right: { lg: 24 } } }}>
           <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
             {toast.message}
           </Alert>
         </Snackbar>
 
-        <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-          <Fab color="primary" onClick={handleAddPostClick} aria-label="Add Post">
-            <AddIcon />
-          </Fab>
-        </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2 }}>
+        {/* Friend Circle Title and Add Task Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2, mr: 2 }}>
           <Typography variant="h4">Friend Circle</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              startIcon={<AddIcon />}
+              onClick={handleAddPostClick}
+            >
+              Add Post
+            </Button>
+          </Box>
         </Box>
 
         <List sx={{ width: '100%' }}>
