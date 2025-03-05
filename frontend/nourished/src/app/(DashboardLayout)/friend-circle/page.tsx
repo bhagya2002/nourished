@@ -465,7 +465,7 @@ export default function FriendCirclePage() {
                   <Typography variant="body1">{post.content}</Typography>
                   {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
-                <Menu id='post-more-menu' anchorEl={anchorEl} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
+                <Menu id='post-more-menu' anchorEl={anchorEl} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
                   <MenuItem onClick={() => { handleEditPostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
                       <Edit fontSize='small' color='primary' />
