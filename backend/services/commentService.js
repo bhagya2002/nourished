@@ -1,5 +1,22 @@
 const db = require("../firebase/firestore");
 
+module.exports.getCommentsOnPost = async function getCommentsOnPost(postId) {
+    try {
+        const commentsResult = await db.queryDatabaseSingle(postId, "posts");
+        if (!commentsResult.success) {
+            return commentsResult;
+        }
+        const commentIds = commentsResult.data.comments;
+        const comments = await db.queryMultiple(commentIds, "comments");
+        if (!comments.success) {
+            return comments;
+        }
+        return { success: true, data: comments.data };
+    } catch (err) {
+        return { success: false, error: err };
+    }
+};
+
 module.exports.createComment = async function createComment(userId, data) {
     try {
         data.uid = userId;

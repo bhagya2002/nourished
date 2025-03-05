@@ -834,6 +834,44 @@ function addEditPost(app) {
     });
 }
 
+function addGetCommentsOnPost(app) {
+    app.post("/getCommentsOnPost", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await commentService.getCommentsOnPost(req.body.postId);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    data: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to fetch comments on post"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getCommentsOnPost endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
 function addCommentOnPost(app) {
     app.post("/commentOnPost", async (req, res) => {
         try {
@@ -987,4 +1025,5 @@ module.exports = function injectRoutes(app) {
     // Comments
     addCommentOnPost(app);
     addDeleteCommentOnPost(app);
+    addGetCommentsOnPost(app);
 };

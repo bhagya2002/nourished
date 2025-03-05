@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
-import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText } from '@mui/material';
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
@@ -58,6 +58,11 @@ export default function FriendCirclePage() {
   const [postContent, setPostContent] = useState('');
   const [postGoalLinkId, setPostGoalLinkId] = useState('');
   const [validationError, setValidationError] = useState('');
+
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [commentDialogPostId, setCommentDialogPostId] = useState('');
+  const [commentValidationError, setCommentValidationError] = useState('');
 
   const [goals, setGoals] = useState<Goal[]>([]);
 
@@ -311,8 +316,11 @@ export default function FriendCirclePage() {
     }
   }
 
-  const handleAddComment = async (postId: string) => {
-    const comment = "I am a genius!";
+  const handleAddComment = async () => {
+    if (!commentContent.trim()) {
+      setCommentValidationError('Required');
+      return;
+    }
     const createdAt = new Date().toISOString();
     if (!user || !token) {
       router.push("/authentication/login");
@@ -329,8 +337,8 @@ export default function FriendCirclePage() {
           data: {
             name: user.displayName,
             email: user.email,
-            postId,
-            comment: comment,
+            postId: commentDialogPostId,
+            comment: commentContent,
             createdAt,
           }
         }),
@@ -342,10 +350,10 @@ export default function FriendCirclePage() {
       }
       const commentId = commentData.data.id;
       const updatedPosts = posts.map((post) => {
-        if (post.id === postId) {
+        if (post.id === commentDialogPostId) {
           return {
             ...post,
-            comments: [...post.comments, { id: commentId, name: user.displayName || "", email: user.email || "", comment, createdAt }],
+            comments: [...post.comments, { id: commentId, name: user.displayName || "", email: user.email || "", comment: commentContent, createdAt }],
           };
         }
         return post;
@@ -357,6 +365,62 @@ export default function FriendCirclePage() {
       console.error("Error adding comment:", error);
       setToast({ open: true, message: 'Failed to add comment', severity: 'error' });
     }
+    setCommentContent('');
+    setCommentValidationError('');
+  }
+
+  const fetchPostComments = async (postId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getCommentsOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, postId }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch comments");
+      const commentsData = await response.json();
+      if (!(commentsData && commentsData.data)) {
+        throw new Error("Failed to fetch comments");
+      }
+      const commentsArray = Array.isArray(commentsData.data) ? commentsData.data : [];
+      setPosts(prevPosts => {
+        const updatedPost = prevPosts.find((post) => post.id === postId);
+        if (updatedPost) {
+          return prevPosts.map((post) => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: commentsArray,
+              };
+            }
+            return post;
+          });
+        }
+        return prevPosts;
+      });
+      console.log(commentsArray);
+      setToast({ open: true, message: 'Comments fetched successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      setToast({ open: true, message: 'Failed to fetch comments', severity: 'error' });
+    }
+  }
+
+  const handleCommentClick = (postId: string, postCommentLength: number) => {
+    setCommentContent('');
+    setCommentValidationError('');
+    setCommentDialogPostId(postId);
+    if (postCommentLength > 0)
+      fetchPostComments(postId);
+    setCommentDialogOpen(true);
+  }
+
+  const handleCommentDialogClose = () => {
+    setCommentDialogOpen(false);
+    setCommentContent('');
+    setCommentValidationError('');
+    setCommentDialogPostId('');
   }
 
   return (
@@ -420,7 +484,7 @@ export default function FriendCirclePage() {
                     {post.likes.includes(user.uid) ? <Favorite /> : <FavoriteBorderIcon />}
                     <StyledBadge badgeContent={post.likes.length} color='secondary' overlap='circular' />
                   </IconButton>
-                  <IconButton onClick={() => handleAddComment(post.id)} color="secondary" sx={{ mr: 1 }} >
+                  <IconButton onClick={() => handleCommentClick(post.id, post.comments.length)} color="secondary" sx={{ mr: 1 }} >
                     {post.comments.length > 0 ? <CommentOutlinedIcon /> : <ModeCommentOutlined />}
                     <StyledBadge badgeContent={post.comments.length} color="secondary" overlap='circular' />
                   </IconButton>
@@ -431,6 +495,42 @@ export default function FriendCirclePage() {
         </List>
       </Box>
 
+      {/* Comment dialog */}
+      <Dialog open={commentDialogOpen} onClose={() => handleCommentDialogClose()}>
+        <DialogTitle>Comments</DialogTitle>
+        <DialogContent dividers sx={{ padding: "0px 24px" }}>
+          <List sx={{ width: '100%' }}>
+            {posts.find((post) => post.id === commentDialogPostId)?.comments.map((comment, index) => (
+              <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, alignItems: 'flex-start' }}>
+                <ListItemIcon sx={{ minWidth: 48, mt: 1 }}>
+                  <Avatar sx={{ width: 32, height: 32, }} variant='rounded'>{comment.name?.charAt(0)}</Avatar>
+                </ListItemIcon>
+                <ListItemText>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{comment.name}</Typography>
+                  <Typography variant="h5">{comment.comment}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>{new Date(comment.createdAt).toLocaleString().split(',')[0]}</Typography>
+                </ListItemText>
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <TextField
+            {...{ error: Boolean(commentValidationError) }}
+            margin='normal'
+            label={commentValidationError ? commentValidationError : "What's on your mind?"}
+            type="text"
+            fullWidth
+            value={commentContent}
+            onChange={(e) => { setCommentContent(e.target.value); setCommentValidationError(''); }}
+            size="small"
+            sx={{ mt: 0, mb: 0 }}
+          />
+          <Button variant='contained' onClick={() => { handleAddComment(); }}>Post</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Post dialog add/edit */}
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>{isEditing ? 'Edit Post' : 'Create New Post'}</DialogTitle>
         <DialogContent dividers>
