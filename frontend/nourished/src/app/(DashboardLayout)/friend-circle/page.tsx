@@ -449,13 +449,13 @@ export default function FriendCirclePage() {
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
-                    <Avatar sx={{ width: 32, height: 32, }} variant='rounded'>
+                    <Avatar sx={{ width: 32, height: 32, backgroundColor: 'primary.main' }} variant='rounded'>
                       {post.name.charAt(0)}
                     </Avatar>
                   }
                   action={post.name === user?.displayName &&
                     <IconButton aria-label='settings' aria-haspopup='true' aria-expanded={postMoreOpen ? 'true' : undefined} id='post-more-button' onClick={(e) => handlePostMoreClick(e, post)}>
-                      <MoreVert />
+                      <MoreVert color='primary' />
                     </IconButton>
                   }
                   title={post.name}
@@ -468,13 +468,13 @@ export default function FriendCirclePage() {
                 <Menu id='post-more-menu' anchorEl={anchorEl} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
                   <MenuItem onClick={() => { handleEditPostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
-                      <Edit fontSize='small' />
+                      <Edit fontSize='small' color='primary' />
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                   </MenuItem>
                   <MenuItem onClick={() => { handleDeletePostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
-                      <Delete fontSize='small' />
+                      <Delete fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete</ListItemText>
                   </MenuItem>
@@ -503,7 +503,7 @@ export default function FriendCirclePage() {
             {posts.find((post) => post.id === commentDialogPostId)?.comments.map((comment, index) => (
               <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, alignItems: 'flex-start' }}>
                 <ListItemIcon sx={{ minWidth: 48, mt: 1 }}>
-                  <Avatar sx={{ width: 32, height: 32, }} variant='rounded'>{comment.name?.charAt(0)}</Avatar>
+                  <Avatar sx={{ width: 32, height: 32, backgroundColor: 'primary.main' }} variant='rounded'>{comment.name?.charAt(0)}</Avatar>
                 </ListItemIcon>
                 <ListItemText>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>{comment.name}</Typography>
