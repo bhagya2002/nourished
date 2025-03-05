@@ -910,6 +910,45 @@ function addDeleteCommentOnPost(app) {
     });
 }
 
+function addLikePost(app) {
+  app.post("/likePost", async (req, res) => {
+      try {
+          let authResult = {};
+          if (!req.headers.debug) {
+              authResult = await authService.authenticateToken(req.body.token);
+              if (!authResult.uid) {
+                  return res.status(401).json({
+                      success: false,
+                      error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                  });
+              }
+          } else {
+              authResult.uid = req.body.token;
+          }
+
+          const result = await postService.likePost(authResult.uid, req.body.postId);
+          if (result.success) {
+              return res.status(200).json({
+                  success: true,
+                  message: "Post liked successfully",
+                  data: result.data
+              });
+          } else {
+              return res.status(500).json({
+                  success: false,
+                  error: result.error || "Failed to like post"
+              });
+          }
+      } catch (err) {
+          console.error("Error in likePost endpoint:", err);
+          return res.status(500).json({
+              success: false,
+              error: err.message || "Server error occurred"
+          });
+      }
+  });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -942,6 +981,7 @@ module.exports = function injectRoutes(app) {
     addGetUserPosts(app);
     addEditPost(app);
     addDeletePost(app);
+    addLikePost(app);
 
     // Comments
     addCommentOnPost(app);

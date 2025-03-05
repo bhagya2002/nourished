@@ -6,10 +6,12 @@ import { useAuth } from '@/context/AuthContext';
 import PageContainer from "../components/container/PageContainer";
 import { Goal } from "../goals/page"
 import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
-import { Delete, Edit, MoreVert } from '@mui/icons-material';
+import { Delete, Edit, Favorite, MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -21,9 +23,18 @@ export type Post = {
   content: string;
   goal: Goal;
   createdAt: string;
-  likes: number;
+  likes: string[];
   comments: string[];  // Assuming comments are just strings for simplicity
 };
+
+const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    right: -4,
+    top: 0,
+    border: `2px solid ${theme.palette.background.paper}`,
+    padding: '0 4px',
+  },
+}));
 
 export default function FriendCirclePage() {
   const router = useRouter();
@@ -72,7 +83,7 @@ export default function FriendCirclePage() {
       const postsArray = Array.isArray(postsData) ? postsData :
         (postsData && Array.isArray(postsData.data)) ? postsData.data : [];
       setPosts(postsArray);
-      setToast({ open: true, message: 'Posts fetched successfully', severity:'success' })
+      setToast({ open: true, message: 'Posts fetched successfully', severity: 'success' })
     } catch (error) {
       console.error("Error fetching posts:", error);
       setToast({ open: true, message: 'Failed to fetch posts', severity: 'error' });
@@ -142,7 +153,7 @@ export default function FriendCirclePage() {
               content: postContent,
               goalId: postGoalLinkId,
               createdAt: postCreatedAt,
-              likes: 0,
+              likes: [],
               comments: []
             }
           }),
@@ -154,7 +165,7 @@ export default function FriendCirclePage() {
         }
         console.log(postData.data.post);
         setPosts(prevPosts => [...prevPosts, postData.data.post]);
-        setToast({ open: true, message: 'Post created successfully', severity:'success' })
+        setToast({ open: true, message: 'Post created successfully', severity: 'success' })
       } catch (error) {
         console.error("Error creating post:", error);
         setToast({ open: true, message: 'Failed to create post', severity: 'error' });
@@ -245,7 +256,7 @@ export default function FriendCirclePage() {
       });
       if (!response.ok) throw new Error("Failed to delete post");
       setPosts(prevPosts => prevPosts.filter(post => post.id !== editingPostId));
-      setToast({ open: true, message: 'Post deleted successfully', severity:'success' })
+      setToast({ open: true, message: 'Post deleted successfully', severity: 'success' })
     } catch (error) {
       console.error("Error deleting post:", error);
       setToast({ open: true, message: 'Failed to delete post', severity: 'error' });
@@ -253,6 +264,43 @@ export default function FriendCirclePage() {
     setPostContent('');
     setPostGoalLinkId('');
     setEditingPostId('');
+  }
+
+  const handlePostLikeClick = async (postId: string) => {
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/likePost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, postId }),
+      });
+      if (!response.ok) throw new Error("Failed to like/unlike post");
+      const updatedPosts = posts.map((post) => {
+        if (post.id === postId) {
+          if (post.likes.includes(user.uid)) {
+            return {
+              ...post,
+              likes: post.likes.filter(uid => uid !== user.uid),
+            };
+          } else {
+            return {
+              ...post,
+              likes: [...post.likes, user.uid],
+            };
+          }
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
+    } catch (error) {
+      console.error("Error liking/unliking post:", error);
+      setToast({ open: true, message: 'Failed to like/unlike post', severity: 'error' });
+    }
   }
 
   return (
@@ -276,7 +324,7 @@ export default function FriendCirclePage() {
         </Box>
 
         <List sx={{ width: '100%' }}>
-          {posts.map((post) => (
+          {user && posts.map((post) => (
             <ListItem key={post.id} sx={{ display: 'block' }}>
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
@@ -312,10 +360,11 @@ export default function FriendCirclePage() {
                   </MenuItem>
                 </Menu>
                 <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
-                  <IconButton onClick={() => console.log('Like post id:', post.id)} color="primary">
-                    <FavoriteBorderIcon />
+                  <IconButton onClick={() => handlePostLikeClick(post.id)} color={post.likes.includes(user.uid) ? 'primary' : 'default'} sx={{ mr: 1 }} >
+                    {post.likes.includes(user.uid) ? <Favorite /> : <FavoriteBorderIcon />}
+                    <StyledBadge badgeContent={post.likes.length} color='secondary' overlap='circular' />
                   </IconButton>
-                  <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary">
+                  <IconButton onClick={() => console.log('Comment on post id:', post.id)} color="primary" sx={{ mr: 1 }} >
                     <CommentOutlinedIcon />
                   </IconButton>
                 </CardActions>

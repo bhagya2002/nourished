@@ -25,7 +25,7 @@ module.exports.createPost = async function createPost(uid, post) {
       post.goal = undefined;
     }
     delete post.goalId;
-    return { success: true, data: { post: {...post, id: result.id } } };
+    return { success: true, data: { post: { ...post, id: result.id } } };
   } catch (err) {
     return { success: false, error: err };
   }
@@ -82,7 +82,50 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
 
 module.exports.deletePost = async function deletePost(uid, postId) {
   const result = await db.removeFromFieldArray("users", uid, "posts", postId);
-  if (result.success) {
-    return await db.deleteSingleDoc("posts", postId);
+  const userLikeResult = await db.removeFromFieldArray("users", uid, "likes", postId);
+  if (!result.success) {
+    return result;
+  } else if (!userLikeResult.success) {
+    return userLikeResult;
   }
+  return await db.deleteSingleDoc("posts", postId);
+}
+
+module.exports.likePost = async function likePost(uid, postId) {
+  const result = await db.queryDatabaseSingle(postId, "posts");
+  if (!result.success) {
+    return result;
+  }
+  const post = result.data;
+
+  const userResult = await db.queryDatabaseSingle(uid, "users");
+  if (!userResult.success) {
+    return userResult;
+  }
+  // Check if the user has already liked the post, if not, like it, if so, remove the like
+  const isLiked = post.likes.includes(uid);
+  if (isLiked) {
+    const updateResult = await db.removeFromFieldArray("posts", postId, "likes", uid);
+    if (!updateResult.success) {
+      return updateResult;
+    }
+    post.likes = post.likes.filter(id => id !== uid);
+    // update the user doc with like/unlike postId
+    const userUpdateResult = await db.updateField("users", uid, "likes", postId);
+    if (!userUpdateResult.success) {
+      return userUpdateResult;
+    }
+  } else {
+    const updateResult = await db.updateFieldArray("posts", postId, "likes", uid);
+    if (!updateResult.success) {
+      return updateResult;
+    }
+    post.likes.push(uid);
+    // update the user doc with like/unlike postId
+    const userUpdateResult = await db.removeFromFieldArray("users", uid, "likes", postId);
+    if (!userUpdateResult.success) {
+      return userUpdateResult;
+    }
+  }
+  return { success: true, data: { post } };
 }
