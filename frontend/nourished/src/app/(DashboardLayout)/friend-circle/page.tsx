@@ -538,10 +538,11 @@ export default function FriendCirclePage() {
       </Box>
 
       {/* Comment dialog */}
-      <Dialog open={commentDialogOpen} onClose={() => handleCommentDialogClose()}>
+      <Dialog open={commentDialogOpen} onClose={() => handleCommentDialogClose()} fullWidth>
         <DialogTitle>Comments</DialogTitle>
         <DialogContent dividers sx={{ padding: "0px 24px" }}>
           <List sx={{ width: '100%' }}>
+            {posts.find((post) => post.id === commentDialogPostId)?.comments.length === 0 && <Alert severity="info" style={{ margin: 0, padding: "16px 0px" }}>No comments yet</Alert>}
             {posts.find((post) => post.id === commentDialogPostId)?.comments.map((comment, index) => (
               <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, pr: 4, alignItems: 'flex-start', '&.MuiListItem-secondaryAction': { right: 0 } }}>
                 <ListItemIcon sx={{ minWidth: 48, mt: 1 }}>
@@ -580,7 +581,7 @@ export default function FriendCirclePage() {
       </Dialog>
 
       {/* Post dialog add/edit */}
-      <Dialog open={open} onClose={handleClose}>
+      <Dialog open={open} onClose={handleClose} fullWidth>
         <DialogTitle>{isEditing ? 'Edit Post' : 'Create New Post'}</DialogTitle>
         <DialogContent dividers>
           {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
