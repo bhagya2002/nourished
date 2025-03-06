@@ -557,6 +557,7 @@ export default function GoalsPage() {
               borderRadius: 4,
               alignItems: 'center',
             }}>
+            {/* progress bar */}
             <Card
               sx={{
                 marginY: 2,
@@ -586,6 +587,7 @@ export default function GoalsPage() {
                   99
                 </Typography>
             </Card>
+            {/* goal info */}
             <CardContent 
               sx={{ 
                 '&.MuiCardContent-root': { p: 0 },
