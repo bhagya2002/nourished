@@ -158,3 +158,43 @@
     "challengeId": "1Q1sUPfPHZTkyFtjIW5b"
 }
 ```
+
+## createInvite
+```JSON
+{
+    "token": "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "data": {
+        "invitee": "6YiMTawgQlStxfG2ysMkkkQ4c2s2",
+        "type": 0, // 0 for friends, 1 for challenges
+        "targetId": "3" // This is optional and only required for challenge invites
+    }
+}
+```
+## acceptInvite
+```JSON
+{
+    "token": "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "data": {
+        "invitee": "6YiMTawgQlStxfG2ysMkkkQ4c2s2",
+        "type": 1, // 0 for friends, 1 for challenges
+        "inviteId": "hTJ90IGq82sXkIvlHDS2",
+        "targetId": "yVCM7S2FTkIIutATJEYx" // This is optional and only used for the challenges invites
+    }
+}
+```
+## declineInvite
+```JSON
+{
+    "token": "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "data": {
+        "inviteId": "rc2KLH6qa5ykkZKpkY9W"
+    }
+}
+```
+
+## getUserInvites
+```JSON
+{
+    "token": "6YiMTawgQlStxfG2ysMkkkQ4c2s2"
+}
+```
