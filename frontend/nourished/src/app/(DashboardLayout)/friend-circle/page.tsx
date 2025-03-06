@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -48,11 +48,15 @@ export default function FriendCirclePage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
 
-  const [toast, setToast] = useState({ open: false, message: 'nothing', severity: 'info' });
+  const [toast, setToast] = useState({
+    open: false,
+    message: 'nothing',
+    severity: 'info',
+  });
   const [open, setOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState('');
-  const [posts, setPosts] = useState<Post[]>([]);  // Use the Post type for the posts state
+  const [posts, setPosts] = useState<Post[]>([]); // Use the Post type for the posts state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const postMoreOpen = Boolean(anchorEl);
   const [postContent, setPostContent] = useState('');
@@ -69,7 +73,7 @@ export default function FriendCirclePage() {
   // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/authentication/login");
+      router.push('/authentication/login');
     }
   }, [loading, user, router]);
 
@@ -84,45 +88,56 @@ export default function FriendCirclePage() {
   const fetchPosts = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/getUserPosts`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token }),
       });
-      if (!response.ok) throw new Error("Failed to fetch posts");
+      if (!response.ok) throw new Error('Failed to fetch posts');
       const postsData = await response.json();
       // Ensure postsData is an array
-      const postsArray = Array.isArray(postsData) ? postsData :
-        (postsData && Array.isArray(postsData.data)) ? postsData.data : [];
+      const postsArray = Array.isArray(postsData)
+        ? postsData
+        : postsData && Array.isArray(postsData.data)
+        ? postsData.data
+        : [];
       setPosts(postsArray);
       console.log(postsArray);
       setToast({ open: true, message: 'Posts fetched successfully', severity: 'success' })
     } catch (error) {
-      console.error("Error fetching posts:", error);
-      setToast({ open: true, message: 'Failed to fetch posts', severity: 'error' });
+      console.error('Error fetching posts:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch posts',
+        severity: 'error',
+      });
     }
-  }
+  };
 
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token }),
       });
-      if (!response.ok) throw new Error("Failed to fetch goals");
+      if (!response.ok) throw new Error('Failed to fetch goals');
       const goalsData = await response.json();
       // Ensure goalsData is an array
       const goalsArray = Array.isArray(goalsData) ? goalsData :
         (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
       setGoals(goalsArray);
     } catch (error) {
-      console.error("Error fetching goals:", error);
-      setToast({ open: true, message: 'Failed to fetch goals', severity: 'error' });
+      console.error('Error fetching goals:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch goals',
+        severity: 'error',
+      });
     }
   };
 
@@ -145,7 +160,7 @@ export default function FriendCirclePage() {
       return;
     }
     if (!(user && token)) {
-      router.push("/authentication/login");
+      router.push('/authentication/login');
       return;
     }
 
@@ -154,15 +169,15 @@ export default function FriendCirclePage() {
       const postCreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createPost`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             token,
             post: {
-              name: user.displayName || "",
-              email: user.email || "",
+              name: user.displayName || '',
+              email: user.email || '',
               content: postContent,
               goalId: postGoalLinkId,
               createdAt: postCreatedAt,
@@ -171,17 +186,21 @@ export default function FriendCirclePage() {
             }
           }),
         });
-        if (!response.ok) throw new Error("Failed to create post");
+        if (!response.ok) throw new Error('Failed to create post');
         const postData = await response.json();
         if (!(postData && postData.data)) {
-          throw new Error("Failed to create post");
+          throw new Error('Failed to create post');
         }
         console.log(postData.data.post);
         setPosts(prevPosts => [...prevPosts, postData.data.post]);
         setToast({ open: true, message: 'Post created successfully', severity: 'success' })
       } catch (error) {
-        console.error("Error creating post:", error);
-        setToast({ open: true, message: 'Failed to create post', severity: 'error' });
+        console.error('Error creating post:', error);
+        setToast({
+          open: true,
+          message: 'Failed to create post',
+          severity: 'error',
+        });
       }
       setOpen(false);
       setPostContent('');
@@ -202,7 +221,7 @@ export default function FriendCirclePage() {
               newValue: value,
             }),
           });
-        }
+        };
 
         await Promise.all([
           updateField('content', postContent),
@@ -214,30 +233,42 @@ export default function FriendCirclePage() {
             return {
               ...post,
               content: postContent,
-              goal: goals.find((goal) => goal.id === postGoalLinkId) || post.goal,
+              goal:
+                goals.find((goal) => goal.id === postGoalLinkId) || post.goal,
             };
           }
           return post;
         });
         setPosts(updatedPosts);
-        setToast({ open: true, message: 'Post updated successfully', severity: 'success' })
+        setToast({
+          open: true,
+          message: 'Post updated successfully',
+          severity: 'success',
+        });
       } catch (error) {
-        console.error("Error updating goal:", error);
-        setToast({ open: true, message: 'Failed to update goal', severity: 'error' });
+        console.error('Error updating goal:', error);
+        setToast({
+          open: true,
+          message: 'Failed to update goal',
+          severity: 'error',
+        });
       }
       setOpen(false);
       setPostContent('');
       setPostGoalLinkId('');
       setEditingPostId('');
-    };
-  }
+    }
+  };
 
   // Handle closing the toast box
   const handleToastClose = () => {
     setToast({ ...toast, open: false });
   };
 
-  const handlePostMoreClick = (event: React.MouseEvent<HTMLButtonElement>, post: Post) => {
+  const handlePostMoreClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    post: Post
+  ) => {
     console.log(post);
     setAnchorEl(event.currentTarget);
     setPostContent(post.content);
@@ -252,18 +283,18 @@ export default function FriendCirclePage() {
   const handleEditPostClick = () => {
     setIsEditing(true);
     setOpen(true);
-  }
+  };
 
   const handleDeletePostClick = async () => {
     if (!user || !token) {
-      router.push("/authentication/login");
+      router.push('/authentication/login');
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/deletePost`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ token, postId: editingPostId }),
       });
@@ -271,8 +302,12 @@ export default function FriendCirclePage() {
       setPosts(prevPosts => prevPosts.filter(post => post.id !== editingPostId));
       setToast({ open: true, message: 'Post deleted successfully', severity: 'success' })
     } catch (error) {
-      console.error("Error deleting post:", error);
-      setToast({ open: true, message: 'Failed to delete post', severity: 'error' });
+      console.error('Error deleting post:', error);
+      setToast({
+        open: true,
+        message: 'Failed to delete post',
+        severity: 'error',
+      });
     }
     setPostContent('');
     setPostGoalLinkId('');
@@ -460,7 +495,10 @@ export default function FriendCirclePage() {
   }
 
   return (
-    <PageContainer title="Friend Circle" description="What are your friends doing?">
+    <PageContainer
+      title='Friend Circle'
+      description='What are your friends doing?'
+    >
       <Box sx={{ mt: 2 }}>
         {/* popup toast message */}
         <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} sx={{ '&.MuiSnackbar-root': { right: { lg: 24 } } }}>
@@ -514,7 +552,12 @@ export default function FriendCirclePage() {
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                   </MenuItem>
-                  <MenuItem onClick={() => { handleDeletePostClick(); handlePostMoreClose(); }}>
+                  <MenuItem
+                    onClick={() => {
+                      handleDeletePostClick();
+                      handlePostMoreClose();
+                    }}
+                  >
                     <ListItemIcon>
                       <Delete fontSize='small' color='error' />
                     </ListItemIcon>
@@ -584,33 +627,54 @@ export default function FriendCirclePage() {
       <Dialog open={open} onClose={handleClose} fullWidth>
         <DialogTitle>{isEditing ? 'Edit Post' : 'Create New Post'}</DialogTitle>
         <DialogContent dividers>
-          {validationError && <Alert severity="error" style={{ margin: '0px' }}>{validationError}</Alert>}
+          {validationError && (
+            <Alert severity='error' style={{ margin: '0px' }}>
+              {validationError}
+            </Alert>
+          )}
           <TextField
             autoFocus
             multiline
             rows={4}
             margin='normal'
             label="What's on your mind?"
-            type="text"
+            type='text'
             fullWidth
             value={postContent}
-            onChange={(e) => { setPostContent(e.target.value); setValidationError(''); }}
-            size="small"
+            onChange={(e) => {
+              setPostContent(e.target.value);
+              setValidationError('');
+            }}
+            size='small'
           />
           <FormControl fullWidth margin='normal'>
-            <InputLabel id='link-select-label' size='small'>For which goal?</InputLabel>
-            <Select labelId='link-select-label' id='link-select' label="For which goal?"
-              value={postGoalLinkId} onChange={(e: SelectChangeEvent) => { setPostGoalLinkId(e.target.value); }} size='small'>
-              <MenuItem value={""}>None</MenuItem>
+            <InputLabel id='link-select-label' size='small'>
+              For which goal?
+            </InputLabel>
+            <Select
+              labelId='link-select-label'
+              id='link-select'
+              label='For which goal?'
+              value={postGoalLinkId}
+              onChange={(e: SelectChangeEvent) => {
+                setPostGoalLinkId(e.target.value);
+              }}
+              size='small'
+            >
+              <MenuItem value={''}>None</MenuItem>
               {goals.map((goal, index) => (
-                <MenuItem key={index} value={goal.id}>{goal.title}</MenuItem>
+                <MenuItem key={index} value={goal.id}>
+                  {goal.title}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button variant='contained' onClick={handlePost}>Post</Button>
+          <Button variant='contained' onClick={handlePost}>
+            Post
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
