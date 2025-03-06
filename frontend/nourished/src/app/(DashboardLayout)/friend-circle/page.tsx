@@ -3,46 +3,25 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import PageContainer from '../components/container/PageContainer';
-import { Goal } from '../goals/page';
-import {
-  Fab,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  Typography,
-  List,
-  ListItem,
-  IconButton,
-  CardActions,
-  CardHeader,
-  Avatar,
-  Select,
-  SelectChangeEvent,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Alert,
-  Snackbar,
-  AlertColor,
-  Collapse,
-  Menu,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
+import PageContainer from "../components/container/PageContainer";
+import { Goal } from "../goals/page"
+import { Fab, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Card, CardContent, Typography, List, ListItem, IconButton, CardActions, CardHeader, Avatar, Select, SelectChangeEvent, MenuItem, InputLabel, FormControl, Alert, Snackbar, AlertColor, Collapse, Menu, ListItemIcon, ListItemText, ListItemAvatar, ListItemSecondaryAction, Grid } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import Badge, { BadgeProps } from '@mui/material/Badge';
 import AddIcon from '@mui/icons-material/Add';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import CommentOutlinedIcon from '@mui/icons-material/CommentOutlined';
-import { Delete, Edit, MoreVert } from '@mui/icons-material';
+import { Comment, Delete, Edit, Favorite, ModeCommentOutlined, MoreVert } from '@mui/icons-material';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+
+export type Comment = {
+  id: string;
+  name: string;
+  email: string;
+  comment: string;
+  createdAt: string;
+}
 
 // Define a type for the posts
 export type Post = {
@@ -52,9 +31,18 @@ export type Post = {
   content: string;
   goal: Goal;
   createdAt: string;
-  likes: number;
-  comments: string[]; // Assuming comments are just strings for simplicity
+  likes: string[];
+  comments: Comment[];
 };
+
+const StyledBadge = styled(Badge)<BadgeProps>(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    right: -4,
+    top: 0,
+    border: `2px solid ${theme.palette.background.paper}`,
+    padding: '0 4px',
+  },
+}));
 
 export default function FriendCirclePage() {
   const router = useRouter();
@@ -74,6 +62,11 @@ export default function FriendCirclePage() {
   const [postContent, setPostContent] = useState('');
   const [postGoalLinkId, setPostGoalLinkId] = useState('');
   const [validationError, setValidationError] = useState('');
+
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [commentDialogPostId, setCommentDialogPostId] = useState('');
+  const [commentValidationError, setCommentValidationError] = useState('');
 
   const [goals, setGoals] = useState<Goal[]>([]);
 
@@ -110,11 +103,8 @@ export default function FriendCirclePage() {
         ? postsData.data
         : [];
       setPosts(postsArray);
-      setToast({
-        open: true,
-        message: 'Posts fetched successfully',
-        severity: 'success',
-      });
+      console.log(postsArray);
+      setToast({ open: true, message: 'Posts fetched successfully', severity: 'success' })
     } catch (error) {
       console.error('Error fetching posts:', error);
       setToast({
@@ -138,12 +128,8 @@ export default function FriendCirclePage() {
       if (!response.ok) throw new Error('Failed to fetch goals');
       const goalsData = await response.json();
       // Ensure goalsData is an array
-      const goalsArray = Array.isArray(goalsData)
-        ? goalsData
-        : goalsData && Array.isArray(goalsData.data)
-        ? goalsData.data
-        : [];
-      console.log(goalsArray);
+      const goalsArray = Array.isArray(goalsData) ? goalsData :
+        (goalsData && Array.isArray(goalsData.data)) ? goalsData.data : [];
       setGoals(goalsArray);
     } catch (error) {
       console.error('Error fetching goals:', error);
@@ -195,9 +181,9 @@ export default function FriendCirclePage() {
               content: postContent,
               goalId: postGoalLinkId,
               createdAt: postCreatedAt,
-              likes: 0,
-              comments: [],
-            },
+              likes: [],
+              comments: []
+            }
           }),
         });
         if (!response.ok) throw new Error('Failed to create post');
@@ -206,12 +192,8 @@ export default function FriendCirclePage() {
           throw new Error('Failed to create post');
         }
         console.log(postData.data.post);
-        setPosts((prevPosts) => [...prevPosts, postData.data.post]);
-        setToast({
-          open: true,
-          message: 'Post created successfully',
-          severity: 'success',
-        });
+        setPosts(prevPosts => [...prevPosts, postData.data.post]);
+        setToast({ open: true, message: 'Post created successfully', severity: 'success' })
       } catch (error) {
         console.error('Error creating post:', error);
         setToast({
@@ -316,15 +298,9 @@ export default function FriendCirclePage() {
         },
         body: JSON.stringify({ token, postId: editingPostId }),
       });
-      if (!response.ok) throw new Error('Failed to delete post');
-      setPosts((prevPosts) =>
-        prevPosts.filter((post) => post.id !== editingPostId)
-      );
-      setToast({
-        open: true,
-        message: 'Post deleted successfully',
-        severity: 'success',
-      });
+      if (!response.ok) throw new Error("Failed to delete post");
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== editingPostId));
+      setToast({ open: true, message: 'Post deleted successfully', severity: 'success' })
     } catch (error) {
       console.error('Error deleting post:', error);
       setToast({
@@ -336,7 +312,187 @@ export default function FriendCirclePage() {
     setPostContent('');
     setPostGoalLinkId('');
     setEditingPostId('');
-  };
+  }
+
+  const handlePostLikeClick = async (postId: string) => {
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/likePost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, postId }),
+      });
+      if (!response.ok) throw new Error("Failed to like/unlike post");
+      const updatedPosts = posts.map((post) => {
+        if (post.id === postId) {
+          if (post.likes.includes(user.uid)) {
+            return {
+              ...post,
+              likes: post.likes.filter(uid => uid !== user.uid),
+            };
+          } else {
+            return {
+              ...post,
+              likes: [...post.likes, user.uid],
+            };
+          }
+        }
+        return post;
+      });
+      setPosts(updatedPosts);
+    } catch (error) {
+      console.error("Error liking/unliking post:", error);
+      setToast({ open: true, message: 'Failed to like/unlike post', severity: 'error' });
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!commentContent.trim()) {
+      setCommentValidationError('Required');
+      return;
+    }
+    const createdAt = new Date().toISOString();
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/commentOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          data: {
+            name: user.displayName,
+            email: user.email,
+            postId: commentDialogPostId,
+            comment: commentContent,
+            createdAt,
+          }
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to add comment");
+      const commentData = await response.json();
+      if (!(commentData && commentData.data)) {
+        throw new Error("Failed to create post");
+      }
+      const commentId = commentData.data.id;
+      const updatedPosts = posts.map((post) => {
+        if (post.id === commentDialogPostId) {
+          return {
+            ...post,
+            comments: [...post.comments, { id: commentId, name: user.displayName || "", email: user.email || "", comment: commentContent, createdAt }],
+          };
+        }
+        return post;
+      });
+      console.log(updatedPosts);
+      setPosts(updatedPosts);
+      setToast({ open: true, message: 'Comment added successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setToast({ open: true, message: 'Failed to add comment', severity: 'error' });
+    }
+    setCommentContent('');
+    setCommentValidationError('');
+  }
+
+  const fetchPostComments = async (postId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getCommentsOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, postId }),
+      });
+      if (!response.ok) throw new Error("Failed to fetch comments");
+      const commentsData = await response.json();
+      if (!(commentsData && commentsData.data)) {
+        throw new Error("Failed to fetch comments");
+      }
+      const commentsArray = Array.isArray(commentsData.data) ? commentsData.data : [];
+      setPosts(prevPosts => {
+        const updatedPost = prevPosts.find((post) => post.id === postId);
+        if (updatedPost) {
+          return prevPosts.map((post) => {
+            if (post.id === postId) {
+              return {
+                ...post,
+                comments: commentsArray,
+              };
+            }
+            return post;
+          });
+        }
+        return prevPosts;
+      });
+      console.log(commentsArray);
+      setToast({ open: true, message: 'Comments fetched successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      setToast({ open: true, message: 'Failed to fetch comments', severity: 'error' });
+    }
+  }
+
+  const handleCommentClick = (postId: string, postCommentLength: number) => {
+    setCommentContent('');
+    setCommentValidationError('');
+    setCommentDialogPostId(postId);
+    if (postCommentLength > 0)
+      fetchPostComments(postId);
+    setCommentDialogOpen(true);
+  }
+
+  const handleCommentDialogClose = () => {
+    setCommentDialogOpen(false);
+    setCommentContent('');
+    setCommentValidationError('');
+    setCommentDialogPostId('');
+  }
+
+  const handleCommentDelete = async (commentId: string) => {
+    if (!user || !token) {
+      router.push("/authentication/login");
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/deleteCommentOnPost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, data: { commentId, postId: commentDialogPostId } }),
+      });
+      if (!response.ok) throw new Error("Failed to delete comment");
+      setPosts(prevPosts => {
+        const updatedPost = prevPosts.find((post) => post.id === commentDialogPostId);
+        if (updatedPost) {
+          return prevPosts.map((post) => {
+            if (post.id === commentDialogPostId) {
+              return {
+                ...post,
+                comments: post.comments.filter(comment => comment.id !== commentId),
+              };
+            }
+            return post;
+          });
+        }
+        return prevPosts;
+      });
+      setToast({ open: true, message: 'Comment deleted successfully', severity: 'success' });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      setToast({ open: true, message: 'Failed to delete comment', severity: 'error' });
+    }
+  }
 
   return (
     <PageContainer
@@ -345,92 +501,54 @@ export default function FriendCirclePage() {
     >
       <Box sx={{ mt: 2 }}>
         {/* popup toast message */}
-        <Snackbar
-          open={toast.open}
-          autoHideDuration={3000}
-          onClose={handleToastClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}
-        >
-          <Alert
-            onClose={handleToastClose}
-            severity={toast.severity as AlertColor}
-            sx={{ width: '100%' }}
-          >
+        <Snackbar open={toast.open} autoHideDuration={3000} onClose={handleToastClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} sx={{ '&.MuiSnackbar-root': { right: { lg: 24 } } }}>
+          <Alert onClose={handleToastClose} severity={toast.severity as AlertColor} sx={{ width: '100%' }}>
             {toast.message}
           </Alert>
         </Snackbar>
 
-        <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-          <Fab
-            color='primary'
-            onClick={handleAddPostClick}
-            aria-label='Add Post'
-          >
-            <AddIcon />
-          </Fab>
+        {/* Friend Circle Title and Add Task Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2, mr: 2 }}>
+          <Typography variant="h3">Friend Circle</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              startIcon={<AddIcon />}
+              onClick={handleAddPostClick}
+            >
+              Add Post
+            </Button>
+          </Box>
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            mb: 3,
-            ml: 2,
-          }}
-        >
-          <Typography variant='h4'>Friend Circle</Typography>
-        </Box>
-
-        <List sx={{ width: '100%' }}>
-          {posts.map((post) => (
-            <ListItem key={post.id} sx={{ display: 'block' }}>
+        {/* Posts List */}
+        <Grid container columnSpacing={2} rowSpacing={0} sx={{ pl: 2, pr: 2 }}>
+          {user && posts.map((post) => (
+            <Grid item xs={12} sm={6} key={post.id}>
               <Card sx={{ position: 'relative', marginBottom: 2 }}>
                 <CardHeader
                   avatar={
-                    <Avatar sx={{ width: 32, height: 32 }} variant='rounded'>
+                    <Avatar sx={{ width: 32, height: 32, backgroundColor: 'primary.main' }} variant='rounded'>
                       {post.name.charAt(0)}
                     </Avatar>
                   }
-                  action={
-                    post.name === user?.displayName && (
-                      <IconButton
-                        aria-label='settings'
-                        aria-haspopup='true'
-                        aria-expanded={postMoreOpen ? 'true' : undefined}
-                        id='post-more-button'
-                        onClick={(e) => handlePostMoreClick(e, post)}
-                      >
-                        <MoreVert />
-                      </IconButton>
-                    )
+                  action={post.name === user?.displayName &&
+                    <IconButton aria-label='settings' aria-haspopup='true' aria-expanded={postMoreOpen ? 'true' : undefined} id='post-more-button' onClick={(e) => handlePostMoreClick(e, post)}>
+                      <MoreVert color='primary' />
+                    </IconButton>
                   }
                   title={post.name}
                   subheader={new Date(post.createdAt).toLocaleString()}
                 />
-                <CardContent>
-                  <Typography variant='body1'>{post.content}</Typography>
-                  {post.goal && (
-                    <Typography variant='body2' sx={{ mt: 1 }}>
-                      For goal: {post.goal.title}
-                    </Typography>
-                  )}
+                <CardContent sx={{ padding: '0px 16px' }}>
+                  <Typography variant="body1">{post.content}</Typography>
+                  {post.goal && <Typography variant="body2" sx={{ mt: 1 }}>For goal: {post.goal.title}</Typography>}
                 </CardContent>
-                <Menu
-                  id='post-more-menu'
-                  anchorEl={anchorEl}
-                  open={postMoreOpen}
-                  onClose={handlePostMoreClose}
-                  MenuListProps={{ 'aria-labelledby': 'post-more-button' }}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      handleEditPostClick();
-                      handlePostMoreClose();
-                    }}
-                  >
+                <Menu id='post-more-menu' anchorEl={anchorEl} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} open={postMoreOpen} onClose={handlePostMoreClose} MenuListProps={{ 'aria-labelledby': 'post-more-button' }}>
+                  <MenuItem onClick={() => { handleEditPostClick(); handlePostMoreClose(); }}>
                     <ListItemIcon>
-                      <Edit fontSize='small' />
+                      <Edit fontSize='small' color='primary' />
                     </ListItemIcon>
                     <ListItemText>Edit</ListItemText>
                   </MenuItem>
@@ -441,32 +559,72 @@ export default function FriendCirclePage() {
                     }}
                   >
                     <ListItemIcon>
-                      <Delete fontSize='small' />
+                      <Delete fontSize='small' color='error' />
                     </ListItemIcon>
                     <ListItemText>Delete</ListItemText>
                   </MenuItem>
                 </Menu>
                 <CardActions disableSpacing sx={{ justifyContent: 'flex-end' }}>
-                  <IconButton
-                    onClick={() => console.log('Like post id:', post.id)}
-                    color='primary'
-                  >
-                    <FavoriteBorderIcon />
+                  <IconButton onClick={() => handlePostLikeClick(post.id)} color={post.likes.includes(user.uid) ? 'primary' : 'default'} sx={{ mr: 1 }} >
+                    {post.likes.includes(user.uid) ? <Favorite /> : <FavoriteBorderIcon />}
+                    <StyledBadge badgeContent={post.likes.length} color='secondary' overlap='circular' />
                   </IconButton>
-                  <IconButton
-                    onClick={() => console.log('Comment on post id:', post.id)}
-                    color='primary'
-                  >
-                    <CommentOutlinedIcon />
+                  <IconButton onClick={() => handleCommentClick(post.id, post.comments.length)} color="secondary" sx={{ mr: 1 }} >
+                    {post.comments.length > 0 ? <CommentOutlinedIcon /> : <ModeCommentOutlined />}
+                    <StyledBadge badgeContent={post.comments.length} color="secondary" overlap='circular' />
                   </IconButton>
                 </CardActions>
               </Card>
-            </ListItem>
+            </Grid>
           ))}
-        </List>
+        </Grid>
       </Box>
 
-      <Dialog open={open} onClose={handleClose}>
+      {/* Comment dialog */}
+      <Dialog open={commentDialogOpen} onClose={() => handleCommentDialogClose()} fullWidth>
+        <DialogTitle>Comments</DialogTitle>
+        <DialogContent dividers sx={{ padding: "0px 24px" }}>
+          <List sx={{ width: '100%' }}>
+            {posts.find((post) => post.id === commentDialogPostId)?.comments.length === 0 && <Alert severity="info" style={{ margin: 0, padding: "16px 0px" }}>No comments yet</Alert>}
+            {posts.find((post) => post.id === commentDialogPostId)?.comments.map((comment, index) => (
+              <ListItem key={index} disablePadding sx={{ mt: 1, mb: 1, pr: 4, alignItems: 'flex-start', '&.MuiListItem-secondaryAction': { right: 0 } }}>
+                <ListItemIcon sx={{ minWidth: 48, mt: 1 }}>
+                  <Avatar sx={{ width: 32, height: 32, backgroundColor: 'primary.main' }} variant='rounded'>{comment.name?.charAt(0)}</Avatar>
+                </ListItemIcon>
+                <ListItemText>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{comment.name}</Typography>
+                  <Typography variant="h5">{comment.comment}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>{new Date(comment.createdAt).toLocaleString().split(',')[0]}</Typography>
+                </ListItemText>
+                <ListItemSecondaryAction>
+                  {user && (comment.email === user.email || posts.find((post) => post.id === commentDialogPostId)?.email === user.email) &&
+                    <IconButton edge="end" aria-label="delete" onClick={() => { handleCommentDelete(comment.id) }} sx={{ padding: 0 }}>
+                      <Delete color='error' />
+                    </IconButton>
+                  }
+                </ListItemSecondaryAction>
+              </ListItem>
+            ))}
+          </List>
+        </DialogContent>
+        <DialogActions>
+          <TextField
+            {...{ error: Boolean(commentValidationError) }}
+            margin='normal'
+            label={commentValidationError ? commentValidationError : "What's on your mind?"}
+            type="text"
+            fullWidth
+            value={commentContent}
+            onChange={(e) => { setCommentContent(e.target.value); setCommentValidationError(''); }}
+            size="small"
+            sx={{ mt: 0, mb: 0 }}
+          />
+          <Button variant='contained' onClick={() => { handleAddComment(); }}>Post</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Post dialog add/edit */}
+      <Dialog open={open} onClose={handleClose} fullWidth>
         <DialogTitle>{isEditing ? 'Edit Post' : 'Create New Post'}</DialogTitle>
         <DialogContent dividers>
           {validationError && (
