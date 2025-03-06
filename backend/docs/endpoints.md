@@ -158,6 +158,16 @@
     "challengeId": "1Q1sUPfPHZTkyFtjIW5b"
 }
 ```
+## incrementChallenge
+```JSON
+{
+    "token": "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "data": {
+        "challengeId": "yVCM7S2FTkIIutATJEYx",
+        "amount": 15
+    }
+}
+```
 
 ## createInvite
 ```JSON
