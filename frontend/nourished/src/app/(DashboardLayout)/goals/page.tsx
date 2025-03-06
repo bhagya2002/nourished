@@ -25,6 +25,7 @@ import {
   ListItemIcon,
   Card,
   CardContent,
+  Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -545,8 +546,50 @@ export default function GoalsPage() {
       {/* goals list */}
       <List>
         {goals.map((goal, index) => (
-          <Card key={index} sx={{ mb: 1 }}>
-            <CardContent sx={{ '&.MuiCardContent-root': { p: 0 } }}>
+          <Card key={index} 
+            sx={{ 
+              mb: 2, 
+              ml: { xs: 4, sm: 6 }, 
+              display: 'flex',
+              flexDirection: 'row',
+              overflow: 'initial',
+              boxShadow: 4,
+              borderRadius: 4,
+              alignItems: 'center',
+            }}>
+            <Card
+              sx={{
+                marginY: 2,
+                width: 160,
+                transform: 'translateX(-32px)',
+                ml: 0,
+                pb: 20,
+                height: 0,
+                backgroundColor: 'secondary.main',
+                opacity: 0.5,
+                position: 'relative',
+                borderRadius: 4,
+                flexShrink: 0,
+                "&:after": {
+                  content: '"%"',
+                  position: 'absolute',
+                  bottom: 40,
+                  right: 8,
+                  fontSize: 120,
+                  fontWeight: 1000,
+                  color: 'common.white',
+                  opacity: 0.3,
+                }
+              }}>
+                <Typography variant='h6' sx={{ position: 'absolute', top: 48, left: 8, textAlign: 'center', color: 'common.white', fontSize: 120, fontWeight: 1000 }}>
+                  99
+                </Typography>
+            </Card>
+            <CardContent 
+              sx={{ 
+                '&.MuiCardContent-root': { p: 0 },
+                flex: 1,
+              }}>
               <ListItem>
                 <ListItemText
                   primary={goal.title}
