@@ -43,7 +43,7 @@ export type Goal = {
   description: string;
   deadline: string;
   createdAt: string;
-  taskIds: string[];
+  tasks: any[];
 };
 
 export default function GoalsPage() {
@@ -58,7 +58,7 @@ export default function GoalsPage() {
     description: '',
     deadline: '',
     createdAt: '',
-    taskIds: [],
+    tasks: [],
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -71,7 +71,6 @@ export default function GoalsPage() {
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
 
-  const [goalTasks, setGoalTasks] = useState<Array<Array<any>>>([]);
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
@@ -84,7 +83,7 @@ export default function GoalsPage() {
       description: '',
       deadline: '',
       createdAt: '',
-      taskIds: [],
+      tasks: [],
     });
   };
 
@@ -105,10 +104,15 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error('Failed to fetch goals');
       const goalsData = await response.json();
+      console.log(goalsData.data)
 
       // Ensure we're setting an array even if the API returns something else
-      if (goalsData && goalsData.data) {
-        setGoals(Array.isArray(goalsData.data) ? goalsData.data : []);
+      if (goalsData && goalsData.data && Array.isArray(goalsData.data)) {
+        goalsData.data.forEach((goal: any) => {
+          goal.tasks = goal.taskIds;
+          delete goal.taskIds;
+        });
+        setGoals(goalsData.data);
       } else {
         setGoals([]);
       }
@@ -140,15 +144,17 @@ export default function GoalsPage() {
       const tasksArray = Array.isArray(tasksData)
         ? tasksData
         : tasksData && Array.isArray(tasksData.data)
-        ? tasksData.data
-        : [];
-
-      setGoalTasks((prevGoalTasks) => {
-        // Create a new array to avoid mutation
-        const newGoalTasks = [...prevGoalTasks];
-        // Ensure the index exists in the array
-        newGoalTasks[index] = tasksArray;
-        return newGoalTasks;
+          ? tasksData.data
+          : [];
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[index] };
+        updatedGoal.tasks = tasksArray;
+        return prevGoals.map((goal, idx) => (idx === index ? updatedGoal : goal));
+      });
+      setToast({
+        open: true,
+        message: 'Tasks fetched successfully!',
+        severity:'success',
       });
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -156,12 +162,6 @@ export default function GoalsPage() {
         open: true,
         message: 'Failed to fetch tasks',
         severity: 'error',
-      });
-      // Set an empty array for this index on error
-      setGoalTasks((prevGoalTasks) => {
-        const newGoalTasks = [...prevGoalTasks];
-        newGoalTasks[index] = [];
-        return newGoalTasks;
       });
     }
   };
@@ -337,31 +337,13 @@ export default function GoalsPage() {
   };
 
   const handleGoalExpand = (index: number) => {
-    if (index === -1) {
-      setExpandingGoalIndex(index);
-    } else {
-      setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
-    }
-
-    // Initialize an empty array for this index if it doesn't exist
-    if (index !== -1) {
-      setGoalTasks((prevGoalTasks) => {
-        if (!prevGoalTasks[index]) {
-          const newGoalTasks = [...prevGoalTasks];
-          newGoalTasks[index] = [];
-          return newGoalTasks;
-        }
-        return prevGoalTasks;
-      });
-
+    if (expandingGoalIndex !== index) {
       // Fetch goal tasks if needed
-      if (
-        index !== -1 &&
-        (!goalTasks[index] || goalTasks[index].length === 0)
-      ) {
+      if (goals[index].tasks && typeof goals[index].tasks[0] === 'string') {
         fetchGoalTasks(index);
       }
     }
+    setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
   };
 
   // Create a new task
@@ -396,28 +378,21 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error('Failed to create task');
       const taskId = (await response.json()).id;
-      // Update the goal tasks array with the new task (avoiding redundant fetches)
-      setGoalTasks((prevGoalTasks) => {
-        // Ensure the index exists in the array by initializing it if necessary
-        if (!Array.isArray(prevGoalTasks[expandingGoalIndex])) {
-          prevGoalTasks[expandingGoalIndex] = [];
-        }
-        return prevGoalTasks.map((tasks, idx) =>
-          idx === expandingGoalIndex
-            ? [
-                ...tasks,
-                {
-                  id: taskId,
-                  title,
-                  description,
-                  frequency,
-                  createdAt: taskCreatedAt,
-                  goalId: goals[expandingGoalIndex]?.id || '',
-                },
-              ]
-            : tasks
-        );
-      });
+      const newTask = {
+        id: taskId,
+        title,
+        description,
+        frequency,
+        createdAt: taskCreatedAt,
+        goalId: goals[expandingGoalIndex].id,
+      }
+      setGoals((prevGoals) =>
+        prevGoals.map((goal, index) =>
+          index === expandingGoalIndex
+            ? { ...goal, tasks: [...goal.tasks, newTask] }
+            : goal
+        )
+      );
       setToast({
         open: true,
         message: 'Task created successfully!',
@@ -448,7 +423,7 @@ export default function GoalsPage() {
           },
           body: JSON.stringify({
             token,
-            taskId: goalTasks[expandingGoalIndex][taskEditingIndex].id,
+            taskId: goals[expandingGoalIndex].tasks[taskEditingIndex].id,
             fieldToChange: field,
             newValue: value,
           }),
@@ -462,14 +437,17 @@ export default function GoalsPage() {
         updateField('frequency', updatedData.frequency),
       ]);
       // Update the goal tasks array with the new task (avoiding redundant fetches)
-      setGoalTasks((prevGoalTasks) => {
-        const updatedTasks = [...prevGoalTasks[expandingGoalIndex]];
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        const updatedTasks = [...updatedGoal.tasks];
         updatedTasks[taskEditingIndex] = {
           ...updatedTasks[taskEditingIndex],
           ...updatedData,
         };
-        prevGoalTasks[expandingGoalIndex] = updatedTasks;
-        return prevGoalTasks;
+        updatedGoal.tasks = updatedTasks;
+        return prevGoals.map((goal, idx) =>
+          idx === expandingGoalIndex ? updatedGoal : goal
+        );
       });
       setToast({
         open: true,
@@ -506,15 +484,17 @@ export default function GoalsPage() {
         message: 'Task deleted successfully!',
         severity: 'success',
       });
-      setGoalTasks((prevGoalTasks) => {
-        const updatedTasks = [...prevGoalTasks[expandingGoalIndex]];
-        // This filters out the task to be deleted
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        const updatedTasks = [...updatedGoal.tasks];
+        // Filter out the task to be deleted
         const filteredTasks = updatedTasks.filter(
           (_, i) => i !== taskDeletingIndex
         );
-        // Now, update the specific goal's tasks
-        return prevGoalTasks.map((tasks, idx) =>
-          idx === expandingGoalIndex ? filteredTasks : tasks
+        // Update the specific goal's tasks
+        updatedGoal.tasks = filteredTasks;
+        return prevGoals.map((goal, idx) =>
+          idx === expandingGoalIndex ? updatedGoal : goal
         );
       });
     } catch (error) {
@@ -596,10 +576,10 @@ export default function GoalsPage() {
               timeout='auto'
               unmountOnExit
             >
+              {/* goal tasks list */}
               <List component='div' disablePadding>
-                {goalTasks[index] !== undefined &&
-                  Array.isArray(goalTasks[index]) &&
-                  goalTasks[index].map((task: any, taskIndex: number) => (
+                {goals[index].tasks !== undefined &&
+                  goals[index].tasks.map((task: any, taskIndex: number) => (
                     <ListItem key={taskIndex} sx={{ pl: 4 }}>
                       <ListItemText
                         primary={task.title}
@@ -710,16 +690,17 @@ export default function GoalsPage() {
           onClose={() => setTaskCreateModalOpen(false)}
           onCreate={handleGoalTaskCreate}
           userTasks={
-            Array.isArray(goalTasks[expandingGoalIndex])
-              ? goalTasks[expandingGoalIndex]
+            goals[expandingGoalIndex] !== undefined &&
+            Array.isArray(goals[expandingGoalIndex].tasks)
+              ? goals[expandingGoalIndex].tasks
               : []
           }
         />
         {expandingGoalIndex >= 0 &&
           taskEditingIndex >= 0 &&
-          goalTasks[expandingGoalIndex] !== undefined &&
-          Array.isArray(goalTasks[expandingGoalIndex]) &&
-          goalTasks[expandingGoalIndex][taskEditingIndex] !== undefined && (
+          goals[expandingGoalIndex] !== undefined &&
+          Array.isArray(goals[expandingGoalIndex].tasks) &&
+          goals[expandingGoalIndex].tasks[taskEditingIndex] !== undefined && (
             <TaskEditDialog
               open={taskEditModalOpen}
               onClose={() => {
@@ -728,17 +709,17 @@ export default function GoalsPage() {
               }}
               onSave={handleGoalTaskEdit}
               initialTitle={
-                goalTasks[expandingGoalIndex][taskEditingIndex].title
+                goals[expandingGoalIndex].tasks[taskEditingIndex].title
               }
               initialDescription={
-                goalTasks[expandingGoalIndex][taskEditingIndex].description
+                goals[expandingGoalIndex].tasks[taskEditingIndex].description
               }
               initialFrequency={
-                goalTasks[expandingGoalIndex][taskEditingIndex].frequency
+                goals[expandingGoalIndex].tasks[taskEditingIndex].frequency
               }
               userTasks={
-                Array.isArray(goalTasks[expandingGoalIndex])
-                  ? goalTasks[expandingGoalIndex]
+                Array.isArray(goals[expandingGoalIndex].tasks)
+                  ? goals[expandingGoalIndex].tasks
                   : []
               }
             />
