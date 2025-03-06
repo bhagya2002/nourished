@@ -386,12 +386,13 @@ export default function GoalsPage() {
         createdAt: taskCreatedAt,
         goalId: goals[expandingGoalIndex].id,
       }
-      // Update the goal tasks array with the new task (avoiding redundant fetches)
-      setGoals((prevGoals) => {
-        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-        updatedGoal.tasks.push(newTask);
-        return prevGoals.map((goal, idx) => (idx === expandingGoalIndex ? updatedGoal : goal));
-      });
+      setGoals((prevGoals) =>
+        prevGoals.map((goal, index) =>
+          index === expandingGoalIndex
+            ? { ...goal, tasks: [...goal.tasks, newTask] }
+            : goal
+        )
+      );
       setToast({
         open: true,
         message: 'Task created successfully!',
