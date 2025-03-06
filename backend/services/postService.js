@@ -111,7 +111,7 @@ module.exports.likePost = async function likePost(uid, postId) {
     }
     post.likes = post.likes.filter(id => id !== uid);
     // update the user doc with like/unlike postId
-    const userUpdateResult = await db.updateField("users", uid, "likes", postId);
+    const userUpdateResult = await db.updateFieldArray("users", uid, "likes", postId);
     if (!userUpdateResult.success) {
       return userUpdateResult;
     }

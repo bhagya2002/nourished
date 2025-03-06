@@ -509,7 +509,7 @@ export default function FriendCirclePage() {
 
         {/* Friend Circle Title and Add Task Button */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2, mr: 2 }}>
-          <Typography variant="h4">Friend Circle</Typography>
+          <Typography variant="h3">Friend Circle</Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button 
               variant="contained" 
