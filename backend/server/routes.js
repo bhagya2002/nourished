@@ -5,6 +5,7 @@ const authService = require("../services/authService");
 const postService = require("../services/postService");
 const commentService = require("../services/commentService");
 const challengeService = require("../services/challengeService");
+const inviteService = require("../services/inviteService");
 
 function addHeartbeatRoute(app) {
     app.get("/heartbeat", (req, res) => {
@@ -1139,6 +1140,158 @@ function addGetChallengeInfo(app) {
     });
 }
 
+function addCreateInvite(app) {
+    app.post("/createInvite", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await inviteService.createInvite(authResult.uid, req.body.data);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to create the invite"
+                });
+            }
+        } catch (err) {
+            console.error("Error in addCreateInvite endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addAcceptInvite(app) {
+    app.post("/acceptInvite", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await inviteService.acceptInvite(authResult.uid, req.body.data);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to accept the invite"
+                });
+            }
+        } catch (err) {
+            console.error("Error in addAcceptInvite endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addDeclineInvite(app) {
+    app.post("/declineInvite", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await inviteService.declineInvite(req.body.data);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to decline the invite"
+                });
+            }
+        } catch (err) {
+            console.error("Error in declineInvite endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
+function addGetUserInvites(app) {
+    app.post("/getUserInvites", async (req, res) => {
+        try {
+            let authResult = {};
+            if (!req.headers.debug) {
+                authResult = await authService.authenticateToken(req.body.token);
+                if (!authResult.uid) {
+                    return res.status(401).json({
+                        success: false,
+                        error: `Authentication failed! ${authResult.message || "Invalid token"}`
+                    });
+                }
+            } else {
+                authResult.uid = req.body.token;
+            }
+
+            const result = await inviteService.getUserInvites(authResult.uid);
+            if (result.success) {
+                return res.status(200).json({
+                    success: true,
+                    message: result.data
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || "Failed to fetch user invites"
+                });
+            }
+        } catch (err) {
+            console.error("Error in getUserInvites endpoint:", err);
+            return res.status(500).json({
+                success: false,
+                error: err.message || "Server error occurred"
+            });
+        }
+    });
+}
+
 module.exports = function injectRoutes(app) {
     addHeartbeatRoute(app);
 
@@ -1183,4 +1336,10 @@ module.exports = function injectRoutes(app) {
     addRemoveUserFromChallenge(app);
     addIncrementChallenge(app);
     addGetChallengeInfo(app);
+
+    // Invites
+    addCreateInvite(app);
+    addAcceptInvite(app);
+    addDeclineInvite(app);
+    addGetUserInvites(app);
 };

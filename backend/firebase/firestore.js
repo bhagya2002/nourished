@@ -168,3 +168,7 @@ module.exports.commitBatch = async function commitBatch(batch) {
 module.exports.getDeleteFromArray = function getDeleteFromArray(valueToRemove) {
     return admin.firestore.FieldValue.arrayRemove(valueToRemove);
 }
+
+module.exports.getAddToArray = function getAddToArray(valueToAdd) {
+    return admin.firestore.FieldValue.arrayUnion(valueToAdd);
+} 
