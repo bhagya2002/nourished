@@ -23,6 +23,8 @@ import {
   Collapse,
   ListItemButton,
   ListItemIcon,
+  Card,
+  CardContent,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -154,7 +156,7 @@ export default function GoalsPage() {
       setToast({
         open: true,
         message: 'Tasks fetched successfully!',
-        severity:'success',
+        severity: 'success',
       });
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -543,85 +545,87 @@ export default function GoalsPage() {
       {/* goals list */}
       <List>
         {goals.map((goal, index) => (
-          <div key={index}>
-            <ListItem>
-              <ListItemText
-                primary={goal.title}
-                secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`}
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge='end'
-                  onClick={() => handleEditGoalClick(index)}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  edge='end'
-                  onClick={() => handleDeleteGoalClick(index)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-                <IconButton edge='end' onClick={() => handleGoalExpand(index)}>
-                  {index === expandingGoalIndex ? (
-                    <ExpandLess />
-                  ) : (
-                    <ExpandMore />
-                  )}
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Collapse
-              in={index === expandingGoalIndex}
-              timeout='auto'
-              unmountOnExit
-            >
-              {/* goal tasks list */}
-              <List component='div' disablePadding>
-                {goals[index].tasks !== undefined &&
-                  goals[index].tasks.map((task: any, taskIndex: number) => (
-                    <ListItem key={taskIndex} sx={{ pl: 4 }}>
-                      <ListItemText
-                        primary={task.title}
-                        secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge='end'
-                          sx={{ right: 24 }}
-                          onClick={() => {
-                            setTaskEditModalOpen(true);
-                            setTaskEditingIndex(taskIndex);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          edge='end'
-                          sx={{ right: 24 }}
-                          onClick={() => {
-                            handleGoalTaskDelete(task.id, goal.id, taskIndex);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                <ListItemButton
-                  sx={{ pl: 4 }}
-                  dense
-                  key={-1}
-                  onClick={() => setTaskCreateModalOpen(true)}
-                >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <AddIcon fontSize='small' />
-                  </ListItemIcon>
-                  <ListItemText primary='Add a Task' />
-                </ListItemButton>
-              </List>
-            </Collapse>
-          </div>
+          <Card key={index} sx={{ mb: 1 }}>
+            <CardContent sx={{ '&.MuiCardContent-root': { p: 0 } }}>
+              <ListItem>
+                <ListItemText
+                  primary={goal.title}
+                  secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`}
+                />
+                <ListItemSecondaryAction>
+                  <IconButton
+                    edge='end'
+                    onClick={() => handleEditGoalClick(index)}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    edge='end'
+                    onClick={() => handleDeleteGoalClick(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                  <IconButton edge='end' onClick={() => handleGoalExpand(index)}>
+                    {index === expandingGoalIndex ? (
+                      <ExpandLess />
+                    ) : (
+                      <ExpandMore />
+                    )}
+                  </IconButton>
+                </ListItemSecondaryAction>
+              </ListItem>
+              <Collapse
+                in={index === expandingGoalIndex}
+                timeout='auto'
+                unmountOnExit
+              >
+                {/* goal tasks list */}
+                <List component='div' disablePadding>
+                  {goals[index].tasks !== undefined &&
+                    goals[index].tasks.map((task: any, taskIndex: number) => (
+                      <ListItem key={taskIndex} sx={{ pl: 4 }}>
+                        <ListItemText
+                          primary={task.title}
+                          secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton
+                            edge='end'
+                            sx={{ right: 24 }}
+                            onClick={() => {
+                              setTaskEditModalOpen(true);
+                              setTaskEditingIndex(taskIndex);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            edge='end'
+                            sx={{ right: 24 }}
+                            onClick={() => {
+                              handleGoalTaskDelete(task.id, goal.id, taskIndex);
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                    ))}
+                  <ListItemButton
+                    sx={{ pl: 4 }}
+                    dense
+                    key={-1}
+                    onClick={() => setTaskCreateModalOpen(true)}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <AddIcon fontSize='small' />
+                    </ListItemIcon>
+                    <ListItemText primary='Add a Task' />
+                  </ListItemButton>
+                </List>
+              </Collapse>
+            </CardContent>
+          </Card>
         ))}
       </List>
 
@@ -691,7 +695,7 @@ export default function GoalsPage() {
           onCreate={handleGoalTaskCreate}
           userTasks={
             goals[expandingGoalIndex] !== undefined &&
-            Array.isArray(goals[expandingGoalIndex].tasks)
+              Array.isArray(goals[expandingGoalIndex].tasks)
               ? goals[expandingGoalIndex].tasks
               : []
           }
