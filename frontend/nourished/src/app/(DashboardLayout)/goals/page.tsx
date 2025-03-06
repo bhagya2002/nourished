@@ -570,6 +570,7 @@ export default function GoalsPage() {
                 position: 'relative',
                 borderRadius: 4,
                 flexShrink: 0,
+                userSelect: 'none',
                 "&:after": {
                   content: '"%"',
                   position: 'absolute',
