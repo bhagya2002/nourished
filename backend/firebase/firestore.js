@@ -81,10 +81,10 @@ module.exports.updateField = async function updateField(collection, doc, fieldNa
     });
 }
 
-module.exports.updateField = async function updateField(collection, doc, fieldName, amount) {
+module.exports.incrementField = async function incrementField(collection, doc, fieldName, amount) {
     const docRef = db.collection(collection).doc(doc);
     let update = {};
-    update[fieldName] = FieldValue.increment(amount);
+    update[fieldName] = admin.firestore.FieldValue.increment(amount);
     return await docRef.update(update).then(() => {
         return { success: true };
     }).catch((error) => {
