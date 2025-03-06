@@ -76,9 +76,9 @@ module.exports.removeUserFromChallenge = async function removeUserFromChallenge(
     }
 };
 
-module.exports.incrementChallenge = async function incrementChallenge(challengeId, amount) {
+module.exports.incrementChallenge = async function incrementChallenge(data) {
     try {
-        const result = await db.updateField("challenges", challengeId, "userIds", amount);
+        const result = await db.incrementField("challenges", data.challengeId, "progress", data.amount);
 
         if (result.success) {
             return { success: true };

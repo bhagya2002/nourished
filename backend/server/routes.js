@@ -1158,20 +1158,20 @@ function addIncrementChallenge(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.incrementChallenge(authResult.uid, req.body.challengeId);
+      const result = await challengeService.incrementChallenge(req.body.data);
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "User removed successfully"
+          message: `Challenge incremented by ${req.body.data.amount}`
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to remove user"
+          error: result.error || "Failed to increment challenge"
         });
       }
     } catch (err) {
-      console.error("Error in removeUserFromChallenge endpoint:", err);
+      console.error("Error in incrementChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
         error: err.message || "Server error occurred"
