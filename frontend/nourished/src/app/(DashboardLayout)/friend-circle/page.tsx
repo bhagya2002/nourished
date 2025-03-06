@@ -446,7 +446,7 @@ export default function FriendCirclePage() {
     setCommentContent('');
     setCommentValidationError('');
     setCommentDialogPostId(postId);
-    if (postCommentLength > 0)
+    if (postCommentLength > 0 && typeof posts.find((post) => post.id === postId)?.comments[0] === 'string')
       fetchPostComments(postId);
     setCommentDialogOpen(true);
   }
