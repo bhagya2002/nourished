@@ -582,7 +582,7 @@ export default function GoalsPage() {
                   opacity: 0.3,
                 }
               }}>
-                <Typography variant='h6' sx={{ position: 'absolute', top: 48, left: 8, textAlign: 'center', color: 'common.white', fontSize: 120, fontWeight: 1000 }}>
+                <Typography sx={{ position: 'absolute', top: 48, left: 8, textAlign: 'center', color: 'common.white', fontSize: 120, fontWeight: 1000 }}>
                   99
                 </Typography>
             </Card>
