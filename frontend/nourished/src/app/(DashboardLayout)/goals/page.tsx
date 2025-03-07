@@ -533,8 +533,8 @@ export default function GoalsPage() {
           open={toast.open}
           autoHideDuration={3000}
           onClose={handleToastClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          sx={{ '&.MuiSnackbar-root': { right: { sm: 40 } } }}
         >
           <Alert
             onClose={handleToastClose}
