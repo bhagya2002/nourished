@@ -662,7 +662,7 @@ export default function GoalsPage() {
                   <List disablePadding>
                     {goals[index].tasks !== undefined &&
                       goals[index].tasks.map((task: any, taskIndex: number) => (
-                        <ListItem key={taskIndex} sx={{ pl: 0 }}>
+                        <ListItem key={taskIndex}>
                           <ListItemText
                             primary={task.title}
                             secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
@@ -689,7 +689,6 @@ export default function GoalsPage() {
                         </ListItem>
                       ))}
                     <ListItemButton
-                      sx={{ pl: 4 }}
                       dense
                       key={-1}
                       onClick={() => setTaskCreateModalOpen(true)}
