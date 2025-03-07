@@ -659,10 +659,10 @@ export default function GoalsPage() {
                 >
                   {/* goal tasks list */}
                   <Divider sx={{ my: 1 }} />
-                  <List component='div' disablePadding>
+                  <List disablePadding>
                     {goals[index].tasks !== undefined &&
                       goals[index].tasks.map((task: any, taskIndex: number) => (
-                        <ListItem key={taskIndex} sx={{ pl: 4 }}>
+                        <ListItem key={taskIndex} sx={{ pl: 0 }}>
                           <ListItemText
                             primary={task.title}
                             secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
@@ -670,7 +670,6 @@ export default function GoalsPage() {
                           <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
                             <IconButton
                               edge='end'
-                              sx={{ right: 24 }}
                               onClick={() => {
                                 setTaskEditModalOpen(true);
                                 setTaskEditingIndex(taskIndex);
@@ -680,7 +679,6 @@ export default function GoalsPage() {
                             </IconButton>
                             <IconButton
                               edge='end'
-                              sx={{ right: 24 }}
                               onClick={() => {
                                 handleGoalTaskDelete(task.id, goal.id, taskIndex);
                               }}
