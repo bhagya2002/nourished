@@ -527,6 +527,7 @@ export default function GoalsPage() {
   return (
     <PageContainer title='Goals' description='Create and manage your goals'>
       <Box sx={{ mt: 2 }}>
+
         {/* popup toast message */}
         <Snackbar
           open={toast.open}
@@ -574,6 +575,7 @@ export default function GoalsPage() {
                 borderRadius: 4,
                 alignItems: 'center',
               }}>
+
               {/* progress bar */}
               <Card
                 sx={{
@@ -604,6 +606,7 @@ export default function GoalsPage() {
                   99
                 </Typography>
               </Card>
+
               {/* goal info */}
               <CardContent
                 sx={{
@@ -613,6 +616,7 @@ export default function GoalsPage() {
                 }}>
                 <ListItem disablePadding
                   secondaryAction={
+                    // Edit and delete buttons for each goal
                     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, }}>
                       <IconButton
                         edge='end'
@@ -628,22 +632,26 @@ export default function GoalsPage() {
                       </IconButton>
                     </Box>
                   }>
+
+                  {/* Goal details */}
                   <ListItemButton onClick={() => handleGoalExpand(index)}
                     sx={{
                       p: 0,
                       transform: 'translateX(-16px)',
-                      '&.MuiListItemButton-root': { p: 0, pr: 3 },
+                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 3, sm: 6 } },
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-evenly',
                       alignItems: 'flex-start',
-                      height: { xs: 120, sm: 160 }
+                      minHeight: { xs: 120, sm: 160 }
                     }}>
                     <Typography color='common.grey' sx={{ opacity: 0.5, fontSize: 14, fontWeight: 600, pt: 0.5 }}>BEFORE {goal.deadline}</Typography>
                     <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
                     <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
                   </ListItemButton>
                 </ListItem>
+
+                {/* Tasks list under each goal */}
                 <Collapse
                   in={index === expandingGoalIndex}
                   timeout='auto'
