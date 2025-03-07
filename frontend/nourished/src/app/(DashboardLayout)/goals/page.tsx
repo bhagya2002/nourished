@@ -26,6 +26,7 @@ import {
   Card,
   CardContent,
   Typography,
+  Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -577,10 +578,10 @@ export default function GoalsPage() {
               <Card
                 sx={{
                   marginY: 2,
-                  width: 160,
+                  width: { xs: 120, sm: 160 },
                   transform: 'translateX(-32px)',
                   ml: 0,
-                  pb: 20,
+                  pb: { xs: 16, sm: 20 },
                   height: 0,
                   backgroundColor: 'secondary.main',
                   opacity: 0.5,
@@ -591,15 +592,15 @@ export default function GoalsPage() {
                   "&:after": {
                     content: '"%"',
                     position: 'absolute',
-                    bottom: 40,
+                    bottom: { xs: 32, sm: 40 },
                     right: 8,
-                    fontSize: 120,
+                    fontSize: { xs: 80, sm: 120 },
                     fontWeight: 1000,
                     color: 'common.white',
                     opacity: 0.3,
                   }
                 }}>
-                <Typography sx={{ position: 'absolute', top: 48, left: 8, textAlign: 'center', color: 'common.white', fontSize: 120, fontWeight: 1000 }}>
+                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontSize: { xs: 80, sm: 120 }, fontWeight: 1000 }}>
                   99
                 </Typography>
               </Card>
@@ -608,10 +609,11 @@ export default function GoalsPage() {
                 sx={{
                   '&.MuiCardContent-root': { p: 0 },
                   flex: 1,
+                  my: 2,
                 }}>
                 <ListItem disablePadding
                   secondaryAction={
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, }}>
                       <IconButton
                         edge='end'
                         onClick={() => handleEditGoalClick(index)}
@@ -626,14 +628,20 @@ export default function GoalsPage() {
                       </IconButton>
                     </Box>
                   }>
-                  <ListItemButton sx={{ p: 0 }} onClick={() => handleGoalExpand(index)}>
-                    <ListItemText
-                      primary={goal.title}
-                      secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`}
-                    />
-                    <ListItemSecondaryAction >
-
-                    </ListItemSecondaryAction>
+                  <ListItemButton onClick={() => handleGoalExpand(index)}
+                    sx={{
+                      p: 0,
+                      transform: 'translateX(-16px)',
+                      '&.MuiListItemButton-root': { p: 0, pr: 3 },
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-evenly',
+                      alignItems: 'flex-start',
+                      height: { xs: 120, sm: 160 }
+                    }}>
+                    <Typography color='common.grey' sx={{ opacity: 0.5, fontSize: 14, fontWeight: 600, pt: 0.5 }}>BEFORE {goal.deadline}</Typography>
+                    <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
+                    <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
                   </ListItemButton>
                 </ListItem>
                 <Collapse
@@ -642,6 +650,7 @@ export default function GoalsPage() {
                   unmountOnExit
                 >
                   {/* goal tasks list */}
+                  <Divider sx={{ my: 1 }} />
                   <List component='div' disablePadding>
                     {goals[index].tasks !== undefined &&
                       goals[index].tasks.map((task: any, taskIndex: number) => (
