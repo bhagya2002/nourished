@@ -171,7 +171,6 @@ export default function GoalsPage() {
 
   // Opens and resets the form dialog
   const handleAddGoalClick = () => {
-    resetNewGoal();
     setIsEditing(false);
     setGoalModalOpen(true);
     setValidationError('');
