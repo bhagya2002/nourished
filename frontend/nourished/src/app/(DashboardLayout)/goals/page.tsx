@@ -23,6 +23,10 @@ import {
   Collapse,
   ListItemButton,
   ListItemIcon,
+  Card,
+  CardContent,
+  Typography,
+  Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -154,7 +158,7 @@ export default function GoalsPage() {
       setToast({
         open: true,
         message: 'Tasks fetched successfully!',
-        severity:'success',
+        severity: 'success',
       });
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -168,7 +172,6 @@ export default function GoalsPage() {
 
   // Opens and resets the form dialog
   const handleAddGoalClick = () => {
-    resetNewGoal();
     setIsEditing(false);
     setGoalModalOpen(true);
     setValidationError('');
@@ -523,208 +526,279 @@ export default function GoalsPage() {
 
   return (
     <PageContainer title='Goals' description='Create and manage your goals'>
-      {/* popup toast message */}
-      <Snackbar
-        open={toast.open}
-        autoHideDuration={3000}
-        onClose={handleToastClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        sx={{ '&.MuiSnackbar-root': { bottom: 88, left: { lg: 270 + 16 } } }}
-      >
-        <Alert
+      <Box sx={{ mt: 2 }}>
+
+        {/* popup toast message */}
+        <Snackbar
+          open={toast.open}
+          autoHideDuration={3000}
           onClose={handleToastClose}
-          severity={toast.severity as AlertColor}
-          sx={{ width: '100%' }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          sx={{ '&.MuiSnackbar-root': { right: { sm: 40 } } }}
         >
-          {toast.message}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={handleToastClose}
+            severity={toast.severity as AlertColor}
+            sx={{ width: '100%' }}
+          >
+            {toast.message}
+          </Alert>
+        </Snackbar>
 
-      {/* goals list */}
-      <List>
-        {goals.map((goal, index) => (
-          <div key={index}>
-            <ListItem>
-              <ListItemText
-                primary={goal.title}
-                secondary={`ID: ${goal.id}, Description: ${goal.description}, CreatedAt: ${goal.createdAt}, Deadline: ${goal.deadline}`}
-              />
-              <ListItemSecondaryAction>
-                <IconButton
-                  edge='end'
-                  onClick={() => handleEditGoalClick(index)}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  edge='end'
-                  onClick={() => handleDeleteGoalClick(index)}
-                >
-                  <DeleteIcon />
-                </IconButton>
-                <IconButton edge='end' onClick={() => handleGoalExpand(index)}>
-                  {index === expandingGoalIndex ? (
-                    <ExpandLess />
-                  ) : (
-                    <ExpandMore />
-                  )}
-                </IconButton>
-              </ListItemSecondaryAction>
-            </ListItem>
-            <Collapse
-              in={index === expandingGoalIndex}
-              timeout='auto'
-              unmountOnExit
+        {/* Goals Page Title and Add Goal Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2, mr: 2 }}>
+          <Typography variant="h3">Your Goals</Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleAddGoalClick}
             >
-              {/* goal tasks list */}
-              <List component='div' disablePadding>
-                {goals[index].tasks !== undefined &&
-                  goals[index].tasks.map((task: any, taskIndex: number) => (
-                    <ListItem key={taskIndex} sx={{ pl: 4 }}>
-                      <ListItemText
-                        primary={task.title}
-                        secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
-                      />
-                      <ListItemSecondaryAction>
-                        <IconButton
-                          edge='end'
-                          sx={{ right: 24 }}
-                          onClick={() => {
-                            setTaskEditModalOpen(true);
-                            setTaskEditingIndex(taskIndex);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          edge='end'
-                          sx={{ right: 24 }}
-                          onClick={() => {
-                            handleGoalTaskDelete(task.id, goal.id, taskIndex);
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                <ListItemButton
-                  sx={{ pl: 4 }}
-                  dense
-                  key={-1}
-                  onClick={() => setTaskCreateModalOpen(true)}
+              Add Goal
+            </Button>
+          </Box>
+        </Box>
+
+        {/* goals list */}
+        <List>
+          {goals.map((goal, index) => (
+            <Card key={index}
+              sx={{
+                mb: 2,
+                mr: 2,
+                ml: { xs: 4, sm: 6 },
+                display: 'flex',
+                flexDirection: 'row',
+                overflow: 'initial',
+                boxShadow: 4,
+                borderRadius: 4,
+                alignItems: 'center',
+              }}>
+
+              {/* progress bar */}
+              <Card
+                sx={{
+                  marginY: 2,
+                  width: { xs: 120, sm: 160 },
+                  transform: 'translateX(-32px)',
+                  ml: 0,
+                  pb: { xs: 16, sm: 20 },
+                  height: 0,
+                  backgroundColor: 'secondary.main',
+                  opacity: 0.5,
+                  position: 'relative',
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  userSelect: 'none',
+                  "&:after": {
+                    content: '"%"',
+                    position: 'absolute',
+                    bottom: { xs: 32, sm: 40 },
+                    right: 8,
+                    fontSize: { xs: 80, sm: 120 },
+                    fontWeight: 1000,
+                    color: 'common.white',
+                    opacity: 0.3,
+                  }
+                }}>
+                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontSize: { xs: 80, sm: 120 }, fontWeight: 1000 }}>
+                  99
+                </Typography>
+              </Card>
+
+              {/* goal info */}
+              <CardContent
+                sx={{
+                  '&.MuiCardContent-root': { p: 0 },
+                  flex: 1,
+                  my: 2,
+                }}>
+                <ListItem disablePadding
+                  secondaryAction={
+                    // Edit and delete buttons for each goal
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, }}>
+                      <IconButton
+                        edge='end'
+                        onClick={() => handleEditGoalClick(index)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        edge='end'
+                        onClick={() => handleDeleteGoalClick(index)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  }>
+
+                  {/* Goal details */}
+                  <ListItemButton onClick={() => handleGoalExpand(index)}
+                    sx={{
+                      p: 0,
+                      transform: 'translateX(-16px)',
+                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 3, sm: 6 } },
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-evenly',
+                      alignItems: 'flex-start',
+                      minHeight: { xs: 120, sm: 160 }
+                    }}>
+                    <Typography color='common.grey' sx={{ opacity: 0.5, fontSize: 14, fontWeight: 600, pt: 0.5 }}>BEFORE {goal.deadline}</Typography>
+                    <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
+                    <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
+                  </ListItemButton>
+                </ListItem>
+
+                {/* Tasks list under each goal */}
+                <Collapse
+                  in={index === expandingGoalIndex}
+                  timeout='auto'
+                  unmountOnExit
                 >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <AddIcon fontSize='small' />
-                  </ListItemIcon>
-                  <ListItemText primary='Add a Task' />
-                </ListItemButton>
-              </List>
-            </Collapse>
-          </div>
-        ))}
-      </List>
+                  {/* goal tasks list */}
+                  <Divider sx={{ my: 1 }} />
+                  <List disablePadding>
+                    {goals[index].tasks !== undefined &&
+                      goals[index].tasks.map((task: any, taskIndex: number) => (
+                        <ListItem key={taskIndex}>
+                          <ListItemText
+                            primary={task.title}
+                            secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
+                          />
+                          <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
+                            <IconButton
+                              edge='end'
+                              onClick={() => {
+                                setTaskEditModalOpen(true);
+                                setTaskEditingIndex(taskIndex);
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              edge='end'
+                              onClick={() => {
+                                handleGoalTaskDelete(task.id, goal.id, taskIndex);
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                    <ListItemButton
+                      dense
+                      key={-1}
+                      onClick={() => setTaskCreateModalOpen(true)}
+                    >
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        <AddIcon fontSize='small' />
+                      </ListItemIcon>
+                      <ListItemText primary='Add a Task' />
+                    </ListItemButton>
+                  </List>
+                </Collapse>
+              </CardContent>
+            </Card>
+          ))}
+        </List>
 
-      {/* add goal button */}
-      <Box sx={{ position: 'fixed', bottom: 16, right: 16 }}>
-        <Fab color='primary' onClick={handleAddGoalClick} aria-label='Add Goal'>
-          <AddIcon />
-        </Fab>
-      </Box>
-
-      {/* add/edit goal form dialog */}
-      <Dialog open={goalModalOpen} onClose={handleClose}>
-        <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
-        <DialogContent dividers>
-          {validationError && (
-            <Alert severity='error' style={{ margin: '0px' }}>
-              {validationError}
-            </Alert>
-          )}
-          <TextField
-            autoFocus
-            margin='normal'
-            label='Title'
-            type='text'
-            fullWidth
-            name='title'
-            value={newGoal.title}
-            onChange={handleInputChange}
-            size='small'
-          />
-          <TextField
-            margin='normal'
-            label='Description'
-            type='text'
-            fullWidth
-            name='description'
-            value={newGoal.description}
-            onChange={handleInputChange}
-            size='small'
-          />
-          <TextField
-            margin='normal'
-            label='Deadline'
-            type='date'
-            fullWidth
-            name='deadline'
-            value={newGoal.deadline}
-            onChange={handleInputChange}
-            InputLabelProps={{ shrink: true }}
-            size='small'
-            inputProps={{ min: today }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button variant='contained' onClick={handleSubmit}>
-            {isEditing ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* add/edit task form dialog */}
-      <div>
-        <TaskCreateDialog
-          open={taskCreateModalOpen}
-          onClose={() => setTaskCreateModalOpen(false)}
-          onCreate={handleGoalTaskCreate}
-          userTasks={
-            goals[expandingGoalIndex] !== undefined &&
-            Array.isArray(goals[expandingGoalIndex].tasks)
-              ? goals[expandingGoalIndex].tasks
-              : []
-          }
-        />
-        {expandingGoalIndex >= 0 &&
-          taskEditingIndex >= 0 &&
-          goals[expandingGoalIndex] !== undefined &&
-          Array.isArray(goals[expandingGoalIndex].tasks) &&
-          goals[expandingGoalIndex].tasks[taskEditingIndex] !== undefined && (
-            <TaskEditDialog
-              open={taskEditModalOpen}
-              onClose={() => {
-                setTaskEditModalOpen(false);
-                setTaskEditingIndex(-1);
-              }}
-              onSave={handleGoalTaskEdit}
-              initialTitle={
-                goals[expandingGoalIndex].tasks[taskEditingIndex].title
-              }
-              initialDescription={
-                goals[expandingGoalIndex].tasks[taskEditingIndex].description
-              }
-              initialFrequency={
-                goals[expandingGoalIndex].tasks[taskEditingIndex].frequency
-              }
-              userTasks={
-                Array.isArray(goals[expandingGoalIndex].tasks)
-                  ? goals[expandingGoalIndex].tasks
-                  : []
-              }
+        {/* add/edit goal form dialog */}
+        <Dialog open={goalModalOpen} onClose={handleClose}>
+          <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
+          <DialogContent dividers>
+            {validationError && (
+              <Alert severity='error' style={{ margin: '0px' }}>
+                {validationError}
+              </Alert>
+            )}
+            <TextField
+              autoFocus
+              margin='normal'
+              label='Title'
+              type='text'
+              fullWidth
+              name='title'
+              value={newGoal.title}
+              onChange={handleInputChange}
+              size='small'
             />
-          )}
-      </div>
+            <TextField
+              margin='normal'
+              label='Description'
+              type='text'
+              fullWidth
+              name='description'
+              value={newGoal.description}
+              onChange={handleInputChange}
+              size='small'
+            />
+            <TextField
+              margin='normal'
+              label='Deadline'
+              type='date'
+              fullWidth
+              name='deadline'
+              value={newGoal.deadline}
+              onChange={handleInputChange}
+              InputLabelProps={{ shrink: true }}
+              size='small'
+              inputProps={{ min: today }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button variant='contained' onClick={handleSubmit}>
+              {isEditing ? 'Update' : 'Create'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* add/edit task form dialog */}
+        <div>
+          <TaskCreateDialog
+            open={taskCreateModalOpen}
+            onClose={() => setTaskCreateModalOpen(false)}
+            onCreate={handleGoalTaskCreate}
+            userTasks={
+              goals[expandingGoalIndex] !== undefined &&
+                Array.isArray(goals[expandingGoalIndex].tasks)
+                ? goals[expandingGoalIndex].tasks
+                : []
+            }
+          />
+          {expandingGoalIndex >= 0 &&
+            taskEditingIndex >= 0 &&
+            goals[expandingGoalIndex] !== undefined &&
+            Array.isArray(goals[expandingGoalIndex].tasks) &&
+            goals[expandingGoalIndex].tasks[taskEditingIndex] !== undefined && (
+              <TaskEditDialog
+                open={taskEditModalOpen}
+                onClose={() => {
+                  setTaskEditModalOpen(false);
+                  setTaskEditingIndex(-1);
+                }}
+                onSave={handleGoalTaskEdit}
+                initialTitle={
+                  goals[expandingGoalIndex].tasks[taskEditingIndex].title
+                }
+                initialDescription={
+                  goals[expandingGoalIndex].tasks[taskEditingIndex].description
+                }
+                initialFrequency={
+                  goals[expandingGoalIndex].tasks[taskEditingIndex].frequency
+                }
+                userTasks={
+                  Array.isArray(goals[expandingGoalIndex].tasks)
+                    ? goals[expandingGoalIndex].tasks
+                    : []
+                }
+              />
+            )}
+        </div>
+      </Box>
     </PageContainer>
   );
 }
