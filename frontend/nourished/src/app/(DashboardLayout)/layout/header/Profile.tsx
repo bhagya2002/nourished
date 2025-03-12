@@ -81,19 +81,19 @@ const Profile = () => {
           },
         }}
       >
-        <MenuItem>
+        <MenuItem onClick={() => { router.push('/profile'); handleClose2(); }}>
           <ListItemIcon>
             <IconUser width={20} />
           </ListItemIcon>
           <ListItemText>My Profile</ListItemText>
         </MenuItem>
-        <MenuItem>
+        <MenuItem onClick={() => { router.push('/profile/account'); handleClose2(); }}>
           <ListItemIcon>
             <IconMail width={20} />
           </ListItemIcon>
           <ListItemText>My Account</ListItemText>
         </MenuItem>
-        <MenuItem>
+        <MenuItem onClick={() => { router.push('/tasks'); handleClose2(); }}>
           <ListItemIcon>
             <IconListCheck width={20} />
           </ListItemIcon>
