@@ -190,14 +190,15 @@ const WellnessCategories: React.FC<WellnessCategoriesProps> = ({
 
   return (
     <DashboardCard title='Wellness Categories'>
-      <Box sx={{ p: 3 }}>
-        {tasks.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 2 }}>
-            <Typography variant='body1' color='text.secondary'>
-              No tasks available yet.
-            </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
-              Create tasks to see your wellness categories.
+      <Box sx={{ p: 2 }}>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : categoryData.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              No tasks created yet
             </Typography>
           </Box>
         ) : (
@@ -213,25 +214,57 @@ const WellnessCategories: React.FC<WellnessCategoriesProps> = ({
                     flexDirection: 'column',
                     height: '100%',
                     background: theme.palette.background.default,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    transition: 'all 0.3s ease-in-out',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: `linear-gradient(45deg, ${category.color}08, ${category.color}03)`,
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease-in-out',
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      borderColor: `${category.color}40`,
+                      '&::before': {
+                        opacity: 1,
+                      },
+                      '& .MuiLinearProgress-root': {
+                        transform: 'scaleX(1.02)',
+                      },
+                      '& .category-icon': {
+                        transform: 'scale(1.1)',
+                      }
+                    }
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Chip
-                      icon={
-                        React.isValidElement(category.icon)
-                          ? category.icon
-                          : undefined
-                      }
+                      icon={React.isValidElement(category.icon) ? category.icon : undefined}
                       label={category.name}
                       sx={{
                         bgcolor: `${category.color}20`,
                         color: category.color,
-                        '& .MuiChip-icon': { color: category.color },
+                        transition: 'all 0.3s ease-in-out',
+                        '& .MuiChip-icon': { 
+                          color: category.color,
+                          transition: 'transform 0.3s ease-in-out',
+                        },
+                        '&:hover .MuiChip-icon': {
+                          transform: 'scale(1.1)',
+                        }
                       }}
                     />
 
                     <Typography
-                      variant='body2'
+                      variant="body2"
                       sx={{ ml: 'auto', fontWeight: 'medium' }}
                     >
                       {category.completedCount}/{category.count}
@@ -239,13 +272,15 @@ const WellnessCategories: React.FC<WellnessCategoriesProps> = ({
                   </Box>
 
                   <LinearProgress
-                    variant='determinate'
+                    variant="determinate"
                     value={(category.completedCount / category.count) * 100}
                     sx={{
                       height: 8,
                       borderRadius: 4,
                       mb: 1,
                       backgroundColor: 'rgba(0,0,0,0.05)',
+                      transform: 'scaleX(1)',
+                      transition: 'all 0.3s ease-in-out',
                       '& .MuiLinearProgress-bar': {
                         backgroundColor: category.color,
                         borderRadius: 4,
@@ -253,7 +288,7 @@ const WellnessCategories: React.FC<WellnessCategoriesProps> = ({
                     }}
                   />
 
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography variant="caption" color="text.secondary">
                     {Math.round(
                       (category.completedCount / category.count) * 100
                     )}

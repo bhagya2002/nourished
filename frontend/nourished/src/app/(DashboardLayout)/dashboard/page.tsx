@@ -25,6 +25,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Link from 'next/link';
+import GoalProgress from '@/app/(DashboardLayout)/components/dashboard/GoalProgress';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -53,6 +54,7 @@ const Dashboard = () => {
 
   const [tasks, setTasks] = useState<any[]>([]);
   const [completedTasks, setCompletedTasks] = useState<any[]>([]);
+  const [streakData, setStreakData] = useState<any>(null);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
@@ -62,6 +64,9 @@ const Dashboard = () => {
   const [happinessData, setHappinessData] = useState<any[]>([]);
   const [isLoadingHappiness, setIsLoadingHappiness] = useState(false);
   const [happinessError, setHappinessError] = useState<string | null>(null);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+  const [goalsError, setGoalsError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('🚀 Dashboard Auth Debug:', { user, token, loading });
@@ -137,7 +142,7 @@ const Dashboard = () => {
     }
   };
 
-  // Function to fetch recent completed tasks
+  // Update fetchRecentCompletions to store streak data
   const fetchRecentCompletions = async () => {
     if (!token) return;
 
@@ -145,11 +150,9 @@ const Dashboard = () => {
     setHistoryError(null);
 
     try {
-      // Add timeout to prevent long-hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Call the getTaskHistory endpoint to get recent completions
       const makeRequest = async (currentToken: string) => {
         const response = await fetch(`${API_BASE_URL}/getTaskHistory`, {
           method: 'POST',
@@ -160,24 +163,12 @@ const Dashboard = () => {
 
         if (!response.ok) {
           const responseText = await response.text();
-          console.log('Error response:', responseText);
-
-          // Handle token expiration
-          if (
-            response.status === 401 &&
-            (responseText.includes('token has expired') ||
-              responseText.includes('auth/id-token-expired'))
-          ) {
+          if (response.status === 401 && (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired'))) {
             throw new Error('token_expired');
           } else {
-            throw new Error(
-              `Server error: ${response.status} - ${
-                responseText || 'Failed to fetch task history'
-              }`
-            );
+            throw new Error(`Server error: ${response.status} - ${responseText || 'Failed to fetch task history'}`);
           }
         }
-
         return response;
       };
 
@@ -188,28 +179,11 @@ const Dashboard = () => {
         if (error.message === 'token_expired' && refreshToken) {
           console.log('Token expired, attempting to refresh...');
           const freshToken = await refreshToken();
-
           if (freshToken) {
-            console.log('Token refreshed, retrying request');
             response = await makeRequest(freshToken);
           } else {
-            console.error('Failed to refresh token');
             throw new Error('Authentication error. Please log in again.');
           }
-        } else if (
-          error instanceof DOMException &&
-          error.name === 'AbortError'
-        ) {
-          throw new Error(
-            'Request timed out. The server might be overloaded. Please try again later.'
-          );
-        } else if (
-          error instanceof TypeError &&
-          error.message === 'Failed to fetch'
-        ) {
-          throw new Error(
-            'Cannot connect to the server. Please check if the backend server is running.'
-          );
         } else {
           throw error;
         }
@@ -223,20 +197,13 @@ const Dashboard = () => {
         throw new Error(data.error || 'Failed to load task history data');
       }
 
-      // Take only the first 5 for the dashboard
-      const recentCompletions =
-        data.data && data.data.completions
-          ? data.data.completions.slice(0, 5)
-          : [];
+      // Store both completions and streak data
+      setCompletedTasks(data.data.completions || []);
+      setStreakData(data.data.streaks || null);
 
-      setCompletedTasks(recentCompletions);
     } catch (error) {
       console.error('Error fetching recent completions:', error);
-      setHistoryError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to load recent completions'
-      );
+      setHistoryError(error instanceof Error ? error.message : 'Failed to load recent completions');
     } finally {
       setIsLoadingHistory(false);
     }
@@ -338,11 +305,82 @@ const Dashboard = () => {
     }
   };
 
+  // New function to fetch goals
+  const fetchGoals = async () => {
+    if (!token) return;
+    
+    setIsLoadingGoals(true);
+    setGoalsError(null);
+    
+    try {
+      // Add timeout to prevent long-hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      
+      const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(`Server responded with ${response.status}: ${text}`);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const goalsData = await response.json();
+      
+      if (goalsData && goalsData.success && Array.isArray(goalsData.data)) {
+        // For each goal, fetch its tasks
+        const goalsWithTasks = await Promise.all(
+          goalsData.data.map(async (goal: any) => {
+            try {
+              // Only fetch tasks if the goal has taskIds
+              if (goal.taskIds && goal.taskIds.length > 0) {
+                const taskResponse = await fetch(`${API_BASE_URL}/getGoalTasks`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token, goalId: goal.id }),
+                });
+                
+                if (taskResponse.ok) {
+                  const taskData = await taskResponse.json();
+                  if (taskData.success && Array.isArray(taskData.data)) {
+                    return { ...goal, tasks: taskData.data };
+                  }
+                }
+              }
+              // If no tasks or fetch failed, return goal without tasks
+              return { ...goal, tasks: [] };
+            } catch (error) {
+              console.error(`Error fetching tasks for goal ${goal.id}:`, error);
+              return { ...goal, tasks: [] };
+            }
+          })
+        );
+        
+        setGoals(goalsWithTasks);
+      } else {
+        setGoals([]);
+      }
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      setGoalsError(error instanceof Error ? error.message : 'Failed to load goals');
+    } finally {
+      setIsLoadingGoals(false);
+    }
+  };
+
   useEffect(() => {
     if (user && token) {
       fetchTasks();
       fetchRecentCompletions();
       fetchHappinessData();
+      fetchGoals();
     }
   }, [user, token]);
 
@@ -440,7 +478,7 @@ const Dashboard = () => {
     <PageContainer title='Nourished' description='Welcome to Nourished'>
       <Box>
         <Grid container spacing={3}>
-          {/* First Row: Combined Key Metrics & Welcome */}
+          {/* First Row: Key Metrics */}
           <Grid item xs={12}>
             <Grid container spacing={3}>
               {/* Task Overview */}
@@ -456,14 +494,19 @@ const Dashboard = () => {
                 <StreakCounter
                   taskHistory={completedTasks}
                   isLoading={isLoadingHistory}
+                  streakData={streakData}
                 />
               </Grid>
 
-              {/* Recent Activity - More prominent placement */}
+              {/* Recent Activity */}
               <Grid item xs={12} sm={4}>
                 <DashboardCard title='Recent Activity'>
                   <Box sx={{ p: 2 }}>
-                    {completedTasks.length > 0 ? (
+                    {isLoadingHistory ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                        <CircularProgress size={24} />
+                      </Box>
+                    ) : completedTasks.length > 0 ? (
                       completedTasks.slice(0, 3).map((task, index) => (
                         <Box
                           key={index}
@@ -512,20 +555,26 @@ const Dashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Second Row: Main Dashboard Content */}
-          <Grid item xs={12} md={8}>
+          {/* Second Row: Goals */}
+          <Grid item xs={12}>
+            <GoalProgress 
+              goals={goals}
+              isLoading={isLoadingGoals}
+            />
+          </Grid>
+
+          {/* Third Row: Charts */}
+          <Grid item xs={12}>
             <Grid container spacing={3}>
-              {/* Task Completion Trends Chart */}
-              <Grid item xs={12}>
+              {/* Task Completion Trends and Happiness Trends side by side */}
+              <Grid item xs={12} md={6}>
                 <TaskCompletionTrends
                   taskHistory={completedTasks}
                   isLoading={isLoadingHistory}
                   error={historyError}
                 />
               </Grid>
-
-              {/* Simplified Happiness Trends (without redundant overview) */}
-              <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
                 <HappinessTrends
                   happinessData={happinessData}
                   isLoading={isLoadingHappiness}
@@ -536,8 +585,8 @@ const Dashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Wellness Categories */}
-          <Grid item xs={12} md={4}>
+          {/* Fourth Row: Wellness Categories */}
+          <Grid item xs={12}>
             <WellnessCategories tasks={tasks} isLoading={isLoadingTasks} />
           </Grid>
         </Grid>
