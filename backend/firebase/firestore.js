@@ -171,4 +171,49 @@ module.exports.getDeleteFromArray = function getDeleteFromArray(valueToRemove) {
 
 module.exports.getAddToArray = function getAddToArray(valueToAdd) {
     return admin.firestore.FieldValue.arrayUnion(valueToAdd);
-} 
+}
+
+/**
+ * Query database with multiple custom conditions
+ * @param {string} collectionName - Collection to query
+ * @param {Array<Array<any>>} conditions - Array of condition arrays [fieldName, operator, value]
+ * @returns {Promise<Object>} - Query result
+ */
+module.exports.queryDatabaseCustom = async function queryDatabaseCustom(collectionName, conditions) {
+    try {
+        let query = db.collection(collectionName);
+        
+        // Apply all conditions to the query
+        for (const condition of conditions) {
+            if (condition.length !== 3) {
+                throw new Error(`Invalid condition format: ${JSON.stringify(condition)}`);
+            }
+            
+            const [field, operator, value] = condition;
+            query = query.where(field, operator, value);
+        }
+
+        const querySnapshot = await query.get();
+
+        if (querySnapshot.empty) {
+            return { success: true, data: [] };
+        }
+
+        // Convert the query results to an array of documents
+        const docs = [];
+        querySnapshot.forEach(doc => {
+            docs.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+
+        return { success: true, data: docs };
+    } catch (error) {
+        logger.error("Error in queryDatabaseCustom:", error);
+        return {
+            success: false,
+            error: typeof error === 'object' ? error.message : String(error)
+        };
+    }
+}; 
