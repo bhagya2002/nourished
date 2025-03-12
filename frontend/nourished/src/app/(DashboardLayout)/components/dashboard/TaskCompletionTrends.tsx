@@ -29,14 +29,36 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
   
   // Process data for chart
   const getChartData = () => {
+    // If no task history, generate sample data for visual display
     if (!taskHistory || taskHistory.length === 0) {
+      const today = new Date();
+      const dates = [];
+      const completedCounts = [];
+      
+      // Generate dates (past 7 days or past 30 days)
+      const startDate = new Date();
+      if (timeframe === 'week') {
+        startDate.setDate(today.getDate() - 7);
+      } else {
+        startDate.setDate(today.getDate() - 30);
+      }
+      
+      // Create empty data points
+      for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const formattedDate = `${d.getMonth() + 1}/${d.getDate()}`;
+        dates.push(formattedDate);
+        completedCounts.push(0);
+      }
+      
       return {
-        dates: [],
-        completedCounts: []
+        dates,
+        completedCounts,
+        isEmpty: true
       };
     }
     
-    // Determine date range based on timeframe
+    // Process real data when available
     const today = new Date();
     const startDate = new Date();
     
@@ -79,11 +101,12 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
     
     return {
       dates: formattedDates,
-      completedCounts
+      completedCounts,
+      isEmpty: false
     };
   };
   
-  const { dates, completedCounts } = getChartData();
+  const { dates, completedCounts, isEmpty } = getChartData();
   
   const chartOptions: ApexOptions = {
     chart: {
@@ -96,7 +119,7 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
       },
       animations: {
         enabled: true,
-        easing: 'easeinout' as const,
+        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -106,7 +129,11 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
           enabled: true,
           speed: 350
         }
-      }
+      },
+      sparkline: {
+        enabled: false
+      },
+      background: 'transparent'
     },
     colors: [theme.palette.primary.main],
     dataLabels: {
@@ -114,7 +141,8 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
     },
     stroke: {
       curve: 'smooth',
-      width: 3
+      width: 3,
+      lineCap: 'round'
     },
     grid: {
       borderColor: theme.palette.divider,
@@ -128,11 +156,12 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
           show: true
         }
       },
+      strokeDashArray: 5,
       padding: {
         top: 0,
-        right: 0,
+        right: 10,
         bottom: 0,
-        left: 0
+        left: 10
       }
     },
     xaxis: {
@@ -145,14 +174,20 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
       },
       labels: {
         style: {
-          colors: theme.palette.text.secondary
-        }
+          colors: theme.palette.text.secondary,
+          fontSize: '12px'
+        },
+        offsetY: 5
       }
     },
     yaxis: {
+      min: 0,
+      max: Math.max(...completedCounts, 1) + 1,
+      tickAmount: 4,
       labels: {
         style: {
-          colors: theme.palette.text.secondary
+          colors: theme.palette.text.secondary,
+          fontSize: '12px'
         },
         formatter: (value: number) => {
           return Math.floor(value).toString();
@@ -163,24 +198,49 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
       theme: theme.palette.mode,
       x: {
         format: 'dd/MM/yy'
+      },
+      y: {
+        formatter: (value: number) => {
+          return `${Math.floor(value)} tasks`;
+        }
+      },
+      marker: {
+        show: true
+      },
+      style: {
+        fontSize: '12px'
       }
     },
     fill: {
       type: 'gradient',
       gradient: {
-        shade: 'light',
         type: 'vertical',
         shadeIntensity: 0.4,
         opacityFrom: 0.9,
         opacityTo: 0.5,
-        stops: [0, 100]
+        stops: [0, 90, 100],
+        colorStops: [
+          {
+            offset: 0,
+            color: theme.palette.primary.main,
+            opacity: 0.9
+          },
+          {
+            offset: 100,
+            color: theme.palette.primary.light,
+            opacity: 0.4
+          }
+        ]
       }
     },
     markers: {
       size: 4,
       colors: [theme.palette.background.paper],
       strokeColors: theme.palette.primary.main,
-      strokeWidth: 2
+      strokeWidth: 2,
+      hover: {
+        size: 6
+      }
     }
   };
   
@@ -240,7 +300,7 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
         </ToggleButtonGroup>
       }
     >
-      <Box sx={{ p: 3, height: '400px' }}>
+      <Box sx={{ p: 2, height: '300px' }}>
         {(!taskHistory || taskHistory.length === 0) ? (
           <Box sx={{ 
             height: '100%', 
@@ -249,21 +309,34 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
             justifyContent: 'center', 
             alignItems: 'center',
             textAlign: 'center',
-            p: 2
+            px: 3
           }}>
-            <Typography variant="body1" color="text.secondary">
-              No task completion data available yet.
+            <Typography variant="body1" gutterBottom>
+              {isEmpty ? "No task completion data yet" : "Loading task data..."}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Complete tasks to see your trends over time.
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+              Complete tasks to see your progress trends here
             </Typography>
+            
+            {/* Show sample chart even when empty for better UX */}
+            <Box sx={{ width: '100%', height: '70%', opacity: 0.3 }}>
+              <Chart
+                options={chartOptions}
+                series={[{
+                  name: 'Sample Data',
+                  data: completedCounts
+                }]}
+                type="area"
+                height="100%"
+              />
+            </Box>
           </Box>
         ) : (
-          <Chart
+          <Chart 
             options={chartOptions}
             series={series}
-            type="line"
-            height="350"
+            type="area"
+            height="100%"
           />
         )}
       </Box>

@@ -1,15 +1,15 @@
-import React from "react";
-import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
+import React, { ReactNode } from "react";
+import { Card, CardHeader, CardContent, Typography, Stack, Box, Divider, useTheme } from "@mui/material";
 
 type Props = {
   title?: string;
   subtitle?: string;
-  action?: JSX.Element | any;
+  action?: ReactNode;
   footer?: JSX.Element;
   cardheading?: string | JSX.Element;
   headtitle?: string | JSX.Element;
   headsubtitle?: string | JSX.Element;
-  children?: JSX.Element;
+  children?: ReactNode;
   middlecontent?: string | JSX.Element;
 };
 
@@ -24,8 +24,50 @@ const DashboardCard = ({
   headsubtitle,
   middlecontent,
 }: Props) => {
+  const theme = useTheme();
+  
   return (
-    <Card sx={{ padding: 0 }} elevation={9} variant={undefined}>
+    <Card
+      elevation={0}
+      sx={{
+        padding: 0,
+        background: theme.palette.background.default,
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: '16px',
+        height: '100%',
+        transition: 'all 0.3s ease-in-out',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          boxShadow: `0 4px 20px 0 ${theme.palette.mode === 'dark' 
+            ? 'rgba(0,0,0,0.12)' 
+            : 'rgba(0,0,0,0.05)'}`,
+          borderRadius: 'inherit',
+          transition: 'opacity 0.3s ease-in-out',
+          opacity: 0,
+          zIndex: -1,
+        },
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          borderColor: 'transparent',
+          '&::before': {
+            opacity: 1,
+          },
+          '& .MuiCardHeader-root': {
+            background: theme.palette.mode === 'dark' 
+              ? 'rgba(0,0,0,0.1)' 
+              : 'rgba(0,0,0,0.01)',
+          }
+        }
+      }}
+    >
       {cardheading ? (
         <CardContent>
           <Typography variant="h5">{headtitle}</Typography>
