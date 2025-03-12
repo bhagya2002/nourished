@@ -59,6 +59,51 @@ function addGetFriendRecommendation(app) {
   })
 }
 
+function addGetUserProfile(app) {
+  app.post("/getUserProfile", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+        });
+      }
+
+      // Get user info
+      const userResult = await userService.getUserInfo(req.body.userId);
+      if (!userResult.success) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found"
+        });
+      }
+
+      // Get task history
+      const taskHistoryResult = await taskService.getTaskHistory(req.body.userId);
+      
+      // Check if users are friends
+      const currentUserResult = await userService.getUserInfo(authResult.uid);
+      const isFriend = currentUserResult.success && 
+        currentUserResult.data.friends?.includes(req.body.userId);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...userResult.data,
+          isFriend,
+          taskHistory: taskHistoryResult.success ? taskHistoryResult.data : null
+        }
+      });
+    } catch (err) {
+      console.error("Error in getUserProfile endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred"
+      });
+    }
+  });
+}
 
 function addCreateTask(app) {
   app.post("/createTask", async (req, res) => {
@@ -333,7 +378,6 @@ function addGetGoalTasks(app) {
   });
 }
 
-
 function addCreateGoal(app) {
   app.post("/createGoal", async (req, res) => {
     try {
@@ -372,7 +416,6 @@ function addCreateGoal(app) {
     }
   });
 }
-
 
 function addDeleteGoal(app) {
   app.post("/deleteGoal", async (req, res) => {
@@ -801,50 +844,6 @@ function addDeletePost(app) {
       }
     } catch (err) {
       console.error("Error in deletePost endpoint:", err);
-      return res.status(500).json({
-        success: false,
-        error: err.message || "Server error occurred"
-      });
-    }
-  });
-}
-
-function addEditPost(app) {
-  app.post("/editPost", async (req, res) => {
-    try {
-      let authResult = {};
-      if (!req.headers.debug) {
-        authResult = await authService.authenticateToken(req.body.token);
-        if (!authResult.uid) {
-          return res.status(401).json({
-            success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
-          });
-        }
-      } else {
-        authResult.uid = req.body.token;
-      }
-
-      const result = await postService.editPost(
-        authResult.uid,
-        req.body.postId,
-        req.body.fieldToChange,
-        req.body.newValue
-      );
-
-      if (result.success) {
-        return res.status(200).json({
-          success: true,
-          message: "Post updated successfully"
-        });
-      } else {
-        return res.status(500).json({
-          success: false,
-          error: result.error || "Failed to update post"
-        });
-      }
-    } catch (err) {
-      console.error("Error in editPost endpoint:", err);
       return res.status(500).json({
         success: false,
         error: err.message || "Server error occurred"
@@ -1438,6 +1437,7 @@ module.exports = function injectRoutes(app) {
   addGetUserInfo(app);
   addFriendConnection(app);
   addGetFriendRecommendation(app);
+  addGetUserProfile(app);
 
   // Tasks
   addCreateTask(app);
