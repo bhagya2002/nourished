@@ -33,7 +33,7 @@ const DashboardCard = ({
         padding: 0,
         background: theme.palette.background.default,
         border: '1px solid',
-        borderColor: 'divider',
+        borderColor: theme.palette.divider,
         borderRadius: '16px',
         height: '100%',
         transition: 'all 0.3s ease-in-out',
@@ -56,7 +56,7 @@ const DashboardCard = ({
         },
         '&:hover': {
           transform: 'translateY(-4px)',
-          borderColor: 'transparent',
+          borderColor: theme.palette.primary.light,
           '&::before': {
             opacity: 1,
           },

@@ -16,6 +16,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import BoltIcon from '@mui/icons-material/Bolt';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DashboardCard from '../shared/DashboardCard';
 
 interface StreakCounterProps {
   taskHistory: Array<{
@@ -131,32 +132,19 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
   };
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        height: '100%',
-        borderRadius: 2,
-        background: theme.palette.background.default,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant='h6' fontWeight='medium'>
-          Your Streak
-        </Typography>
+    <DashboardCard
+      title="Your Streak"
+      action={
         <Tooltip title='Complete tasks daily to build your streak' arrow>
           <Chip
             label='Daily Streak'
             size='small'
             color='primary'
             variant='outlined'
-            sx={{ ml: 'auto' }}
           />
         </Tooltip>
-      </Box>
-
+      }
+    >
       <Box
         sx={{
           flex: 1,
@@ -164,6 +152,7 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
+          py: 2
         }}
       >
         <Fade in={animate} timeout={800}>
@@ -186,10 +175,11 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
             fontWeight: 'bold',
             color: theme.palette.primary.main,
             animation: animate ? 'pulse 1s ease-in-out' : 'none',
+            transition: 'all 0.3s ease-in-out',
             '@keyframes pulse': {
-              '0%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.2)' },
-              '100%': { transform: 'scale(1)' },
+              '0%': { transform: 'scale(1)', opacity: 0.7 },
+              '50%': { transform: 'scale(1.2)', opacity: 1 },
+              '100%': { transform: 'scale(1)', opacity: 0.7 },
             },
           }}
         >
@@ -225,7 +215,16 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
               '& .MuiLinearProgress-bar': {
                 background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
                 borderRadius: 4,
-                transition: 'transform 1s ease-in-out',
+                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                animation: 'shimmer 2s infinite linear',
+              },
+              '@keyframes shimmer': {
+                '0%': {
+                  backgroundPosition: '-200% 0',
+                },
+                '100%': {
+                  backgroundPosition: '200% 0',
+                },
               },
             }}
           />
@@ -241,7 +240,7 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
           </Typography>
         </Box>
       </Box>
-    </Paper>
+    </DashboardCard>
   );
 };
 

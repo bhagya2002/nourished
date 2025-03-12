@@ -29,31 +29,11 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
   
   // Process data for chart
   const getChartData = () => {
-    // If no task history, generate sample data for visual display
-    if (!taskHistory || taskHistory.length === 0) {
-      const today = new Date();
-      const dates = [];
-      const completedCounts = [];
-      
-      // Generate dates (past 7 days or past 30 days)
-      const startDate = new Date();
-      if (timeframe === 'week') {
-        startDate.setDate(today.getDate() - 7);
-      } else {
-        startDate.setDate(today.getDate() - 30);
-      }
-      
-      // Create empty data points
-      for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        const formattedDate = `${d.getMonth() + 1}/${d.getDate()}`;
-        dates.push(formattedDate);
-        completedCounts.push(0);
-      }
-      
+    // If no task history or loading, return empty data
+    if (isLoading || !taskHistory) {
       return {
-        dates,
-        completedCounts,
+        dates: [],
+        completedCounts: [],
         isEmpty: true
       };
     }
@@ -81,9 +61,11 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
     
     // Count completions per date
     taskHistory.forEach(item => {
-      if (item.completedStatus) {
+      // Check only for completedAt since that's the reliable indicator
+      if (item.completedAt) {
         const completedDate = new Date(item.completedAt);
-        if (completedDate >= startDate && completedDate <= today) {
+        // Ensure the date is valid
+        if (!isNaN(completedDate.getTime()) && completedDate >= startDate && completedDate <= today) {
           const dateStr = completedDate.toISOString().split('T')[0];
           dateMap.set(dateStr, (dateMap.get(dateStr) || 0) + 1);
         }
@@ -99,10 +81,13 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
       return `${d.getMonth() + 1}/${d.getDate()}`;
     });
     
+    // Only consider empty if no completions in the entire period
+    const hasCompletions = completedCounts.some(count => count > 0);
+    
     return {
       dates: formattedDates,
       completedCounts,
-      isEmpty: false
+      isEmpty: !hasCompletions
     };
   };
   
@@ -177,12 +162,13 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
           colors: theme.palette.text.secondary,
           fontSize: '12px'
         },
-        offsetY: 5
+        offsetY: 5,
+        rotate: 0
       }
     },
     yaxis: {
       min: 0,
-      max: Math.max(...completedCounts, 1) + 1,
+      max: Math.max(...completedCounts, 2),
       tickAmount: 4,
       labels: {
         style: {
@@ -260,79 +246,81 @@ const TaskCompletionTrends: React.FC<TaskCompletionTrendsProps> = ({
     }
   };
   
-  if (isLoading) {
-    return (
-      <DashboardCard title="Task Completion Trends">
-        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px' }}>
-          <CircularProgress />
-        </Box>
-      </DashboardCard>
-    );
-  }
-  
-  if (error) {
-    return (
-      <DashboardCard title="Task Completion Trends">
-        <Box sx={{ p: 3, textAlign: 'center', height: '400px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography color="error" variant="body1">{error}</Typography>
-        </Box>
-      </DashboardCard>
-    );
-  }
-  
   return (
-    <DashboardCard 
+    <DashboardCard
       title="Task Completion Trends"
       action={
         <ToggleButtonGroup
-          size="small"
           value={timeframe}
           exclusive
           onChange={handleTimeframeChange}
-          aria-label="timeframe"
+          size="small"
+          sx={{
+            '& .MuiToggleButton-root': {
+              px: 2,
+              py: 0.5,
+              fontSize: '0.875rem',
+              borderRadius: '4px !important',
+              borderColor: theme.palette.divider,
+              '&.Mui-selected': {
+                backgroundColor: theme.palette.primary.main,
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: theme.palette.primary.dark,
+                },
+              },
+            },
+          }}
         >
-          <ToggleButton value="week" aria-label="week view">
-            Week
-          </ToggleButton>
-          <ToggleButton value="month" aria-label="month view">
-            Month
-          </ToggleButton>
+          <ToggleButton value="week">Week</ToggleButton>
+          <ToggleButton value="month">Month</ToggleButton>
         </ToggleButtonGroup>
       }
     >
-      <Box sx={{ p: 2, height: '300px' }}>
-        {(!taskHistory || taskHistory.length === 0) ? (
-          <Box sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
-            justifyContent: 'center', 
-            alignItems: 'center',
-            textAlign: 'center',
-            px: 3
-          }}>
-            <Typography variant="body1" gutterBottom>
-              {isEmpty ? "No task completion data yet" : "Loading task data..."}
+      <Box sx={{ mt: 3, height: 350, position: 'relative' }}>
+        {isLoading ? (
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <CircularProgress size={40} />
+          </Box>
+        ) : error ? (
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <Typography color="error" variant="body1">
+              {error}
             </Typography>
-            <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-              Complete tasks to see your progress trends here
+          </Box>
+        ) : isEmpty ? (
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: 2,
+            }}
+          >
+            <Typography color="textSecondary" variant="body1">
+              No task completion data available for this period
             </Typography>
-            
-            {/* Show sample chart even when empty for better UX */}
-            <Box sx={{ width: '100%', height: '70%', opacity: 0.3 }}>
-              <Chart
-                options={chartOptions}
-                series={[{
-                  name: 'Sample Data',
-                  data: completedCounts
-                }]}
-                type="area"
-                height="100%"
-              />
-            </Box>
           </Box>
         ) : (
-          <Chart 
+          <Chart
             options={chartOptions}
             series={series}
             type="area"
