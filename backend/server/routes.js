@@ -1370,6 +1370,50 @@ function addGetUserInvites(app) {
   });
 }
 
+function addResetRecurringTasks(app) {
+  app.post("/resetRecurringTasks", async (req, res) => {
+    try {
+      // Admin authentication check
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+      
+      console.log(`Manual trigger of task reset by user: ${authResult.uid}`);
+      
+      // Call the reset function
+      const result = await taskService.resetRecurringTasks();
+      
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: `Task reset completed: ${result.message}`,
+          data: result.data
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to reset recurring tasks"
+        });
+      }
+    } catch (err) {
+      console.error("Error in resetRecurringTasks endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: typeof err === 'object' ? (err.message || "Server error occurred") : String(err)
+      });
+    }
+  });
+}
+
 module.exports = function injectRoutes(app) {
   addHeartbeatRoute(app);
 
@@ -1422,4 +1466,7 @@ module.exports = function injectRoutes(app) {
   addAcceptInvite(app);
   addDeclineInvite(app);
   addGetUserInvites(app);
+
+  // Reset Recurring Tasks
+  addResetRecurringTasks(app);
 }

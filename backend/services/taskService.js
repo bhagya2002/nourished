@@ -643,3 +643,89 @@ module.exports.getHappinessData = async function getHappinessData(uid, startDate
         };
     }
 };
+
+module.exports.resetRecurringTasks = async function resetRecurringTasks() {
+    try {
+        console.log('Starting scheduled task reset check...');
+        
+        // Get all completed tasks with frequencies
+        const completedTasksResult = await db.queryDatabaseCustom("tasks", [
+            ["completed", "==", true],
+            ["frequency", "in", ["Daily", "Weekly", "Monthly"]]
+        ]);
+        
+        if (!completedTasksResult.success || !completedTasksResult.data) {
+            console.error("Failed to fetch completed recurring tasks:", completedTasksResult.error);
+            return { success: false, error: "Failed to fetch tasks for reset" };
+        }
+        
+        const tasksToReset = [];
+        const now = new Date();
+        
+        // Determine which tasks need to be reset
+        for (const task of completedTasksResult.data) {
+            if (!task.completedAt) continue; // Skip if no completion date
+            
+            const completedDate = new Date(task.completedAt);
+            let shouldReset = false;
+            
+            switch (task.frequency) {
+                case "Daily":
+                    // Reset if completed before today
+                    shouldReset = completedDate.getDate() !== now.getDate() || 
+                                  completedDate.getMonth() !== now.getMonth() ||
+                                  completedDate.getFullYear() !== now.getFullYear();
+                    break;
+                    
+                case "Weekly":
+                    // Reset if completed more than 7 days ago
+                    const oneWeekAgo = new Date(now);
+                    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                    shouldReset = completedDate < oneWeekAgo;
+                    break;
+                    
+                case "Monthly":
+                    // Reset if completed in a previous month
+                    shouldReset = completedDate.getMonth() !== now.getMonth() ||
+                                  completedDate.getFullYear() !== now.getFullYear();
+                    break;
+            }
+            
+            if (shouldReset) {
+                tasksToReset.push(task.id);
+                console.log(`Task ${task.id} (${task.title}) - ${task.frequency} will be reset from completed state`);
+            }
+        }
+        
+        // Reset tasks that need to be reset
+        const resetResults = [];
+        for (const taskId of tasksToReset) {
+            try {
+                // Reset to incomplete and clear completedAt
+                const updateResult = await db.updateField("tasks", taskId, "completed", false);
+                if (updateResult.success) {
+                    await db.updateField("tasks", taskId, "completedAt", null);
+                    resetResults.push({ taskId, success: true });
+                } else {
+                    resetResults.push({ taskId, success: false, error: updateResult.error });
+                }
+            } catch (resetErr) {
+                console.error(`Error resetting task ${taskId}:`, resetErr);
+                resetResults.push({ taskId, success: false, error: resetErr.message });
+            }
+        }
+        
+        console.log(`Completed task reset check. Reset ${tasksToReset.length} tasks.`);
+        return { 
+            success: true, 
+            message: `Reset ${tasksToReset.length} recurring tasks`,
+            data: { tasksReset: tasksToReset.length, details: resetResults }
+        };
+    } catch (err) {
+        console.error("Error in resetRecurringTasks:", err);
+        return { 
+            success: false, 
+            error: typeof err === 'object' ? (err.message || "Unknown error") : String(err) 
+        };
+    }
+};
