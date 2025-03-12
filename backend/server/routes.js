@@ -206,9 +206,26 @@ function addToggleTaskCompletion(app) {
         console.log(`Toggle task completion result:`, result);
 
         if (result.success) {
+          // Get fresh task data and include it in the response for immediate UI update
+          // This avoids stale data in the UI without requiring additional API calls
+          const freshTaskDataPromise = taskService.getUserTasks(authResult.uid);
+          const taskHistoryPromise = taskService.getTaskHistory(authResult.uid);
+          
+          const [freshTaskData, freshTaskHistory] = await Promise.all([
+            freshTaskDataPromise,
+            taskHistoryPromise
+          ]);
+          
           return res.status(200).json({
             success: true,
-            message: req.body.completed ? "Task marked as complete" : "Task marked as incomplete"
+            message: req.body.completed ? "Task marked as complete" : "Task marked as incomplete",
+            data: {
+              tasks: freshTaskData.success ? freshTaskData.data : [],
+              recentActivity: freshTaskHistory.success ? {
+                completions: freshTaskHistory.data.completions?.slice(0, 5) || [],
+                streaks: freshTaskHistory.data.streaks
+              } : null
+            }
           });
         } else {
           // Always return JSON format

@@ -1,9 +1,38 @@
 const db = require("../firebase/firestore");
 
-// Simple in-memory cache for tasks
-const taskCache = {};
-const historyCache = {};
-const HISTORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+// Improved cache implementation with shorter TTLs for real-time updates
+const cacheStore = {
+    tasks: {}, // Cache for user tasks
+    history: {} // Cache for task history
+};
+
+// Shorter cache TTLs for more responsive UI
+const CACHE_TTL = {
+    TASKS: 10 * 1000,      // 10 seconds for tasks
+    HISTORY: 30 * 1000     // 30 seconds for history
+};
+
+// Clear all caches for a user to ensure fresh data
+function clearUserCaches(uid) {
+    if (uid) {
+        console.log(`Clearing all caches for user ${uid}`);
+        Object.keys(cacheStore.tasks).forEach(key => {
+            if (key.includes(uid)) {
+                delete cacheStore.tasks[key];
+            }
+        });
+        Object.keys(cacheStore.history).forEach(key => {
+            if (key.includes(uid)) {
+                delete cacheStore.history[key];
+            }
+        });
+    }
+}
+
+// Helper function to get cache key for history
+function getHistoryCacheKey(uid, startDate, endDate) {
+    return `${uid}:${startDate || ""}:${endDate || ""}`;
+}
 
 module.exports.createTask = async function createTask(uid, task, goalId) {
     try {
@@ -22,6 +51,10 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
         if (goalId) {
             await db.updateFieldArray("goals", goalId, "taskIds", taskResult.id);
         }
+        
+        // Clear caches for this user to ensure fresh data
+        clearUserCaches(uid);
+        
         return { success: true, data: { id: taskResult.id } };
     } catch (err) {
         return { success: false, error: err };
@@ -31,18 +64,23 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
 module.exports.editTask = async function editTask(uid, taskId, fieldToChange, newValue) {
     const result = await db.queryDatabaseSingle(uid, "users");
     if (result.success) {
-        return await db.updateField("tasks", taskId, fieldToChange, newValue);
+        const updateResult = await db.updateField("tasks", taskId, fieldToChange, newValue);
+        
+        // Clear caches for this user to ensure fresh data
+        clearUserCaches(uid);
+        
+        return updateResult;
     } else return result;
 }
 
 module.exports.getUserTasks = async function getUserTasks(uid) {
     console.time('getUserTasks');
     try {
-        // Check if we have a cached version (add simple in-memory caching)
+        // Check if we have a cached version
         const cacheKey = `tasks_${uid}`;
-        if (taskCache[cacheKey] && taskCache[cacheKey].expiry > Date.now()) {
+        if (cacheStore.tasks[cacheKey] && cacheStore.tasks[cacheKey].expiry > Date.now()) {
             console.timeEnd('getUserTasks');
-            return taskCache[cacheKey].data;
+            return cacheStore.tasks[cacheKey].data;
         }
         
         // Use queryDatabase helper function instead of direct db access
@@ -55,10 +93,11 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
         
         if (!tasksResult.data || tasksResult.data.length === 0) {
             console.timeEnd('getUserTasks');
-            // Cache empty result for 30 seconds
-            taskCache[cacheKey] = {
+            
+            // Cache empty result
+            cacheStore.tasks[cacheKey] = {
                 data: { success: true, data: [] },
-                expiry: Date.now() + 30000 // 30 second cache
+                expiry: Date.now() + CACHE_TTL.TASKS
             };
             return { success: true, data: [] };
         }
@@ -75,10 +114,10 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
         
         const result = { success: true, data: tasks };
         
-        // Cache for 30 seconds
-        taskCache[cacheKey] = {
+        // Cache with shorter TTL for more responsive UI
+        cacheStore.tasks[cacheKey] = {
             data: result,
-            expiry: Date.now() + 30000 // 30 second cache
+            expiry: Date.now() + CACHE_TTL.TASKS
         };
         
         console.timeEnd('getUserTasks');
@@ -106,6 +145,10 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
         await db.removeFromFieldArray("goals", goalId, "taskIds", taskId);
     }
     const deleteResult = await db.deleteSingleDoc("tasks", taskId);
+    
+    // Clear all caches for this user to ensure fresh data
+    clearUserCaches(uid);
+    
     return deleteResult;
 }
 
@@ -157,11 +200,6 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
                 }
-                
-                // Clear the history cache for this user to ensure fresh data on next request
-                clearHistoryCache(uid);
-                
-                return { success: true };
             } else {
                 // If marked as incomplete, remove completedAt
                 console.log(`Clearing completedAt timestamp for task ${taskId}`);
@@ -171,12 +209,12 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
                 }
-                
-                // Clear the history cache for this user
-                clearHistoryCache(uid);
-                
-                return { success: true };
             }
+            
+            // Clear all caches for this user to ensure fresh data everywhere
+            clearUserCaches(uid);
+            
+            return { success: true };
         } catch (timestampErr) {
             console.error(`Error updating timestamp: ${timestampErr}`);
             // Main update succeeded, so still return success
@@ -191,29 +229,16 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
     }
 };
 
-// Helper function to clear history cache for a user
-function clearHistoryCache(uid) {
-    if (historyCache[uid]) {
-        console.log(`Clearing history cache for user ${uid}`);
-        delete historyCache[uid];
-    }
-}
-
-// Helper function to get cache key for history
-function getHistoryCacheKey(uid, startDate, endDate) {
-    return `${uid}:${startDate || ""}:${endDate || ""}`;
-}
-
 module.exports.getTaskHistory = async function getTaskHistory(uid, startDate, endDate, lastDoc) {
     try {
         const cacheKey = getHistoryCacheKey(uid, startDate, endDate);
         
         // Check if we have a valid cache entry for this query
-        if (!lastDoc && historyCache[cacheKey] && historyCache[cacheKey].timestamp > Date.now() - HISTORY_CACHE_TTL) {
+        if (!lastDoc && cacheStore.history[cacheKey] && cacheStore.history[cacheKey].timestamp > Date.now() - CACHE_TTL.HISTORY) {
             console.log(`Using cached task history for ${cacheKey}`);
             
             // Apply pagination if lastDoc provided
-            const cachedResults = historyCache[cacheKey].data;
+            const cachedResults = cacheStore.history[cacheKey].data;
             
             return {
                 success: true,
@@ -269,9 +294,9 @@ module.exports.getTaskHistory = async function getTaskHistory(uid, startDate, en
             streaks: calculateStreaks(completedTasks)
         };
         
-        // Cache the full results (not paginated)
+        // Cache the full results (not paginated) with shorter TTL
         if (!lastDoc) {
-            historyCache[cacheKey] = {
+            cacheStore.history[cacheKey] = {
                 timestamp: Date.now(),
                 data: fullResults
             };
