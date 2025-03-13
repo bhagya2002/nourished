@@ -23,6 +23,7 @@
     "apexcharts": "3.43.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.3.0",
+    "framer-motion": "^12.5.0",
     "lodash": "4.17.21",
     "next": "^15.1.6",
     "next-auth": "^4.24.11",

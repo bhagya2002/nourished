@@ -1,14 +1,12 @@
 import {
-  IconAperture,
-  IconCopy,
   IconLayoutDashboard,
   IconLogin,
   IconMoodHappy,
-  IconTypography,
-  IconUserPlus,
   IconTarget,
   IconStack,
   IconUser,
+  IconFriends,
+  IconSettings,
 } from '@tabler/icons-react';
 
 import { uniqueId } from 'lodash';
@@ -18,7 +16,6 @@ const Menuitems = [
     navlabel: true,
     subheader: 'Home',
   },
-
   {
     id: uniqueId(),
     title: 'Dashboard',
@@ -42,16 +39,14 @@ const Menuitems = [
     href: '/tasks',
   },
   {
-    id: uniqueId(),
-    title: 'Typos',
-    icon: IconTypography,
-    href: '/utilities/typography',
+    navlabel: true,
+    subheader: 'Wellness',
   },
   {
     id: uniqueId(),
-    title: 'Shadow',
-    icon: IconCopy,
-    href: '/utilities/shadow',
+    title: 'Mood Tracker',
+    icon: IconMoodHappy,
+    href: '/mood',
   },
   {
     navlabel: true,
@@ -60,18 +55,24 @@ const Menuitems = [
   {
     id: uniqueId(),
     title: 'Friend Circle',
-    icon: IconAperture,
+    icon: IconFriends,
     href: '/friend-circle',
   },
   {
     navlabel: true,
-    subheader: 'User',
+    subheader: 'Account',
   },
   {
     id: uniqueId(),
-    title: 'Account',
+    title: 'Profile',
     icon: IconUser,
     href: '/profile',
+  },
+  {
+    id: uniqueId(),
+    title: 'Settings',
+    icon: IconSettings,
+    href: '/settings',
   },
   {
     id: uniqueId(),
