@@ -27,6 +27,8 @@ import {
   CardContent,
   Typography,
   Divider,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -36,6 +38,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
+import { MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -48,6 +51,8 @@ export type Goal = {
   deadline: string;
   createdAt: string;
   tasks: any[];
+  totalTasks: number;
+  completedTasks: number;
 };
 
 export default function GoalsPage() {
@@ -63,6 +68,8 @@ export default function GoalsPage() {
     deadline: '',
     createdAt: '',
     tasks: [],
+    totalTasks: 0,
+    completedTasks: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -74,12 +81,15 @@ export default function GoalsPage() {
   });
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
+  // More actions menu for edition and deletion
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const goalMoreActionsOpen = Boolean(anchorEl);
 
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
 
-  // reset the form to initial state
+  // Reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({
       id: '',
@@ -88,6 +98,8 @@ export default function GoalsPage() {
       deadline: '',
       createdAt: '',
       tasks: [],
+      totalTasks: 0,
+      completedTasks: 0,
     });
   };
 
@@ -307,13 +319,15 @@ export default function GoalsPage() {
               deadline: newGoal.deadline,
               createdAt: goalCreatedAt,
               taskIds: [],
+              totalTasks: 0,
+              completedTasks: 0,
             },
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
         const goalData = await response.json();
         if (!(goalData && goalData.data)) {
-          throw new Error('Failed to create post');
+          throw new Error('Failed to create goal');
         }
         const goalId = goalData.data.id;
         // Update the goals array with the new goal (avoiding redundant fetches)
@@ -380,7 +394,11 @@ export default function GoalsPage() {
         }),
       });
       if (!response.ok) throw new Error('Failed to create task');
-      const taskId = (await response.json()).id;
+      const taskData = await response.json();
+      if (!(taskData && taskData.data)) {
+        throw new Error('Failed to create task under goal');
+      }
+      const taskId = taskData.data.id;
       const newTask = {
         id: taskId,
         title,
@@ -389,13 +407,41 @@ export default function GoalsPage() {
         createdAt: taskCreatedAt,
         goalId: goals[expandingGoalIndex].id,
       }
-      setGoals((prevGoals) =>
-        prevGoals.map((goal, index) =>
-          index === expandingGoalIndex
-            ? { ...goal, tasks: [...goal.tasks, newTask] }
-            : goal
-        )
-      );
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        updatedGoal.tasks = [...updatedGoal.tasks, newTask];
+        // Update goal's totalTasks
+        const goalDeadline = new Date(updatedGoal.deadline);
+        const taskCreatedTime = new Date(taskCreatedAt);
+        const daysLeft = Math.ceil((goalDeadline.getTime() - taskCreatedTime.getTime()) / (1000 * 60 * 60 * 24));
+        let totalTasks = 0;
+        // Calculate total tasks incompleted based on goal deadline and frequency
+        switch (frequency) {
+          case "Daily":
+            totalTasks = Math.ceil(daysLeft / 1);
+            break;
+          case "Weekly":
+            totalTasks = Math.ceil(daysLeft / 7);
+            break;
+          case "Monthly":
+            totalTasks = Math.ceil(daysLeft / 30);
+            break;
+          default:
+            totalTasks = 0;
+            break;
+        }
+        updatedGoal.totalTasks += totalTasks;
+        return prevGoals.map((goal, idx) =>
+          idx === expandingGoalIndex ? updatedGoal : goal
+        );
+      })
+      // setGoals((prevGoals) =>
+      //   prevGoals.map((goal, index) =>
+      //     index === expandingGoalIndex
+      //       ? { ...goal, tasks: [...goal.tasks, newTask] }
+      //       : goal
+      //   )
+      // );
       setToast({
         open: true,
         message: 'Task created successfully!',
@@ -418,6 +464,7 @@ export default function GoalsPage() {
     frequency: string;
   }) => {
     try {
+      const prevFrequency = goals[expandingGoalIndex].tasks[taskEditingIndex].frequency;
       const updateField = async (field: string, value: string) => {
         const res = await fetch(`${API_BASE_URL}/editTask`, {
           method: 'POST',
@@ -448,6 +495,50 @@ export default function GoalsPage() {
           ...updatedData,
         };
         updatedGoal.tasks = updatedTasks;
+        // Update goal's totalTasks
+        if (prevFrequency !== updatedData.frequency) {
+          const goalDeadline = new Date(updatedGoal.deadline);
+          const taskEditTime = new Date();
+          let daysLeft = Math.ceil((goalDeadline.getTime() - taskEditTime.getTime()) / (1000 * 60 * 60 * 24));
+          if (updatedTasks[taskEditingIndex].completedAt) {
+            const completedAt: Date = new Date(updatedTasks[taskEditingIndex].completedAt);
+            if (completedAt.getDate() === taskEditTime.getDate() && completedAt.getMonth() === taskEditTime.getMonth() && completedAt.getFullYear() === taskEditTime.getFullYear()) {
+              daysLeft -= 1;
+            }
+          }
+          let totalTasksDecreased = 0;
+          let totalTasksIncreased = 0;
+          switch (prevFrequency) {
+            case "Daily":
+              totalTasksDecreased = Math.ceil(daysLeft / 1);
+              break;
+            case "Weekly":
+              totalTasksDecreased = Math.ceil(daysLeft / 7);
+              break;
+            case "Monthly":
+              totalTasksDecreased = Math.ceil(daysLeft / 30);
+              break;
+            default:
+              totalTasksDecreased = 0;
+              break;
+          }
+          switch (updatedData.frequency) {
+            case "Daily":
+              totalTasksIncreased = Math.ceil(daysLeft / 1);
+              break;
+            case "Weekly":
+              totalTasksIncreased = Math.ceil(daysLeft / 7);
+              break;
+            case "Monthly":
+              totalTasksIncreased = Math.ceil(daysLeft / 30);
+              break;
+            default:
+              totalTasksIncreased = 0;
+              break;
+          }
+          updatedGoal.totalTasks -= totalTasksDecreased;
+          updatedGoal.totalTasks += totalTasksIncreased;
+        }
         return prevGoals.map((goal, idx) =>
           idx === expandingGoalIndex ? updatedGoal : goal
         );
@@ -490,6 +581,31 @@ export default function GoalsPage() {
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         const updatedTasks = [...updatedGoal.tasks];
+        // Update goal's totalTasks
+        const now = new Date();
+        let daysLeft = Math.ceil((new Date(updatedGoal.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (updatedTasks[taskDeletingIndex].completedAt) {
+          const completedAt: Date = new Date(updatedTasks[taskDeletingIndex].completedAt);
+          if (completedAt.getDate() === now.getDate() && completedAt.getMonth() === now.getMonth() && completedAt.getFullYear() === now.getFullYear()) {
+            daysLeft -= 1;
+          }
+        }
+        let totalTasksDecreased = 0;
+        switch (updatedTasks[taskDeletingIndex].frequency) {
+          case "Daily":
+            totalTasksDecreased = Math.ceil(daysLeft / 1);
+            break;
+          case "Weekly":
+            totalTasksDecreased = Math.ceil(daysLeft / 7);
+            break;
+          case "Monthly":
+            totalTasksDecreased = Math.ceil(daysLeft / 30);
+            break;
+          default:
+            totalTasksDecreased = 0;
+            break;
+        }
+        updatedGoal.totalTasks -= totalTasksDecreased;
         // Filter out the task to be deleted
         const filteredTasks = updatedTasks.filter(
           (_, i) => i !== taskDeletingIndex
@@ -585,7 +701,14 @@ export default function GoalsPage() {
                   ml: 0,
                   pb: { xs: 16, sm: 20 },
                   height: 0,
-                  backgroundColor: 'secondary.main',
+                  backgroundColor: (() => {
+                    const percentage = Math.round((goal.completedTasks / goal.totalTasks) * 100);
+                    return percentage > 66
+                      ? 'secondary.main'
+                      : percentage > 33
+                      ? 'orange'
+                      : 'red';
+                  })(),
                   opacity: 0.5,
                   position: 'relative',
                   borderRadius: 4,
@@ -602,10 +725,35 @@ export default function GoalsPage() {
                     opacity: 0.3,
                   }
                 }}>
-                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontSize: { xs: 80, sm: 120 }, fontWeight: 1000 }}>
-                  99
+                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontWeight: 1000, 
+                  fontSize: { 
+                    xs: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 60 : 80, 
+                    sm: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 80 : 120 
+                  }}}>
+                  {Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 100 : Math.round((goal.completedTasks / goal.totalTasks) * 100)}
                 </Typography>
               </Card>
+
+              {/* goal actions menu */}
+              <Menu id='goal-more-menu' anchorEl={anchorEl} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} open={goalMoreActionsOpen} onClose={() => { setAnchorEl(null); }} MenuListProps={{ 'aria-labelledby': 'goal-more-button' }}>
+                <MenuItem onClick={() => { handleEditGoalClick(index); setAnchorEl(null); }}>
+                  <ListItemIcon>
+                    <EditIcon fontSize='small' color='primary' />
+                  </ListItemIcon>
+                  <ListItemText>Edit</ListItemText>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleDeleteGoalClick(index);
+                    setAnchorEl(null);
+                  }}
+                >
+                  <ListItemIcon>
+                    <DeleteIcon fontSize='small' color='error' />
+                  </ListItemIcon>
+                  <ListItemText>Delete</ListItemText>
+                </MenuItem>
+              </Menu>
 
               {/* goal info */}
               <CardContent
@@ -614,31 +762,13 @@ export default function GoalsPage() {
                   flex: 1,
                   my: 2,
                 }}>
-                <ListItem disablePadding
-                  secondaryAction={
-                    // Edit and delete buttons for each goal
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, }}>
-                      <IconButton
-                        edge='end'
-                        onClick={() => handleEditGoalClick(index)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        edge='end'
-                        onClick={() => handleDeleteGoalClick(index)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  }>
-
+                <ListItem disablePadding>
                   {/* Goal details */}
                   <ListItemButton onClick={() => handleGoalExpand(index)}
                     sx={{
                       p: 0,
                       transform: 'translateX(-16px)',
-                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 3, sm: 6 } },
+                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 0, sm: 0 }, pl: { xs: 0, sm: 1 } },
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-evenly',
@@ -649,6 +779,17 @@ export default function GoalsPage() {
                     <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
                     <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
                   </ListItemButton>
+
+                  {/* goal actions trigger button */}
+                  <IconButton aria-label='goal-actions' aria-haspopup='true' aria-expanded={goalMoreActionsOpen ? 'true' : undefined} id='goal-more-button'
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 0,
+                    }}>
+                    <MoreVert color='primary' />
+                  </IconButton>
                 </ListItem>
 
                 {/* Tasks list under each goal */}
@@ -746,6 +887,7 @@ export default function GoalsPage() {
               InputLabelProps={{ shrink: true }}
               size='small'
               inputProps={{ min: today }}
+              disabled={isEditing}
             />
           </DialogContent>
           <DialogActions>

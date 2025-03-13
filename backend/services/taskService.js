@@ -49,7 +49,32 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
             return { success: false, error: updateResult.error };
         }
         if (goalId) {
+            // Update fields in the goal document
             await db.updateFieldArray("goals", goalId, "taskIds", taskResult.id);
+            const goalResult = await db.queryDatabaseSingle(goalId, "goals");
+            if (!goalResult.success) {
+                return goalResult;
+            }
+            const goal = goalResult.data;
+            const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+            let totalTasks = 0;
+            // Calculate total tasks incompleted based on goal deadline and frequency
+            switch (task.frequency) {
+                case "Daily":
+                    totalTasks = Math.ceil(daysLeft / 1);
+                    break;
+                case "Weekly":
+                    totalTasks = Math.ceil(daysLeft / 7);
+                    break;
+                case "Monthly":
+                    totalTasks = Math.ceil(daysLeft / 30);
+                    break;
+                default:
+                    totalTasks = 0;
+                    break;
+            }
+            console.log(`Task ${taskResult.id} created for goal ${goalId}. Days left: ${daysLeft}. Total tasks: ${totalTasks}`);
+            await db.incrementField("goals", goalId, "totalTasks", totalTasks);
         }
         
         // Clear caches for this user to ensure fresh data
@@ -64,6 +89,62 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
 module.exports.editTask = async function editTask(uid, taskId, fieldToChange, newValue) {
     const result = await db.queryDatabaseSingle(uid, "users");
     if (result.success) {
+        // Update the parent goal document fields
+        if (fieldToChange === "frequency") {
+            const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
+            if (!taskResult.success) {
+                return taskResult;
+            }
+            const goalId = taskResult.data.goalId;
+            if (goalId && newValue !== taskResult.data.frequency) {
+                const goalResult = await db.queryDatabaseSingle(goalId, "goals");
+                if (!goalResult.success) {
+                    return goalResult;
+                }
+                let daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
+                if (taskResult.data.completedAt) {
+                    const completedAt = new Date(taskResult.data.completedAt);
+                    const today = new Date();
+                    if (completedAt.getDate() === today.getDate() && completedAt.getMonth() === today.getMonth() && completedAt.getFullYear() === today.getFullYear()) {
+                        daysLeft--;
+                    }
+                }
+                let totalTasksDecreased = 0;
+                let totalTasksIncreased = 0;
+                switch (taskResult.data.frequency) {
+                    case "Daily":
+                        totalTasksDecreased = Math.ceil(daysLeft / 1);
+                        break;
+                    case "Weekly":
+                        totalTasksDecreased = Math.ceil(daysLeft / 7);
+                        break;
+                    case "Monthly":
+                        totalTasksDecreased = Math.ceil(daysLeft / 30);
+                        break;
+                    default:
+                        totalTasksDecreased = 0;
+                        break;
+                }
+                switch (newValue) {
+                    case "Daily":
+                        totalTasksIncreased = Math.ceil(daysLeft / 1);
+                        break;
+                    case "Weekly":
+                        totalTasksIncreased = Math.ceil(daysLeft / 7);
+                        break;
+                    case "Monthly":
+                        totalTasksIncreased = Math.ceil(daysLeft / 30);
+                        break;
+                    default:
+                        totalTasksIncreased = 0;
+                        break;
+                }
+                console.log(`Task ${taskId} frequency changed from ${taskResult.data.frequency} to ${newValue}. Days left: ${daysLeft}. Total tasks decreased: ${totalTasksDecreased}. Total tasks increased: ${totalTasksIncreased}`);
+                await db.incrementField("goals", goalId, "totalTasks", totalTasksIncreased - totalTasksDecreased);
+            }
+        }
+
         const updateResult = await db.updateField("tasks", taskId, fieldToChange, newValue);
         
         // Clear caches for this user to ensure fresh data
@@ -137,6 +218,43 @@ module.exports.getGoalTasks = async function getGoalTasks(goalId) {
 }
 
 module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
+    // Update goal document on totalTasks field
+    if (goalId) {
+        const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
+        if (!taskResult.success) {
+            return taskResult;
+        }
+        const goalResult = await db.queryDatabaseSingle(goalId, "goals");
+        if (!goalResult.success) {
+            return goalResult;
+        }
+        let daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+        // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
+        if (taskResult.data.completedAt) {
+            const completedAt = new Date(taskResult.data.completedAt);
+            const today = new Date();
+            if (completedAt.getDate() === today.getDate() && completedAt.getMonth() === today.getMonth() && completedAt.getFullYear() === today.getFullYear()) {
+                daysLeft--;
+            }
+        }
+        let totalTasksDecreased = 0;
+        switch (taskResult.data.frequency) {
+            case "Daily":
+                totalTasksDecreased = Math.ceil(daysLeft / 1);
+                break;
+            case "Weekly":
+                totalTasksDecreased = Math.ceil(daysLeft / 7);
+                break;
+            case "Monthly":
+                totalTasksDecreased = Math.ceil(daysLeft / 30);
+                break;
+            default:
+                totalTasksDecreased = 0;
+                break;
+        }
+        await db.incrementField("goals", goalId, "totalTasks", -totalTasksDecreased);
+        console.log(`For goal: ${goalId}, total tasks decreased: ${totalTasksDecreased}`);
+    }
     const removeResult = await db.removeFromFieldArray("users", uid, "tasks", taskId);
     if (!removeResult.success) {
         return { success: false, error: removeResult.error };
@@ -200,6 +318,24 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
                 }
+                if (task.data.frequency && task.data.frequency !== "" && task.data.goalId) {
+                    const goalResult = await db.queryDatabaseSingle(task.data.goalId, "goals");
+                    if (!goalResult.success) {
+                        console.error(`Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`);
+                        // We succeeded with the main update, so return success even if goal update fails
+                        return { success: true };
+                    }
+                    const daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysLeft > 0) {
+                        // Update fields in the goal document
+                        const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", 1);
+                        if (!update3.success) {
+                            console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                            // We succeeded with the main update, so return success even if goal update fails
+                            return { success: true };
+                        }
+                    }
+                }
             } else {
                 // If marked as incomplete, remove completedAt
                 console.log(`Clearing completedAt timestamp for task ${taskId}`);
@@ -208,6 +344,24 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     console.error(`Failed to clear completedAt: ${JSON.stringify(update2.error || "Unknown error")}`);
                     // We succeeded with the main update, so return success even if timestamp update fails
                     return { success: true };
+                }
+                if (task.data.frequency && task.data.frequency !== "" && task.data.goalId) {
+                    const goalResult = await db.queryDatabaseSingle(task.data.goalId, "goals");
+                    if (!goalResult.success) {
+                        console.error(`Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`);
+                        // We succeeded with the main update, so return success even if goal update fails
+                        return { success: true };
+                    }
+                    const daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysLeft > 0) {
+                        // Update fields in the goal document
+                        const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", -1);
+                        if (!update3.success) {
+                            console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                            // We succeeded with the main update, so return success even if goal update fails
+                            return { success: true };
+                        }
+                    }
                 }
             }
             
