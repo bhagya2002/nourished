@@ -48,6 +48,8 @@ export type Goal = {
   deadline: string;
   createdAt: string;
   tasks: any[];
+  totalTasks: number;
+  completedTasks: number;
 };
 
 export default function GoalsPage() {
@@ -63,6 +65,8 @@ export default function GoalsPage() {
     deadline: '',
     createdAt: '',
     tasks: [],
+    totalTasks: 0,
+    completedTasks: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
@@ -88,6 +92,8 @@ export default function GoalsPage() {
       deadline: '',
       createdAt: '',
       tasks: [],
+      totalTasks: 0,
+      completedTasks: 0,
     });
   };
 
@@ -307,13 +313,15 @@ export default function GoalsPage() {
               deadline: newGoal.deadline,
               createdAt: goalCreatedAt,
               taskIds: [],
+              totalTasks: 0,
+              completedTasks: 0,
             },
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
         const goalData = await response.json();
         if (!(goalData && goalData.data)) {
-          throw new Error('Failed to create post');
+          throw new Error('Failed to create goal');
         }
         const goalId = goalData.data.id;
         // Update the goals array with the new goal (avoiding redundant fetches)
@@ -380,7 +388,11 @@ export default function GoalsPage() {
         }),
       });
       if (!response.ok) throw new Error('Failed to create task');
-      const taskId = (await response.json()).id;
+      const taskData = await response.json();
+      if (!(taskData && taskData.data)) {
+        throw new Error('Failed to create task under goal');
+      }
+      const taskId = taskData.data.id;
       const newTask = {
         id: taskId,
         title,
@@ -746,6 +758,7 @@ export default function GoalsPage() {
               InputLabelProps={{ shrink: true }}
               size='small'
               inputProps={{ min: today }}
+              disabled={isEditing}
             />
           </DialogContent>
           <DialogActions>
