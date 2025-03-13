@@ -160,7 +160,8 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
             mb: 3,
           }}
         >
-          {moodOptions.map((mood) => {
+          {/* Mood options to show negative on left, positive on right */}
+          {moodOptions.slice().reverse().map((mood) => {
             const Icon = mood.icon;
             const isSelected = selectedMood === mood.value;
             

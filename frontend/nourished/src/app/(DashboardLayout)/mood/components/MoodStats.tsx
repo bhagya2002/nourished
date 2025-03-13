@@ -419,7 +419,7 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
           </Typography>
           
           <Grid container spacing={2}>
-            {[5, 4, 3, 2, 1, 0].map((rating) => {
+            {[0, 1, 2, 3, 4, 5].map((rating) => {
               const moodInfo = getMoodInfo(rating);
               const Icon = moodInfo.icon;
               const count = moodDistribution[rating];
