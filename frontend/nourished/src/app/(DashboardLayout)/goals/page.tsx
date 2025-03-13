@@ -27,6 +27,8 @@ import {
   CardContent,
   Typography,
   Divider,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -36,6 +38,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
+import { MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -78,12 +81,15 @@ export default function GoalsPage() {
   });
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
+  // More actions menu for edition and deletion
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const goalMoreActionsOpen = Boolean(anchorEl);
 
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
 
-  // reset the form to initial state
+  // Reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({
       id: '',
@@ -728,6 +734,27 @@ export default function GoalsPage() {
                 </Typography>
               </Card>
 
+              {/* goal actions menu */}
+              <Menu id='goal-more-menu' anchorEl={anchorEl} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} open={goalMoreActionsOpen} onClose={() => { setAnchorEl(null); }} MenuListProps={{ 'aria-labelledby': 'goal-more-button' }}>
+                <MenuItem onClick={() => { handleEditGoalClick(index); setAnchorEl(null); }}>
+                  <ListItemIcon>
+                    <EditIcon fontSize='small' color='primary' />
+                  </ListItemIcon>
+                  <ListItemText>Edit</ListItemText>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleDeleteGoalClick(index);
+                    setAnchorEl(null);
+                  }}
+                >
+                  <ListItemIcon>
+                    <DeleteIcon fontSize='small' color='error' />
+                  </ListItemIcon>
+                  <ListItemText>Delete</ListItemText>
+                </MenuItem>
+              </Menu>
+
               {/* goal info */}
               <CardContent
                 sx={{
@@ -735,31 +762,13 @@ export default function GoalsPage() {
                   flex: 1,
                   my: 2,
                 }}>
-                <ListItem disablePadding
-                  secondaryAction={
-                    // Edit and delete buttons for each goal
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, }}>
-                      <IconButton
-                        edge='end'
-                        onClick={() => handleEditGoalClick(index)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        edge='end'
-                        onClick={() => handleDeleteGoalClick(index)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  }>
-
+                <ListItem disablePadding>
                   {/* Goal details */}
                   <ListItemButton onClick={() => handleGoalExpand(index)}
                     sx={{
                       p: 0,
                       transform: 'translateX(-16px)',
-                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 3, sm: 6 } },
+                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 0, sm: 0 }, pl: { xs: 0, sm: 1 } },
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-evenly',
@@ -770,6 +779,17 @@ export default function GoalsPage() {
                     <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
                     <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
                   </ListItemButton>
+
+                  {/* goal actions trigger button */}
+                  <IconButton aria-label='goal-actions' aria-haspopup='true' aria-expanded={goalMoreActionsOpen ? 'true' : undefined} id='goal-more-button'
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: 0,
+                    }}>
+                    <MoreVert color='primary' />
+                  </IconButton>
                 </ListItem>
 
                 {/* Tasks list under each goal */}

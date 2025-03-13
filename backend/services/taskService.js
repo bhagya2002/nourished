@@ -319,12 +319,21 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     return { success: true };
                 }
                 if (task.data.frequency && task.data.frequency !== "" && task.data.goalId) {
-                    // Update fields in the goal document
-                    const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", 1);
-                    if (!update3.success) {
-                        console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                    const goalResult = await db.queryDatabaseSingle(task.data.goalId, "goals");
+                    if (!goalResult.success) {
+                        console.error(`Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`);
                         // We succeeded with the main update, so return success even if goal update fails
                         return { success: true };
+                    }
+                    const daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysLeft > 0) {
+                        // Update fields in the goal document
+                        const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", 1);
+                        if (!update3.success) {
+                            console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                            // We succeeded with the main update, so return success even if goal update fails
+                            return { success: true };
+                        }
                     }
                 }
             } else {
@@ -337,12 +346,21 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(uid, t
                     return { success: true };
                 }
                 if (task.data.frequency && task.data.frequency !== "" && task.data.goalId) {
-                    // Update fields in the goal document
-                    const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", -1);
-                    if (!update3.success) {
-                        console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                    const goalResult = await db.queryDatabaseSingle(task.data.goalId, "goals");
+                    if (!goalResult.success) {
+                        console.error(`Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`);
                         // We succeeded with the main update, so return success even if goal update fails
                         return { success: true };
+                    }
+                    const daysLeft = Math.ceil((new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysLeft > 0) {
+                        // Update fields in the goal document
+                        const update3 = await db.incrementField("goals", task.data.goalId, "completedTasks", -1);
+                        if (!update3.success) {
+                            console.error(`Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`);
+                            // We succeeded with the main update, so return success even if goal update fails
+                            return { success: true };
+                        }
                     }
                 }
             }
