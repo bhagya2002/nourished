@@ -892,6 +892,21 @@ export default function TasksPage() {
               }
               label="Show Completed"
             />
+            <Button
+              variant="outlined"
+              startIcon={<EventNoteIcon />}
+              onClick={() => router.push('/tasks/history')}
+              sx={{
+                ml: 2,
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                },
+              }}
+            >
+              History
+            </Button>
           </Box>
           <Fab
             color="primary"
@@ -902,6 +917,10 @@ export default function TasksPage() {
               bottom: { xs: 16, sm: 'auto' },
               right: { xs: 16, sm: 'auto' },
               zIndex: { xs: 1000, sm: 1 },
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'rotate(90deg)',
+              },
             }}
           >
             <AddIcon />

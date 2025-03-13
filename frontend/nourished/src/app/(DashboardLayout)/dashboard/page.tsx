@@ -67,6 +67,62 @@ const Dashboard = () => {
   const [goals, setGoals] = useState<any[]>([]);
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
   const [goalsError, setGoalsError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Function to get user's first name
+  const getFirstName = () => {
+    // Try to get name from user profile first
+    if (userProfile?.firstName) {
+      return userProfile.firstName;
+    }
+    
+    if (userProfile?.name) {
+      // Split on spaces and get first part if we have full name
+      const nameParts = userProfile.name.trim().split(/\s+/);
+      return nameParts[0];
+    }
+    
+    // Fallback to display name from Firebase Auth
+    if (user?.displayName) {
+      // Split on spaces and get first part
+      const nameParts = user.displayName.trim().split(/\s+/);
+      return nameParts[0];
+    }
+
+    // Final fallback
+    return 'there';
+  };
+
+  // Fetch user profile
+  const fetchUserProfile = async () => {
+    if (!token || !user?.uid) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          token,
+          userId: user.uid // Using the current user's ID to get their own profile
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Failed to fetch user profile:', errorData || response.statusText);
+        throw new Error('Failed to fetch user profile');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setUserProfile(data.data);
+      } else {
+        console.error('User profile fetch was not successful:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   useEffect(() => {
     console.log('🚀 Dashboard Auth Debug:', { user, token, loading });
@@ -377,6 +433,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (user && token) {
+      fetchUserProfile();
       fetchTasks();
       fetchRecentCompletions();
       fetchHappinessData();
@@ -475,122 +532,162 @@ const Dashboard = () => {
   }
 
   return (
-    <PageContainer title='Nourished' description='Welcome to Nourished'>
-      <Box>
-        <Grid container spacing={3}>
-          {/* First Row: Key Metrics */}
-          <Grid item xs={12}>
-            <Grid container spacing={3}>
-              {/* Task Overview */}
-              <Grid item xs={12} sm={4}>
-                <TaskOverview
-                  completedCount={tasks.filter((t) => t.completed).length}
-                  totalCount={tasks.length}
-                />
-              </Grid>
+    <PageContainer title="Dashboard" description="Welcome to your dashboard">
+      {/* Welcome Message */}
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+            fontWeight: 600,
+            letterSpacing: '-0.5px',
+            color: 'text.primary',
+            fontFamily: "'Inter', sans-serif",
+            lineHeight: 1.2,
+            mb: 0.5,
+          }}
+        >
+          Welcome back,{' '}
+          <Box
+            component="span"
+            sx={{
+              background: (theme) =>
+                `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              display: 'inline',
+            }}
+          >
+            {getFirstName()}
+          </Box>
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: 'text.secondary',
+            fontWeight: 400,
+            letterSpacing: '0.15px',
+          }}
+        >
+          Here's an overview of your wellness journey
+        </Typography>
+      </Box>
 
-              {/* Streak Counter */}
-              <Grid item xs={12} sm={4}>
-                <StreakCounter
-                  taskHistory={completedTasks}
-                  isLoading={isLoadingHistory}
-                  streakData={streakData}
-                />
-              </Grid>
+      {/* Rest of the dashboard content */}
+      <Grid container spacing={3}>
+        {/* First Row: Key Metrics */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            {/* Task Overview */}
+            <Grid item xs={12} sm={4}>
+              <TaskOverview
+                completedCount={tasks.filter((t) => t.completed).length}
+                totalCount={tasks.length}
+              />
+            </Grid>
 
-              {/* Recent Activity */}
-              <Grid item xs={12} sm={4}>
-                <DashboardCard title='Recent Activity'>
-                  <Box sx={{ p: 2 }}>
-                    {isLoadingHistory ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                        <CircularProgress size={24} />
-                      </Box>
-                    ) : completedTasks.length > 0 ? (
-                      completedTasks.slice(0, 3).map((task, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            py: 1.5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            borderBottom:
-                              index < completedTasks.slice(0, 3).length - 1
-                                ? '1px solid'
-                                : 'none',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <CheckCircleIcon
-                            color='success'
-                            sx={{ mr: 1.5, fontSize: '1rem' }}
-                          />
-                          <Box>
-                            <Typography
-                              variant='body2'
-                              noWrap
-                              sx={{ maxWidth: '140px' }}
-                            >
-                              {task.title}
-                            </Typography>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {formatDate(task.completedAt)}
-                            </Typography>
-                          </Box>
+            {/* Streak Counter */}
+            <Grid item xs={12} sm={4}>
+              <StreakCounter
+                taskHistory={completedTasks}
+                isLoading={isLoadingHistory}
+                streakData={streakData}
+              />
+            </Grid>
+
+            {/* Recent Activity */}
+            <Grid item xs={12} sm={4}>
+              <DashboardCard title='Recent Activity'>
+                <Box sx={{ p: 2 }}>
+                  {isLoadingHistory ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : completedTasks.length > 0 ? (
+                    completedTasks.slice(0, 3).map((task, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          py: 1.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderBottom:
+                            index < completedTasks.slice(0, 3).length - 1
+                              ? '1px solid'
+                              : 'none',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <CheckCircleIcon
+                          color='success'
+                          sx={{ mr: 1.5, fontSize: '1rem' }}
+                        />
+                        <Box>
+                          <Typography
+                            variant='body2'
+                            noWrap
+                            sx={{ maxWidth: '140px' }}
+                          >
+                            {task.title}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {formatDate(task.completedAt)}
+                          </Typography>
                         </Box>
-                      ))
-                    ) : (
-                      <Box sx={{ py: 2, textAlign: 'center' }}>
-                        <Typography variant='body2' color='text.secondary'>
-                          No completed tasks yet
-                        </Typography>
                       </Box>
-                    )}
-                  </Box>
-                </DashboardCard>
-              </Grid>
+                    ))
+                  ) : (
+                    <Box sx={{ py: 2, textAlign: 'center' }}>
+                      <Typography variant='body2' color='text.secondary'>
+                        No completed tasks yet
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </DashboardCard>
             </Grid>
-          </Grid>
-
-          {/* Second Row: Goals */}
-          <Grid item xs={12}>
-            <GoalProgress 
-              goals={goals}
-              isLoading={isLoadingGoals}
-            />
-          </Grid>
-
-          {/* Third Row: Charts */}
-          <Grid item xs={12}>
-            <Grid container spacing={3}>
-              {/* Task Completion Trends and Happiness Trends side by side */}
-              <Grid item xs={12} md={6}>
-                <TaskCompletionTrends
-                  taskHistory={completedTasks}
-                  isLoading={isLoadingHistory}
-                  error={historyError}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <HappinessTrends
-                  happinessData={happinessData}
-                  isLoading={isLoadingHappiness}
-                  error={happinessError}
-                  showOverview={true}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          {/* Fourth Row: Wellness Categories */}
-          <Grid item xs={12}>
-            <WellnessCategories tasks={tasks} isLoading={isLoadingTasks} />
           </Grid>
         </Grid>
-      </Box>
+
+        {/* Second Row: Goals */}
+        <Grid item xs={12}>
+          <GoalProgress 
+            goals={goals}
+            isLoading={isLoadingGoals}
+          />
+        </Grid>
+
+        {/* Third Row: Charts */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            {/* Task Completion Trends and Happiness Trends side by side */}
+            <Grid item xs={12} md={6}>
+              <TaskCompletionTrends
+                taskHistory={completedTasks}
+                isLoading={isLoadingHistory}
+                error={historyError}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <HappinessTrends
+                happinessData={happinessData}
+                isLoading={isLoadingHappiness}
+                error={happinessError}
+                showOverview={true}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Fourth Row: Wellness Categories */}
+        <Grid item xs={12}>
+          <WellnessCategories tasks={tasks} isLoading={isLoadingTasks} />
+        </Grid>
+      </Grid>
     </PageContainer>
   );
 };
