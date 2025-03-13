@@ -24,7 +24,7 @@ type NavGroup = {
 
 interface ItemType {
   item: NavGroup;
-  onClick: (event: React.MouseEvent<HTMLElement>) => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   hideMenu?: any;
   level?: number | any;
   pathDirect: string;

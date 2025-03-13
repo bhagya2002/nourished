@@ -28,6 +28,10 @@ export default function RootLayout({ children }: Props) {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <AuthProvider>
       {' '}
@@ -43,11 +47,22 @@ export default function RootLayout({ children }: Props) {
         {/* ------------------------------------------- */}
         {/* Main Wrapper */}
         {/* ------------------------------------------- */}
-        <PageWrapper className='page-wrapper'>
+        <PageWrapper 
+          className='page-wrapper'
+          sx={{
+            marginLeft: { xs: 0, lg: 0 }, // No margin on mobile, small margin on desktop
+            width: '100%',
+            transition: 'margin 0.3s ease',
+          }}
+        >
           {/* ------------------------------------------- */}
           {/* Header */}
           {/* ------------------------------------------- */}
-          <Header toggleMobileSidebar={() => setMobileSidebarOpen(true)} />
+          <Header 
+            toggleMobileSidebar={() => setMobileSidebarOpen(true)} 
+            toggleSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
           {/* ------------------------------------------- */}
           {/* PageContent */}
           {/* ------------------------------------------- */}
