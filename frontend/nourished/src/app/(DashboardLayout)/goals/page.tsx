@@ -401,13 +401,41 @@ export default function GoalsPage() {
         createdAt: taskCreatedAt,
         goalId: goals[expandingGoalIndex].id,
       }
-      setGoals((prevGoals) =>
-        prevGoals.map((goal, index) =>
-          index === expandingGoalIndex
-            ? { ...goal, tasks: [...goal.tasks, newTask] }
-            : goal
-        )
-      );
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        updatedGoal.tasks = [...updatedGoal.tasks, newTask];
+        // Update goal's totalTasks
+        const goalDeadline = new Date(updatedGoal.deadline);
+        const taskCreatedTime = new Date(taskCreatedAt);
+        const daysLeft = Math.ceil((goalDeadline.getTime() - taskCreatedTime.getTime()) / (1000 * 60 * 60 * 24));
+        let totalTasks = 0;
+        // Calculate total tasks incompleted based on goal deadline and frequency
+        switch (frequency) {
+          case "Daily":
+            totalTasks = Math.ceil(daysLeft / 1);
+            break;
+          case "Weekly":
+            totalTasks = Math.ceil(daysLeft / 7);
+            break;
+          case "Monthly":
+            totalTasks = Math.ceil(daysLeft / 30);
+            break;
+          default:
+            totalTasks = 0;
+            break;
+        }
+        updatedGoal.totalTasks += totalTasks;
+        return prevGoals.map((goal, idx) =>
+          idx === expandingGoalIndex ? updatedGoal : goal
+        );
+      })
+      // setGoals((prevGoals) =>
+      //   prevGoals.map((goal, index) =>
+      //     index === expandingGoalIndex
+      //       ? { ...goal, tasks: [...goal.tasks, newTask] }
+      //       : goal
+      //   )
+      // );
       setToast({
         open: true,
         message: 'Task created successfully!',
@@ -430,6 +458,7 @@ export default function GoalsPage() {
     frequency: string;
   }) => {
     try {
+      const prevFrequency = goals[expandingGoalIndex].tasks[taskEditingIndex].frequency;
       const updateField = async (field: string, value: string) => {
         const res = await fetch(`${API_BASE_URL}/editTask`, {
           method: 'POST',
@@ -460,6 +489,50 @@ export default function GoalsPage() {
           ...updatedData,
         };
         updatedGoal.tasks = updatedTasks;
+        // Update goal's totalTasks
+        if (prevFrequency !== updatedData.frequency) {
+          const goalDeadline = new Date(updatedGoal.deadline);
+          const taskEditTime = new Date();
+          let daysLeft = Math.ceil((goalDeadline.getTime() - taskEditTime.getTime()) / (1000 * 60 * 60 * 24));
+          if (updatedTasks[taskEditingIndex].completedAt) {
+            const completedAt: Date = new Date(updatedTasks[taskEditingIndex].completedAt);
+            if (completedAt.getDate() === taskEditTime.getDate() && completedAt.getMonth() === taskEditTime.getMonth() && completedAt.getFullYear() === taskEditTime.getFullYear()) {
+              daysLeft -= 1;
+            }
+          }
+          let totalTasksDecreased = 0;
+          let totalTasksIncreased = 0;
+          switch (prevFrequency) {
+            case "Daily":
+              totalTasksDecreased = Math.ceil(daysLeft / 1);
+              break;
+            case "Weekly":
+              totalTasksDecreased = Math.ceil(daysLeft / 7);
+              break;
+            case "Monthly":
+              totalTasksDecreased = Math.ceil(daysLeft / 30);
+              break;
+            default:
+              totalTasksDecreased = 0;
+              break;
+          }
+          switch (updatedData.frequency) {
+            case "Daily":
+              totalTasksIncreased = Math.ceil(daysLeft / 1);
+              break;
+            case "Weekly":
+              totalTasksIncreased = Math.ceil(daysLeft / 7);
+              break;
+            case "Monthly":
+              totalTasksIncreased = Math.ceil(daysLeft / 30);
+              break;
+            default:
+              totalTasksIncreased = 0;
+              break;
+          }
+          updatedGoal.totalTasks -= totalTasksDecreased;
+          updatedGoal.totalTasks += totalTasksIncreased;
+        }
         return prevGoals.map((goal, idx) =>
           idx === expandingGoalIndex ? updatedGoal : goal
         );
@@ -502,6 +575,31 @@ export default function GoalsPage() {
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         const updatedTasks = [...updatedGoal.tasks];
+        // Update goal's totalTasks
+        const now = new Date();
+        let daysLeft = Math.ceil((new Date(updatedGoal.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (updatedTasks[taskDeletingIndex].completedAt) {
+          const completedAt: Date = new Date(updatedTasks[taskDeletingIndex].completedAt);
+          if (completedAt.getDate() === now.getDate() && completedAt.getMonth() === now.getMonth() && completedAt.getFullYear() === now.getFullYear()) {
+            daysLeft -= 1;
+          }
+        }
+        let totalTasksDecreased = 0;
+        switch (updatedTasks[taskDeletingIndex].frequency) {
+          case "Daily":
+            totalTasksDecreased = Math.ceil(daysLeft / 1);
+            break;
+          case "Weekly":
+            totalTasksDecreased = Math.ceil(daysLeft / 7);
+            break;
+          case "Monthly":
+            totalTasksDecreased = Math.ceil(daysLeft / 30);
+            break;
+          default:
+            totalTasksDecreased = 0;
+            break;
+        }
+        updatedGoal.totalTasks -= totalTasksDecreased;
         // Filter out the task to be deleted
         const filteredTasks = updatedTasks.filter(
           (_, i) => i !== taskDeletingIndex
@@ -597,7 +695,14 @@ export default function GoalsPage() {
                   ml: 0,
                   pb: { xs: 16, sm: 20 },
                   height: 0,
-                  backgroundColor: 'secondary.main',
+                  backgroundColor: (() => {
+                    const percentage = Math.round((goal.completedTasks / goal.totalTasks) * 100);
+                    return percentage > 66
+                      ? 'secondary.main'
+                      : percentage > 33
+                      ? 'orange'
+                      : 'red';
+                  })(),
                   opacity: 0.5,
                   position: 'relative',
                   borderRadius: 4,
@@ -614,8 +719,12 @@ export default function GoalsPage() {
                     opacity: 0.3,
                   }
                 }}>
-                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontSize: { xs: 80, sm: 120 }, fontWeight: 1000 }}>
-                  99
+                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontWeight: 1000, 
+                  fontSize: { 
+                    xs: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 60 : 80, 
+                    sm: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 80 : 120 
+                  }}}>
+                  {Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 100 : Math.round((goal.completedTasks / goal.totalTasks) * 100)}
                 </Typography>
               </Card>
 

@@ -252,6 +252,7 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
                 totalTasksDecreased = 0;
                 break;
         }
+        await db.incrementField("goals", goalId, "totalTasks", -totalTasksDecreased);
         console.log(`For goal: ${goalId}, total tasks decreased: ${totalTasksDecreased}`);
     }
     const removeResult = await db.removeFromFieldArray("users", uid, "tasks", taskId);
