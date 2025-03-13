@@ -38,6 +38,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import TaskCard from './components/TaskCard';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -50,6 +51,8 @@ export default function TasksPage() {
   const { user, token, loading: authLoading, refreshToken } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [filteredTasks, setFilteredTasks] = useState<any[]>([]);
 
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -80,6 +83,13 @@ export default function TasksPage() {
       fetchTasks();
     }
   }, [user, token]);
+
+  // Update filtered tasks when tasks or showCompleted changes
+  useEffect(() => {
+    setFilteredTasks(
+      tasks.filter((task) => !task.completed || showCompleted)
+    );
+  }, [tasks, showCompleted]);
 
   const fetchTasks = async () => {
     if (!token) {
@@ -839,245 +849,136 @@ export default function TasksPage() {
   };
 
   return (
-    <PageContainer title='Task Manager' description='Manage your tasks'>
-      <Box sx={{ mt: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-          <Typography variant='h4'>Your Tasks</Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant='outlined'
-              color='secondary'
-              onClick={() => router.push('/tasks/history')}
-              startIcon={<EventNoteIcon />}
-            >
-              History
-            </Button>
-            <Button
-              variant='contained'
-              color='primary'
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateDialog}
-            >
-              Add Task
-            </Button>
-          </Box>
-        </Box>
-
-        {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+    <PageContainer title="Tasks" description="Manage your tasks">
+      <Box sx={{ position: 'relative', minHeight: '70vh' }}>
+        {/* Loading overlay */}
+        {isLoading && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+              zIndex: 1,
+            }}
+          >
             <CircularProgress />
           </Box>
-        ) : notification.open ? (
-          <Snackbar
-            open={notification.open}
-            autoHideDuration={1500}
-            onClose={() => setNotification({ ...notification, open: false })}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          >
-            <Alert
-              onClose={() => setNotification({ ...notification, open: false })}
-              severity={notification.severity}
-              sx={{ width: '100%' }}
-              action={
-                <Button
-                  color='inherit'
-                  size='small'
-                  onClick={() =>
-                    setNotification({ ...notification, open: false })
-                  }
-                >
-                  Dismiss
-                </Button>
-              }
-            >
-              {notification.message}
-            </Alert>
-          </Snackbar>
-        ) : (
-          <>
-            {tasks.length === 0 ? (
-              <Alert severity='info' sx={{ mt: 2 }}>
-                You don&apos;t have any tasks yet. Click &apos;Add Task&apos; to
-                create one.
-              </Alert>
-            ) : (
-              <Grid container spacing={3} alignItems='stretch'>
-                {tasks.map((task) => (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    key={task.id}
-                    sx={{ display: 'flex' }}
-                  >
-                    <Card
-                      sx={{
-                        width: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        transition: 'box-shadow 0.3s, transform 0.2s',
-                        '&:hover': {
-                          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                          transform: 'translateY(-2px)',
-                        },
-                        backgroundColor: 'white', // Always white background
-                      }}
-                    >
-                      <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                        <Typography
-                          variant='h6'
-                          component='div'
-                          sx={{
-                            mb: 1.5,
-                            color: 'text.primary',
-                          }}
-                        >
-                          {task.title}
-                          {task.completed && (
-                            <CheckCircleIcon
-                              fontSize='small'
-                              color='success'
-                              sx={{ ml: 1, verticalAlign: 'middle' }}
-                            />
-                          )}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{
-                            mb: 2,
-                            minHeight: '40px',
-                            maxHeight: '60px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                          }}
-                        >
-                          {task.description || 'No description provided'}
-                        </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            mt: 1,
-                          }}
-                        >
-                          <Typography variant='caption' color='text.secondary'>
-                            Created:{' '}
-                            {new Date(task.createdAt).toLocaleDateString()}
-                          </Typography>
-                          {task.frequency && (
-                            <Typography
-                              variant='caption'
-                              sx={{
-                                color: 'primary.main',
-                                fontWeight: 'medium',
-                              }}
-                            >
-                              {task.frequency}
-                            </Typography>
-                          )}
-                        </Box>
-                      </CardContent>
-
-                      <CardActions
-                        sx={{
-                          justifyContent: 'space-between',
-                          padding: '16px',
-                          paddingTop: '16px',
-                          paddingBottom: '24px',
-                          borderTop: '1px solid rgba(0,0,0,0.1)',
-                        }}
-                      >
-                        <Box>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={task.completed}
-                                onChange={() => handleComplete(task.id)}
-                                color='primary'
-                                icon={<RadioButtonUncheckedIcon />}
-                                checkedIcon={<CheckCircleIcon />}
-                                disabled={isLoading}
-                                sx={{
-                                  '& .MuiSwitch-switchBase': {
-                                    transitionDuration: '300ms',
-                                    '&.Mui-checked': {
-                                      transform: 'translateX(16px)',
-                                      '& + .MuiSwitch-track': {
-                                        backgroundColor: 'success.main',
-                                        opacity: 1,
-                                      },
-                                    },
-                                  },
-                                  '& .MuiSwitch-thumb': {
-                                    transition:
-                                      'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                  },
-                                  '& .MuiSwitch-track': {
-                                    transition:
-                                      'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                  },
-                                }}
-                              />
-                            }
-                            label={
-                              <Typography
-                                variant='body2'
-                                sx={{
-                                  color: task.completed
-                                    ? 'success.main'
-                                    : 'text.secondary',
-                                  fontWeight: task.completed
-                                    ? 'medium'
-                                    : 'normal',
-                                  lineHeight: 1.2,
-                                  whiteSpace: 'nowrap',
-                                  display: 'block',
-                                }}
-                              >
-                                {task.completed ? 'Completed' : 'Mark Complete'}
-                              </Typography>
-                            }
-                          />
-                        </Box>
-                        <Box>
-                          <IconButton
-                            color='primary'
-                            onClick={() => handleOpenEditDialog(task)}
-                            size='small'
-                          >
-                            <EditIcon fontSize='small' />
-                          </IconButton>
-                          <IconButton
-                            color='error'
-                            onClick={() => handleDelete(task.id)}
-                            size='small'
-                          >
-                            <DeleteIcon fontSize='small' />
-                          </IconButton>
-                        </Box>
-                      </CardActions>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </>
         )}
-      </Box>
 
-      <TaskCreateDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onCreate={handleCreate}
-        userTasks={tasks}
-      />
-      {currentEditTask && (
+        {/* Task filters and controls */}
+        <Box
+          sx={{
+            mb: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showCompleted}
+                  onChange={(e) => setShowCompleted(e.target.checked)}
+                />
+              }
+              label="Show Completed"
+            />
+          </Box>
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={handleOpenCreateDialog}
+            sx={{
+              position: { xs: 'fixed', sm: 'static' },
+              bottom: { xs: 16, sm: 'auto' },
+              right: { xs: 16, sm: 'auto' },
+              zIndex: { xs: 1000, sm: 1 },
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Box>
+
+        {/* Tasks grid */}
+        <Grid container spacing={3}>
+          {filteredTasks.map((task) => (
+            <Grid item xs={12} sm={6} md={4} key={task.id}>
+              <TaskCard
+                task={task}
+                onComplete={handleComplete}
+                onEdit={handleOpenEditDialog}
+                onDelete={handleDelete}
+              />
+            </Grid>
+          ))}
+          {filteredTasks.length === 0 && !isLoading && (
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  textAlign: 'center',
+                  py: 8,
+                  px: 2,
+                  backgroundColor: 'background.paper',
+                  borderRadius: 1,
+                  boxShadow: 1,
+                }}
+              >
+                <EventNoteIcon
+                  sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }}
+                />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No tasks found
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {showCompleted
+                    ? "You haven't completed any tasks yet"
+                    : "You don't have any active tasks"}
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenCreateDialog}
+                  sx={{ mt: 3 }}
+                >
+                  Create Task
+                </Button>
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+
+        {/* Notification snackbar */}
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={6000}
+          onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+        >
+          <Alert
+            onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+            severity={notification.severity}
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
+
+        {/* Dialogs */}
+        <TaskCreateDialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onCreate={handleCreate}
+          userTasks={tasks}
+        />
+
         <TaskEditDialog
           open={editDialogOpen}
           onClose={() => {
@@ -1085,19 +986,24 @@ export default function TasksPage() {
             setCurrentEditTask(null);
           }}
           onSave={handleSaveEdit}
-          initialTitle={currentEditTask.title || ''}
-          initialDescription={currentEditTask.description || ''}
-          initialFrequency={currentEditTask.frequency || ''}
+          initialTitle={currentEditTask?.title || ''}
+          initialDescription={currentEditTask?.description || ''}
+          initialFrequency={currentEditTask?.frequency || ''}
           userTasks={tasks}
         />
-      )}
-      <HappinessDialog
-        open={happinessDialogOpen}
-        taskId={ratingTaskId || ''}
-        taskTitle={ratingTaskTitle}
-        onClose={() => setHappinessDialogOpen(false)}
-        onSubmit={handleSubmitHappiness}
-      />
+
+        <HappinessDialog
+          open={happinessDialogOpen}
+          onClose={() => {
+            setHappinessDialogOpen(false);
+            setRatingTaskId(null);
+            setRatingTaskTitle('');
+          }}
+          onSubmit={handleSubmitHappiness}
+          taskId={ratingTaskId || ''}
+          taskTitle={ratingTaskTitle}
+        />
+      </Box>
     </PageContainer>
   );
 }
