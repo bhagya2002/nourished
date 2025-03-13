@@ -150,7 +150,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
           Track your mood to gain insights into your emotional patterns.
         </Typography>
 
-        {/* Mood options */}
+        {/* Mood options - reversed order for more intuitive progression */}
         <Box
           sx={{
             display: 'flex',
@@ -160,7 +160,8 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
             mb: 3,
           }}
         >
-          {moodOptions.map((mood) => {
+          {/* Reversed order of mood options to show negative on left, positive on right */}
+          {moodOptions.slice().reverse().map((mood) => {
             const Icon = mood.icon;
             const isSelected = selectedMood === mood.value;
             
