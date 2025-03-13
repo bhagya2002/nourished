@@ -29,15 +29,22 @@ import {
   Divider,
   Menu,
   MenuItem,
+  Grid,
+  CardActions,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
+import HappinessDialog from '../tasks/components/HappinessDialog';
 import { MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL =
@@ -57,7 +64,7 @@ export type Goal = {
 
 export default function GoalsPage() {
   const router = useRouter();
-  const { user, token, loading } = useAuth();
+  const { user, token, loading, refreshToken } = useAuth();
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -88,6 +95,13 @@ export default function GoalsPage() {
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
+
+  // Add happiness dialog states
+    const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
+    const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
+    const [ratingTaskTitle, setRatingTaskTitle] = useState<string>('');
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Reset the form to initial state
   const resetNewGoal = () => {
@@ -626,6 +640,260 @@ export default function GoalsPage() {
     }
   };
 
+  // Toggle task completion
+  const handleComplete = async (taskId: string) => {
+    // Make sure we're not already processing another request
+    if (isLoading) return;
+
+    try {
+      const currentTask = goals[expandingGoalIndex].tasks.find((task) => task.id === taskId);
+      if (!currentTask) return;
+      
+      // New completed state (toggle current state)
+      const newCompletedState = !currentTask.completed;
+
+      setToast({ open: true, message: 'Updating task status...', severity: 'info' });
+
+      // Optimistically update UI first
+      setGoals((prevGoals) => {
+        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        const updatedTasks = [...updatedGoal.tasks];
+        const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
+        updatedTasks[taskIndex].completed = newCompletedState;
+        updatedGoal.tasks = updatedTasks;
+        return prevGoals.map((goal, idx) =>
+          idx === expandingGoalIndex ? updatedGoal : goal
+        );
+      });
+
+      // Simple timeout handling to prevent UI freezing
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      console.log(
+        `Sending toggle request for task ${taskId} to ${
+          newCompletedState ? 'complete' : 'incomplete'
+        }`
+      );
+
+      // Send toggle request to server
+      try {
+        const makeRequest = async (currentToken: string) => {
+          return await fetch(`${API_BASE_URL}/toggleTaskCompletion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token: currentToken,
+              taskId,
+              completed: newCompletedState,
+            }),
+            signal: controller.signal,
+          });
+        };
+
+        // First attempt with current token
+        let response = await makeRequest(token!);
+
+        // Check if we got a token expiration error
+        if (response.status === 401) {
+          const responseText = await response.text();
+
+          // If token has expired, try refreshing and retrying once
+          if (
+            responseText.includes('token has expired') ||
+            responseText.includes('auth/id-token-expired')
+          ) {
+            console.log('Token expired, attempting to refresh...');
+            const freshToken = await refreshToken();
+
+            if (freshToken) {
+              console.log('Token refreshed, retrying request');
+              response = await makeRequest(freshToken);
+            }
+          }
+        }
+
+        clearTimeout(timeoutId);
+
+        // First check if the request was successful based on status code
+        if (response.ok) {
+          // Success! Show success notification
+          setToast({
+            open: true,
+            message: newCompletedState
+              ? 'Task marked complete!'
+              : 'Task marked incomplete!',
+            severity: 'success',
+          });
+
+          // If marked as complete, open the happiness rating dialog
+          if (newCompletedState) {
+            setRatingTaskId(taskId);
+            setRatingTaskTitle(currentTask.title);
+            // Small delay to allow notification to be seen before showing happiness dialog
+            setTimeout(() => {
+              setHappinessDialogOpen(true);
+            }, 500);
+          }
+
+          // Task was already optimistically updated, no need to refresh
+          return;
+        }
+
+        // If we get here, response was not OK
+        let errorMessage = 'Failed to update task completion';
+
+        // Try to get a more specific error message if possible
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+          try {
+            const freshToken = await refreshToken();
+            if (freshToken) {
+              const result = await makeRequest(freshToken);
+              // Convert response to JSON to access properties
+              const resultData = await result.json().catch(() => ({}));
+              if (!resultData.success) {
+                throw new Error(
+                  resultData.error || 'Failed to update task status'
+                );
+              }
+              return resultData;
+            } else {
+              throw new Error('Failed to refresh authentication token');
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing token:', refreshError);
+            setToast({
+              open: true,
+              message: 'Failed to toggle task completion',
+              severity: 'error',
+            });
+    
+            // Revert the optimistic UI update
+            setGoals((prevGoals) => {
+              const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+              const updatedTasks = [...updatedGoal.tasks];
+              const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
+              updatedTasks[taskIndex].completed = !newCompletedState;
+              updatedGoal.tasks = updatedTasks;
+              return prevGoals.map((goal, idx) =>
+                idx === expandingGoalIndex ? updatedGoal : goal
+              );
+            });
+            router.push('/authentication/login');
+            throw refreshError;
+          }
+        } else {
+          setToast({
+            open: true,
+            message: 'Failed to toggle task completion',
+            severity: 'error',
+          });
+  
+          // Revert the optimistic UI update
+          setGoals((prevGoals) => {
+            const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+            const updatedTasks = [...updatedGoal.tasks];
+            const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
+            updatedTasks[taskIndex].completed = !newCompletedState;
+            updatedGoal.tasks = updatedTasks;
+            return prevGoals.map((goal, idx) =>
+              idx === expandingGoalIndex ? updatedGoal : goal
+            );
+          });
+          throw new Error('Failed to update task status');
+        }
+      } catch (error) {
+        console.error('Error toggling task completion:', error);
+        setToast({
+          open: true,
+          message: 'Failed to toggle task completion',
+          severity: 'error',
+        });
+
+        // Revert the optimistic UI update
+        setGoals((prevGoals) => {
+          const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+          const updatedTasks = [...updatedGoal.tasks];
+          const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
+          updatedTasks[taskIndex].completed = !newCompletedState;
+          updatedGoal.tasks = updatedTasks;
+          return prevGoals.map((goal, idx) =>
+            idx === expandingGoalIndex ? updatedGoal : goal
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling task completion:', error);
+      setToast({
+        open: true,
+        message: 'Failed to toggle task completion',
+        severity: 'error',
+      });
+    }
+  }
+
+  const handleSubmitHappiness = async (taskId: string, rating: number) => {
+    try {
+      setToast({ open: true, message: 'Submitting happiness rating...', severity: 'info' });
+
+      const makeRequest = async (currentToken: string) => {
+        return await fetch(`${API_BASE_URL}/submitHappinessRating`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: currentToken,
+            taskId,
+            rating,
+            date: new Date().toISOString(),
+          }),
+        });
+      };
+
+      // First attempt with current token
+      let response = await makeRequest(token!);
+
+      // Check if we got a token expiration error
+      if (response.status === 401) {
+        const responseText = await response.text();
+
+        // If token has expired, try refreshing and retrying once
+        if (
+          responseText.includes('token has expired') ||
+          responseText.includes('auth/id-token-expired')
+        ) {
+          console.log('Token expired, attempting to refresh...');
+          const freshToken = await refreshToken();
+
+          if (freshToken) {
+            console.log('Token refreshed, retrying request');
+            response = await makeRequest(freshToken);
+          }
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to submit happiness rating');
+      }
+
+      // Success! Show success notification
+      setToast({
+        open: true,
+        message: 'Happiness rating submitted. Thank you!',
+        severity:'success',
+      });
+    } catch (error) {
+      console.error('Error submitting happiness rating:', error);
+      setToast({ open: true, 
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to submit happiness rating',
+        severity: 'error' 
+      });
+    }
+  }
+
   // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
@@ -800,46 +1068,213 @@ export default function GoalsPage() {
                 >
                   {/* goal tasks list */}
                   <Divider sx={{ my: 1 }} />
-                  <List disablePadding>
+                  <Grid container alignItems='stretch' columnSpacing={2} rowSpacing={1} sx={{ pl: 2, pr: 2 }}>
                     {goals[index].tasks !== undefined &&
                       goals[index].tasks.map((task: any, taskIndex: number) => (
-                        <ListItem key={taskIndex}>
-                          <ListItemText
-                            primary={task.title}
-                            secondary={`ID: ${task.id}, Description: ${task.description}, CreatedAt: ${task.createdAt}, GoalId: ${task.goalId}`}
-                          />
-                          <ListItemSecondaryAction sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
-                            <IconButton
-                              edge='end'
-                              onClick={() => {
-                                setTaskEditModalOpen(true);
-                                setTaskEditingIndex(taskIndex);
+                        <Grid item xs={12} sm={6} key={taskIndex}>
+                          <Card
+                            sx={{
+                              width: '100%',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              // transition: 'box-shadow 0.3s, transform 0.2s',
+                              // '&:hover': {
+                              //   boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                              //   transform: 'translateY(-2px)',
+                              // },
+                              backgroundColor: 'white', // Always white background
+                            }}
+                          >
+                            <CardContent sx={{ flexGrow: 1, pb: 1 }}>
+                              <Typography
+                                variant='h6'
+                                component='div'
+                                sx={{
+                                  mb: 1,
+                                  color: 'text.primary',
+                                }}
+                              >
+                                {task.title}
+                                {task.completed && (
+                                  <CheckCircleIcon
+                                    fontSize='small'
+                                    color='success'
+                                    sx={{ ml: 1, verticalAlign: 'middle' }}
+                                  />
+                                )}
+                              </Typography>
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                                sx={{
+                                  mb: 1,
+                                  maxHeight: '60px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: 'vertical',
+                                }}
+                              >
+                                {task.description || 'No description provided'}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  mt: 1,
+                                }}
+                              >
+                                <Typography variant='caption' color='text.secondary'>
+                                  Created:{' '}
+                                  {new Date(task.createdAt).toLocaleDateString()}
+                                </Typography>
+                                {task.frequency && (
+                                  <Typography
+                                    variant='caption'
+                                    sx={{
+                                      color: 'primary.main',
+                                      fontWeight: 'medium',
+                                    }}
+                                  >
+                                    {task.frequency}
+                                  </Typography>
+                                )}
+                              </Box>
+                            </CardContent>
+
+                            {/* goal tasks actions menu */}
+                            <CardActions
+                              sx={{
+                                justifyContent: 'space-between',
+                                padding: '16px',
+                                paddingTop: '16px',
+                                paddingBottom: '24px',
+                                borderTop: '1px solid rgba(0,0,0,0.1)',
                               }}
                             >
-                              <EditIcon />
-                            </IconButton>
-                            <IconButton
-                              edge='end'
-                              onClick={() => {
-                                handleGoalTaskDelete(task.id, goal.id, taskIndex);
-                              }}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </ListItemSecondaryAction>
-                        </ListItem>
-                      ))}
-                    <ListItemButton
-                      dense
-                      key={-1}
-                      onClick={() => setTaskCreateModalOpen(true)}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        <AddIcon fontSize='small' />
-                      </ListItemIcon>
-                      <ListItemText primary='Add a Task' />
-                    </ListItemButton>
-                  </List>
+                              <Box>
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={task.completed}
+                                      onChange={() => handleComplete(task.id)}
+                                      color='primary'
+                                      icon={<RadioButtonUncheckedIcon />}
+                                      checkedIcon={<CheckCircleIcon />}
+                                      disabled={false}
+                                      sx={{
+                                        '& .MuiSwitch-switchBase': {
+                                          transitionDuration: '300ms',
+                                          '&.Mui-checked': {
+                                            transform: 'translateX(16px)',
+                                            '& + .MuiSwitch-track': {
+                                              backgroundColor: 'success.main',
+                                              opacity: 1,
+                                            },
+                                          },
+                                        },
+                                        '& .MuiSwitch-thumb': {
+                                          transition:
+                                            'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                        },
+                                        '& .MuiSwitch-track': {
+                                          transition:
+                                            'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+                                        },
+                                      }}
+                                    />
+                                  }
+                                  label={
+                                    <Typography
+                                      variant='body2'
+                                      sx={{
+                                        color: task.completed
+                                          ? 'success.main'
+                                          : 'text.secondary',
+                                        fontWeight: task.completed
+                                          ? 'medium'
+                                          : 'normal',
+                                        lineHeight: 1.2,
+                                        whiteSpace: 'nowrap',
+                                        display: 'block',
+                                      }}
+                                    >
+                                      {task.completed ? 'Completed' : 'Mark Complete'}
+                                    </Typography>
+                                  }
+                                />
+                              </Box>
+                              <Box>
+                                <IconButton
+                                  color='primary'
+                                  onClick={() => {
+                                    setTaskEditModalOpen(true);
+                                    setTaskEditingIndex(taskIndex);
+                                  }}
+                                  size='small'
+                                >
+                                  <EditIcon fontSize='small' />
+                                </IconButton>
+                                <IconButton
+                                  color='error'
+                                  onClick={() => {
+                                    handleGoalTaskDelete(task.id, goal.id, taskIndex);
+                                  }}
+                                  size='small'
+                                >
+                                  <DeleteIcon fontSize='small' />
+                                </IconButton>
+                              </Box>
+                            </CardActions>
+                          </Card>
+                        </Grid>
+                      ))
+                    }
+                    <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <Card
+                        onClick={() => setTaskCreateModalOpen(true)}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                          marginY: 2,
+                          width: "100%",
+                          m: 0,
+                          height: 176,
+                          backgroundColor: 'white',
+                          position: 'relative',
+                          flexShrink: 0,
+                          userSelect: 'none',
+                          "&:before": {
+                            content: '"Add"',
+                            position: 'absolute',
+                            top: 30,
+                            left: 8,
+                            fontSize: { xs: 80, sm: 60, md: 80 },
+                            fontWeight: 1000,
+                            color: 'secondary.light',
+                            opacity: 0.7,
+                          },
+                          "&:after": {
+                            content: '"Task"',
+                            position: 'absolute',
+                            bottom: 24,
+                            right: 8,
+                            fontSize: { xs: 80, sm: 60, md: 80 },
+                            fontWeight: 1000,
+                            color: 'secondary.light',
+                            opacity: 0.7,
+                          }
+                        }}>
+                          <Typography sx={{ fontSize: { xs: 120, sm: 96, md: 120 }, fontWeight: 1000, color: 'secondary.light', opacity: 0.3 }}>
+                            New
+                          </Typography>
+                      </Card>
+                    </Grid>
+                  </Grid>
                 </Collapse>
               </CardContent>
             </Card>
@@ -940,6 +1375,13 @@ export default function GoalsPage() {
               />
             )}
         </div>
+        <HappinessDialog
+          open={happinessDialogOpen}
+          taskId={ratingTaskId || ''}
+          taskTitle={ratingTaskTitle}
+          onClose={() => setHappinessDialogOpen(false)}
+          onSubmit={handleSubmitHappiness}
+        />
       </Box>
     </PageContainer>
   );
