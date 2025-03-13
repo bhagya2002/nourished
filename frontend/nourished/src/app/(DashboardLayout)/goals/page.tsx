@@ -45,6 +45,7 @@ import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
 import HappinessDialog from '../tasks/components/HappinessDialog';
+import TaskCard from '../tasks/components/TaskCard';
 import { MoreVert } from '@mui/icons-material';
 
 const API_BASE_URL =
@@ -573,68 +574,118 @@ export default function GoalsPage() {
   };
 
   // Delete task
-  const handleGoalTaskDelete = async (
-    taskId: string,
-    goalId: string,
-    taskDeletingIndex: number
-  ) => {
+  const handleGoalTaskDelete = async (taskId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/deleteTask`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token, taskId, goalId }),
-      });
-      if (!response.ok) throw new Error('Failed to delete task');
+      if (!taskId) return;
+
+      const taskToDelete = goals[expandingGoalIndex].tasks.find((task) => task.id === taskId);
+      const taskName = taskToDelete?.title || 'Task';
+
+      // Show notification before deleting
       setToast({
         open: true,
-        message: 'Task deleted successfully!',
-        severity: 'success',
+        message: `Deleting "${taskName}"...`,
+        severity: 'info',
       });
-      setGoals((prevGoals) => {
-        const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-        const updatedTasks = [...updatedGoal.tasks];
-        // Update goal's totalTasks
-        const now = new Date();
-        let daysLeft = Math.ceil((new Date(updatedGoal.deadline).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        if (updatedTasks[taskDeletingIndex].completedAt) {
-          const completedAt: Date = new Date(updatedTasks[taskDeletingIndex].completedAt);
-          if (completedAt.getDate() === now.getDate() && completedAt.getMonth() === now.getMonth() && completedAt.getFullYear() === now.getFullYear()) {
-            daysLeft -= 1;
+
+      const makeRequest = async (currentToken: string) => {
+        return await fetch(`${API_BASE_URL}/deleteTask`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: currentToken,
+            taskId: taskId,
+          }),
+        });
+      };
+
+      let res = await makeRequest(token!);
+
+      // Check for token expiration
+      if (res.status === 401) {
+        const responseText = await res.text();
+
+        if (
+          responseText.includes('token has expired') ||
+          responseText.includes('auth/id-token-expired')
+        ) {
+          console.log('Token expired, attempting to refresh...');
+          const freshToken = await refreshToken();
+
+          if (freshToken) {
+            console.log('Token refreshed, retrying request');
+            res = await makeRequest(freshToken);
           }
         }
-        let totalTasksDecreased = 0;
-        switch (updatedTasks[taskDeletingIndex].frequency) {
-          case "Daily":
-            totalTasksDecreased = Math.ceil(daysLeft / 1);
-            break;
-          case "Weekly":
-            totalTasksDecreased = Math.ceil(daysLeft / 7);
-            break;
-          case "Monthly":
-            totalTasksDecreased = Math.ceil(daysLeft / 30);
-            break;
-          default:
-            totalTasksDecreased = 0;
-            break;
-        }
-        updatedGoal.totalTasks -= totalTasksDecreased;
-        // Filter out the task to be deleted
-        const filteredTasks = updatedTasks.filter(
-          (_, i) => i !== taskDeletingIndex
-        );
-        // Update the specific goal's tasks
-        updatedGoal.tasks = filteredTasks;
-        return prevGoals.map((goal, idx) =>
-          idx === expandingGoalIndex ? updatedGoal : goal
-        );
+      }
+
+      // Process the response
+      if (res.ok) {
+        // Success! 
+        setGoals((prevGoals) => {
+          const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+          const updatedTasks = [...updatedGoal.tasks];
+          const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
+          updatedTasks.splice(taskIndex, 1);
+          updatedGoal.tasks = updatedTasks;
+          // Update goal's totalTasks
+          const goalDeadline = new Date(updatedGoal.deadline);
+          const taskDeletedTime = new Date();
+          let daysLeft = Math.ceil((goalDeadline.getTime() - taskDeletedTime.getTime()) / (1000 * 60 * 60 * 24));
+          if (updatedTasks[taskIndex].completedAt) {
+            const completedAt: Date = new Date(updatedTasks[taskIndex].completedAt);
+            if (completedAt.getDate() === taskDeletedTime.getDate() && completedAt.getMonth() === taskDeletedTime.getMonth() && completedAt.getFullYear() === taskDeletedTime.getFullYear()) {
+              daysLeft -= 1;
+            }
+          }
+          let totalTasksDecreased = 0;
+          switch (updatedTasks[taskIndex].frequency) {
+            case "Daily":
+              totalTasksDecreased = Math.ceil(daysLeft / 1);
+              break;
+            case "Weekly":
+              totalTasksDecreased = Math.ceil(daysLeft / 7);
+              break;
+            case "Monthly":
+              totalTasksDecreased = Math.ceil(daysLeft / 30);
+              break;
+            default:
+              totalTasksDecreased = 0;
+              break;
+          }
+          updatedGoal.totalTasks -= totalTasksDecreased;
+          return prevGoals.map((goal, idx) =>
+            idx === expandingGoalIndex ? updatedGoal : goal
+          );
+        });
+
+        // Show success notification
+        setToast({
+          open: true,
+          message: `"${taskName}" deleted successfully`,
+          severity: 'success',
+        });
+
+        // No need to refresh, we've already updated optimistically
+        return;
+      }
+
+      // If we get here, response was not OK
+      const data = await res.json().catch(() => ({}));
+
+      // Show error and revert the optimistic update
+      setToast({
+        open: true,
+        message: data.error || 'Failed to delete task',
+        severity: 'error',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting task:', error);
       setToast({
         open: true,
-        message: 'Failed to delete task',
+        message: error.message || 'Failed to delete task',
         severity: 'error',
       });
     }
@@ -657,6 +708,7 @@ export default function GoalsPage() {
       // Optimistically update UI first
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+        updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks + 1 : updatedGoal.completedTasks - 1;
         const updatedTasks = [...updatedGoal.tasks];
         const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
         updatedTasks[taskIndex].completed = newCompletedState;
@@ -772,6 +824,7 @@ export default function GoalsPage() {
             // Revert the optimistic UI update
             setGoals((prevGoals) => {
               const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+              updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
               const updatedTasks = [...updatedGoal.tasks];
               const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
               updatedTasks[taskIndex].completed = !newCompletedState;
@@ -793,6 +846,7 @@ export default function GoalsPage() {
           // Revert the optimistic UI update
           setGoals((prevGoals) => {
             const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+            updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
             const updatedTasks = [...updatedGoal.tasks];
             const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
             updatedTasks[taskIndex].completed = !newCompletedState;
@@ -814,6 +868,7 @@ export default function GoalsPage() {
         // Revert the optimistic UI update
         setGoals((prevGoals) => {
           const updatedGoal = { ...prevGoals[expandingGoalIndex] };
+          updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
           const updatedTasks = [...updatedGoal.tasks];
           const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
           updatedTasks[taskIndex].completed = !newCompletedState;
@@ -1072,179 +1127,36 @@ export default function GoalsPage() {
                     {goals[index].tasks !== undefined &&
                       goals[index].tasks.map((task: any, taskIndex: number) => (
                         <Grid item xs={12} sm={6} key={taskIndex}>
-                          <Card
-                            sx={{
-                              width: '100%',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justifyContent: 'space-between',
-                              // transition: 'box-shadow 0.3s, transform 0.2s',
-                              // '&:hover': {
-                              //   boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                              //   transform: 'translateY(-2px)',
-                              // },
-                              backgroundColor: 'white', // Always white background
-                            }}
-                          >
-                            <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-                              <Typography
-                                variant='h6'
-                                component='div'
-                                sx={{
-                                  mb: 1,
-                                  color: 'text.primary',
-                                }}
-                              >
-                                {task.title}
-                                {task.completed && (
-                                  <CheckCircleIcon
-                                    fontSize='small'
-                                    color='success'
-                                    sx={{ ml: 1, verticalAlign: 'middle' }}
-                                  />
-                                )}
-                              </Typography>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                                sx={{
-                                  mb: 1,
-                                  maxHeight: '60px',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 3,
-                                  WebkitBoxOrient: 'vertical',
-                                }}
-                              >
-                                {task.description || 'No description provided'}
-                              </Typography>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  mt: 1,
-                                }}
-                              >
-                                <Typography variant='caption' color='text.secondary'>
-                                  Created:{' '}
-                                  {new Date(task.createdAt).toLocaleDateString()}
-                                </Typography>
-                                {task.frequency && (
-                                  <Typography
-                                    variant='caption'
-                                    sx={{
-                                      color: 'primary.main',
-                                      fontWeight: 'medium',
-                                    }}
-                                  >
-                                    {task.frequency}
-                                  </Typography>
-                                )}
-                              </Box>
-                            </CardContent>
-
-                            {/* goal tasks actions menu */}
-                            <CardActions
-                              sx={{
-                                justifyContent: 'space-between',
-                                padding: '16px',
-                                paddingTop: '16px',
-                                paddingBottom: '24px',
-                                borderTop: '1px solid rgba(0,0,0,0.1)',
-                              }}
-                            >
-                              <Box>
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      checked={task.completed}
-                                      onChange={() => handleComplete(task.id)}
-                                      color='primary'
-                                      icon={<RadioButtonUncheckedIcon />}
-                                      checkedIcon={<CheckCircleIcon />}
-                                      disabled={false}
-                                      sx={{
-                                        '& .MuiSwitch-switchBase': {
-                                          transitionDuration: '300ms',
-                                          '&.Mui-checked': {
-                                            transform: 'translateX(16px)',
-                                            '& + .MuiSwitch-track': {
-                                              backgroundColor: 'success.main',
-                                              opacity: 1,
-                                            },
-                                          },
-                                        },
-                                        '& .MuiSwitch-thumb': {
-                                          transition:
-                                            'transform 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                        },
-                                        '& .MuiSwitch-track': {
-                                          transition:
-                                            'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-                                        },
-                                      }}
-                                    />
-                                  }
-                                  label={
-                                    <Typography
-                                      variant='body2'
-                                      sx={{
-                                        color: task.completed
-                                          ? 'success.main'
-                                          : 'text.secondary',
-                                        fontWeight: task.completed
-                                          ? 'medium'
-                                          : 'normal',
-                                        lineHeight: 1.2,
-                                        whiteSpace: 'nowrap',
-                                        display: 'block',
-                                      }}
-                                    >
-                                      {task.completed ? 'Completed' : 'Mark Complete'}
-                                    </Typography>
-                                  }
-                                />
-                              </Box>
-                              <Box>
-                                <IconButton
-                                  color='primary'
-                                  onClick={() => {
-                                    setTaskEditModalOpen(true);
-                                    setTaskEditingIndex(taskIndex);
-                                  }}
-                                  size='small'
-                                >
-                                  <EditIcon fontSize='small' />
-                                </IconButton>
-                                <IconButton
-                                  color='error'
-                                  onClick={() => {
-                                    handleGoalTaskDelete(task.id, goal.id, taskIndex);
-                                  }}
-                                  size='small'
-                                >
-                                  <DeleteIcon fontSize='small' />
-                                </IconButton>
-                              </Box>
-                            </CardActions>
-                          </Card>
+                          <TaskCard
+                            task={task}
+                            onComplete={handleComplete}
+                            onEdit={() => {setTaskEditModalOpen(true); setTaskEditingIndex(taskIndex);}}
+                            onDelete={handleGoalTaskDelete}
+                          />
                         </Grid>
                       ))
                     }
+
+                    {/* Add new task button */}
                     <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                       <Card
                         onClick={() => setTaskCreateModalOpen(true)}
-                        sx={{
+                        sx={(theme) => ({
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'center',
                           cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: theme.shadows[8],
+                          },
+                          borderRadius: '12px',
                           marginY: 2,
                           width: "100%",
                           m: 0,
-                          height: 176,
-                          backgroundColor: 'white',
+                          height: 112,
+                          backgroundColor: theme.palette.background.paper,
                           position: 'relative',
                           flexShrink: 0,
                           userSelect: 'none',
@@ -1253,7 +1165,7 @@ export default function GoalsPage() {
                             position: 'absolute',
                             top: 30,
                             left: 8,
-                            fontSize: { xs: 80, sm: 60, md: 80 },
+                            fontSize: { xs: 40, sm: 64 },
                             fontWeight: 1000,
                             color: 'secondary.light',
                             opacity: 0.7,
@@ -1263,13 +1175,13 @@ export default function GoalsPage() {
                             position: 'absolute',
                             bottom: 24,
                             right: 8,
-                            fontSize: { xs: 80, sm: 60, md: 80 },
+                            fontSize: { xs: 40, sm: 64 },
                             fontWeight: 1000,
                             color: 'secondary.light',
                             opacity: 0.7,
                           }
-                        }}>
-                          <Typography sx={{ fontSize: { xs: 120, sm: 96, md: 120 }, fontWeight: 1000, color: 'secondary.light', opacity: 0.3 }}>
+                        })}>
+                          <Typography sx={{ fontSize: 96, fontWeight: 1000, color: 'secondary.light', opacity: 0.3 }}>
                             New
                           </Typography>
                       </Card>
