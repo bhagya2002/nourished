@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import {
   CardContent,
@@ -69,13 +68,15 @@ const Blog = () => {
               />
             </Typography>
             <Tooltip title="Add To Cart">
-              <Fab
-                size="small"
-                color="primary"
-                sx={{ bottom: "75px", right: "15px", position: "absolute" }}
-              >
-                <IconBasket size="16" />
-              </Fab>
+              <span>
+                <Fab
+                  size="small"
+                  color="primary"
+                  sx={{ bottom: "75px", right: "15px", position: "absolute" }}
+                >
+                  <IconBasket size="16" />
+                </Fab>
+              </span>
             </Tooltip>
             <CardContent sx={{ p: 3, pt: 2 }}>
               <Typography variant="h6">{product.title}</Typography>

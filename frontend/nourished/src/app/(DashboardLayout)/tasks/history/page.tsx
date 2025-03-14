@@ -2,70 +2,62 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
-import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
   Grid,
-  IconButton,
   LinearProgress,
+  Alert,
   Paper,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
+  Snackbar,
+  alpha,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 
 // Icons
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import InsightsIcon from '@mui/icons-material/Insights';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import InsightsIcon from '@mui/icons-material/Insights';
 import EventNoteIcon from '@mui/icons-material/EventNote';
-import SearchIcon from '@mui/icons-material/Search';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
+// Custom components
+import TaskHistoryDayGroup from './components/TaskHistoryDayGroup';
+import TaskStatsCard from './components/TaskStatsCard';
+import TaskHistoryFilters from './components/TaskHistoryFilters';
+import EmptyState from './components/EmptyState';
+import PageHeader from './components/PageHeader';
 
-// Helper function to format dates
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
-// Helper function to format time
-const formatTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
 
 export default function TaskHistoryPage() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [completions, setCompletions] = useState<any[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { token, user, loading: authLoading, refreshToken } = useAuth();
   const router = useRouter();
+  
+  // Notification state
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info',
+  });
 
   // Stats state
   const [stats, setStats] = useState({
@@ -84,11 +76,9 @@ export default function TaskHistoryPage() {
   // Pagination
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [noMoreData, setNoMoreData] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // Polling
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  // First load state
   const [firstLoad, setFirstLoad] = useState(true);
 
   // Redirect if user is not logged in
@@ -98,17 +88,28 @@ export default function TaskHistoryPage() {
     }
   }, [authLoading, user, router]);
 
+  // Fetch history data from backend
   const fetchHistory = async (isLoadMore = false) => {
     if (!token) return;
 
-    setLoading(true);
-    if (firstLoad) {
-      setErrorMsg('Loading task history...');
-      setFirstLoad(false);
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
     }
-
+    
     try {
       // Add a loading message if this is the first load
+      if (firstLoad) {
+        setErrorMsg(null);
+        setNotification({
+          open: true,
+          message: 'Loading task history...',
+          severity: 'info',
+        });
+        setFirstLoad(false);
+      }
+      
       const makeRequest = async (currentToken: string) => {
         try {
           // Add timeout to prevent long-hanging requests
@@ -153,102 +154,137 @@ export default function TaskHistoryPage() {
           }
 
           return response;
-        } catch (error) {
-          if (error instanceof DOMException && error.name === 'AbortError') {
-            throw new Error('Request timed out. Server might be overloaded.');
-          }
-          if (
-            error instanceof TypeError &&
-            error.message === 'Failed to fetch'
-          ) {
-            // This is a network error - server might be down
-            throw new Error(
-              'Cannot connect to server. Please ensure the backend server is running.'
-            );
+        } catch (error: any) {
+          console.error('Request error:', error);
+          if (error.name === 'AbortError') {
+            throw new Error('Request timed out. Please try again.');
           }
           throw error;
         }
       };
 
-      // First attempt with current token
       let response;
       try {
         response = await makeRequest(token);
       } catch (error: any) {
-        // Only attempt to refresh token if the error is due to token expiration
         if (error.message === 'token_expired' && refreshToken) {
           console.log('Token expired, attempting to refresh...');
           const freshToken = await refreshToken();
-
           if (freshToken) {
-            console.log('Token refreshed, retrying request');
             response = await makeRequest(freshToken);
           } else {
-            console.error('Failed to refresh token');
-            router.push('/authentication/login');
-            return;
+            throw new Error('Failed to refresh authentication token');
           }
         } else {
-          // Re-throw for other errors
           throw error;
         }
       }
 
       const data = await response.json();
 
-      // Clear any loading message
-      setErrorMsg(null);
-
       if (!data.success) {
-        throw new Error(data.error || 'Failed to load task history data');
+        throw new Error(data.error || 'Failed to fetch task history');
       }
 
-      // Handle streaks and statistics
-      if (data.data && data.data.streaks) {
-        setStats(data.data.streaks);
+      // Extract the completed tasks from the correct data structure
+      const completionsData = data.data || {};
+      const newData = completionsData.completions || [];
+      
+      // Set pagination state
+      if (completionsData.lastDoc) {
+        setLastDoc(completionsData.lastDoc);
+      } else {
+        setNoMoreData(true);
       }
 
-      // Handle task completions
-      const newData =
-        data.data && data.data.completions ? data.data.completions : [];
-      setLastDoc(data.data && data.data.lastDoc ? data.data.lastDoc : null);
-      setNoMoreData(newData.length === 0 || !(data.data && data.data.lastDoc));
+      // Update stats if we have them and this is not a pagination request
+      if (!isLoadMore) {
+        // Try to extract stats from various possible locations in the response
+        const streaksData = completionsData.streaks || data.stats || data.streaks || {};
+        
+        setStats({
+          currentStreak: streaksData.currentStreak || streaksData.current || 0,
+          longestStreak: streaksData.longestStreak || streaksData.longest || 0,
+          completionsLast7Days: 
+            streaksData.completionsLast7Days || 
+            streaksData.last7Days || 
+            streaksData.completions7Days || 
+            0,
+          completionsLast30Days: 
+            streaksData.completionsLast30Days || 
+            streaksData.last30Days || 
+            streaksData.completions30Days || 
+            0,
+          totalCompletions: 
+            streaksData.totalCompletions || 
+            streaksData.total || 
+            newData.length || 
+            0,
+        });
+      }
+
+      // Update task completions state, either appending or replacing
       setCompletions(isLoadMore ? [...completions, ...newData] : newData);
+      
+      // Show success notification on first load
+      if (!isLoadMore && firstLoad) {
+        setNotification({
+          open: true,
+          message: 'Task history loaded successfully',
+          severity: 'success',
+        });
+      }
+      
     } catch (err) {
       console.error('Error fetching history:', err);
       setErrorMsg(
         err instanceof Error ? err.message : 'Failed to load task history.'
       );
+      
+      setNotification({
+        open: true,
+        message: err instanceof Error ? err.message : 'Failed to load task history.',
+        severity: 'error',
+      });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  // Set up polling to periodically check for new task completions
+  // Fetch data on mount and when filters change
   useEffect(() => {
     if (token) {
       fetchHistory();
-
-      // Set up polling interval (every 30 seconds) to get updates
-      if (!pollingInterval) {
-        const interval = setInterval(() => {
-          if (!loading) fetchHistory();
-        }, 30000); // 30 seconds
-        setPollingInterval(interval);
-      }
-
-      // Cleanup
-      return () => {
-        if (pollingInterval) {
-          clearInterval(pollingInterval);
-          setPollingInterval(null);
-        }
-      };
     }
-  }, [token, startDate, endDate]); // Re-run when filters change
+  }, [token, startDate, endDate]);
+
+  // Handle filter application
+  const handleApplyFilter = (newStartDate: string, newEndDate: string) => {
+    setStartDate(newStartDate);
+    setEndDate(newEndDate);
+    setLastDoc(null);
+    setNoMoreData(false);
+  };
+  
+  // Handle filter clear
+  const handleClearFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    setLastDoc(null);
+    setNoMoreData(false);
+  };
+  
+  // Handle notification close
+  const handleCloseNotification = () => {
+    setNotification({
+      ...notification,
+      open: false,
+    });
+  };
 
   // Group completions by date
-  const completionsByDate = completions.reduce((groups, item) => {
+  const completionsByDate = completions.reduce((groups: Record<string, any[]>, item) => {
     const date = new Date(item.completedAt).toLocaleDateString();
     if (!groups[date]) {
       groups[date] = [];
@@ -260,205 +296,102 @@ export default function TaskHistoryPage() {
   return (
     <PageContainer title='Task History' description='View your completed tasks'>
       <Box>
-        {/* Header with back button and title */}
-        <Stack direction='row' alignItems='center' spacing={2} sx={{ mb: 3 }}>
-          <IconButton
-            onClick={() => router.push('/tasks')}
-            size='small'
-            sx={{
-              backgroundColor: theme.palette.background.default,
-              '&:hover': { backgroundColor: theme.palette.background.paper },
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant='h4' component='h1'>
-            Task History
-          </Typography>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Button
-            variant='outlined'
-            startIcon={<FilterListIcon />}
-            onClick={() => setShowFilters(!showFilters)}
-            size='small'
-          >
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-        </Stack>
+        {/* Page Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <PageHeader 
+            title="Task History" 
+            subtitle="Track your progress and review all your completed tasks"
+          />
+          
+          <Tooltip title="Refresh task history">
+            <span>
+              <IconButton 
+                onClick={() => fetchHistory()} 
+                color="primary"
+                disabled={loading}
+                sx={{ 
+                  height: 40, 
+                  width: 40,
+                  transition: 'all 0.2s',
+                  '&:hover': { 
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    transform: 'rotate(180deg)',
+                  },
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
 
         {/* Statistics Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                color: 'white',
-                boxShadow: `0 4px 20px 0 rgba(${theme.palette.primary.main}, 0.14)`,
-                borderRadius: 2,
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Stack
-                  direction='row'
-                  justifyContent='space-between'
-                  alignItems='center'
-                >
-                  <Box>
-                    <Typography variant='overline' sx={{ opacity: 0.8 }}>
-                      Current Streak
-                    </Typography>
-                    <Typography
-                      variant='h3'
-                      component='div'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {stats.currentStreak}
-                    </Typography>
-                    <Typography variant='body2' sx={{ opacity: 0.8 }}>
-                      consecutive days
-                    </Typography>
-                  </Box>
-                  <LocalFireDepartmentIcon
-                    sx={{ fontSize: 48, opacity: 0.8 }}
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
+            <TaskStatsCard
+              title="Current Streak"
+              value={stats.currentStreak}
+              description="consecutive days"
+              icon={LocalFireDepartmentIcon}
+              color="primary"
+              delay={0.1}
+            />
           </Grid>
-
+          
           <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: `linear-gradient(135deg, ${theme.palette.success.light}, ${theme.palette.success.main})`,
-                color: 'white',
-                boxShadow: `0 4px 20px 0 rgba(${theme.palette.success.main}, 0.14)`,
-                borderRadius: 2,
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Stack
-                  direction='row'
-                  justifyContent='space-between'
-                  alignItems='center'
-                >
-                  <Box>
-                    <Typography variant='overline' sx={{ opacity: 0.8 }}>
-                      Longest Streak
-                    </Typography>
-                    <Typography
-                      variant='h3'
-                      component='div'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {stats.longestStreak}
-                    </Typography>
-                    <Typography variant='body2' sx={{ opacity: 0.8 }}>
-                      day record
-                    </Typography>
-                  </Box>
-                  <EmojiEventsIcon sx={{ fontSize: 48, opacity: 0.8 }} />
-                </Stack>
-              </CardContent>
-            </Card>
+            <TaskStatsCard
+              title="Longest Streak"
+              value={stats.longestStreak}
+              description="day record"
+              icon={EmojiEventsIcon}
+              color="success"
+              delay={0.2}
+            />
           </Grid>
-
+          
           <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: `linear-gradient(135deg, ${theme.palette.info.light}, ${theme.palette.info.main})`,
-                color: 'white',
-                boxShadow: `0 4px 20px 0 rgba(${theme.palette.info.main}, 0.14)`,
-                borderRadius: 2,
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Stack
-                  direction='row'
-                  justifyContent='space-between'
-                  alignItems='center'
-                >
-                  <Box>
-                    <Typography variant='overline' sx={{ opacity: 0.8 }}>
-                      Last 7 Days
-                    </Typography>
-                    <Typography
-                      variant='h3'
-                      component='div'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {stats.completionsLast7Days}
-                    </Typography>
-                    <Typography variant='body2' sx={{ opacity: 0.8 }}>
-                      tasks completed
-                    </Typography>
-                  </Box>
-                  <InsightsIcon sx={{ fontSize: 48, opacity: 0.8 }} />
-                </Stack>
-              </CardContent>
-            </Card>
+            <TaskStatsCard
+              title="Last 7 Days"
+              value={stats.completionsLast7Days}
+              description="tasks completed"
+              icon={InsightsIcon}
+              color="info"
+              delay={0.3}
+            />
           </Grid>
-
+          
           <Grid item xs={12} sm={6} md={3}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                background: `linear-gradient(135deg, ${theme.palette.warning.light}, ${theme.palette.warning.main})`,
-                color: 'white',
-                boxShadow: `0 4px 20px 0 rgba(${theme.palette.warning.main}, 0.14)`,
-                borderRadius: 2,
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Stack
-                  direction='row'
-                  justifyContent='space-between'
-                  alignItems='center'
-                >
-                  <Box>
-                    <Typography variant='overline' sx={{ opacity: 0.8 }}>
-                      Total
-                    </Typography>
-                    <Typography
-                      variant='h3'
-                      component='div'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {stats.totalCompletions}
-                    </Typography>
-                    <Typography variant='body2' sx={{ opacity: 0.8 }}>
-                      tasks completed
-                    </Typography>
-                  </Box>
-                  <EventNoteIcon sx={{ fontSize: 48, opacity: 0.8 }} />
-                </Stack>
-              </CardContent>
-            </Card>
+            <TaskStatsCard
+              title="Total"
+              value={stats.totalCompletions}
+              description="tasks completed"
+              icon={EventNoteIcon}
+              color="warning"
+              delay={0.4}
+            />
           </Grid>
         </Grid>
 
+        {/* Filters */}
+        <TaskHistoryFilters
+          startDate={startDate}
+          endDate={endDate}
+          onFilterApply={handleApplyFilter}
+          onFilterClear={handleClearFilter}
+          isOpen={showFilters}
+          onToggle={() => setShowFilters(!showFilters)}
+        />
+        
         {/* Error Message */}
         {errorMsg && (
           <Alert
-            severity='error'
-            sx={{ mb: 3 }}
+            severity="error"
+            sx={{ mb: 3, borderRadius: '10px' }}
             onClose={() => setErrorMsg(null)}
             action={
               <Button
-                color='inherit'
-                size='small'
+                color="inherit"
+                size="small"
                 onClick={() => fetchHistory()}
               >
                 Retry
@@ -469,230 +402,71 @@ export default function TaskHistoryPage() {
           </Alert>
         )}
 
-        {/* No Data Message */}
-        {!loading && completions.length === 0 && !errorMsg && (
-          <DashboardCard>
-            <CardContent>
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <EventNoteIcon
-                  sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }}
-                />
-                <Typography variant='h5' gutterBottom>
-                  No Completed Tasks Found
-                </Typography>
-                <Typography
-                  variant='body1'
-                  color='text.secondary'
-                  sx={{ mb: 3 }}
-                >
-                  {startDate || endDate
-                    ? 'No completed tasks found in the selected date range.'
-                    : "You haven't completed any tasks yet."}
-                </Typography>
-                <Button variant='contained' component={Link} href='/tasks'>
-                  Go to Tasks
-                </Button>
-              </Box>
-            </CardContent>
-          </DashboardCard>
-        )}
-
-        {/* Date Range Filters */}
-        {showFilters && (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 3,
-              borderRadius: 2,
-              border: `1px solid ${theme.palette.divider}`,
-            }}
-          >
-            <Typography variant='h6' gutterBottom>
-              Filter History
-            </Typography>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              alignItems={{ xs: 'stretch', sm: 'center' }}
-            >
-              <TextField
-                label='Start Date'
-                type='date'
-                size='small'
-                fullWidth
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField
-                label='End Date'
-                type='date'
-                size='small'
-                fullWidth
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-              <Button
-                variant='contained'
-                onClick={() => {
-                  setLastDoc(null);
-                  setNoMoreData(false);
-                  fetchHistory(false);
-                }}
-                startIcon={<SearchIcon />}
-                sx={{ minWidth: '120px' }}
-              >
-                Apply
-              </Button>
-            </Stack>
-          </Paper>
-        )}
-
         {/* Loading Indicator */}
-        {loading && <LinearProgress sx={{ mb: 3 }} />}
+        {loading && <LinearProgress sx={{ mb: 3, borderRadius: '4px' }} />}
 
-        {/* Render Completions Grouped by Date */}
-        {Object.keys(completionsByDate).length > 0 ? (
-          <Stack spacing={3}>
-            {Object.entries(completionsByDate).map(([date, items]) => (
-              <Box key={date}>
-                <Typography
-                  variant='h6'
-                  sx={{
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: 'text.secondary',
-                  }}
-                >
-                  <CalendarTodayIcon sx={{ mr: 1, fontSize: 20 }} />
-                  {new Date(date).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Typography>
-
-                <Stack spacing={2}>
-                  {(items as any[]).map((item) => (
-                    <Card
-                      key={item.id}
-                      sx={{
-                        borderRadius: 2,
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                        },
-                      }}
-                    >
-                      <CardContent>
-                        <Stack
-                          direction={{ xs: 'column', sm: 'row' }}
-                          spacing={2}
-                          alignItems={{ sm: 'center' }}
-                          justifyContent='space-between'
-                        >
-                          <Box>
-                            <Typography variant='h6' color='text.primary'>
-                              {item.title}
-                            </Typography>
-
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                              sx={{ mb: 1 }}
-                            >
-                              {item.description}
-                            </Typography>
-
-                            <Stack
-                              direction='row'
-                              spacing={2}
-                              alignItems='center'
-                              sx={{ color: 'text.secondary' }}
-                            >
-                              <Box
-                                sx={{ display: 'flex', alignItems: 'center' }}
-                              >
-                                <AccessTimeIcon
-                                  sx={{ fontSize: 16, mr: 0.5 }}
-                                />
-                                <Typography variant='caption'>
-                                  {formatTime(item.completedAt)}
-                                </Typography>
-                              </Box>
-
-                              {item.frequency && (
-                                <Box
-                                  sx={{ display: 'flex', alignItems: 'center' }}
-                                >
-                                  <RepeatIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                                  <Typography variant='caption'>
-                                    {item.frequency}
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Stack>
-                          </Box>
-
-                          <Chip
-                            label='Completed'
-                            color='success'
-                            size='small'
-                            sx={{
-                              fontWeight: 'medium',
-                              borderRadius: '12px',
-                              px: 1,
-                            }}
-                          />
-                        </Stack>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Stack>
-              </Box>
+        {/* Completions Content */}
+        {!loading && completions.length === 0 ? (
+          <EmptyState 
+            hasFilters={startDate !== '' || endDate !== ''} 
+            onClearFilters={handleClearFilter} 
+          />
+        ) : (
+          <>
+            {/* Render Completions Grouped by Date */}
+            {Object.entries(completionsByDate).map(([date, items], index) => (
+              <TaskHistoryDayGroup 
+                key={date} 
+                date={date} 
+                tasks={items} 
+                index={index}
+              />
             ))}
 
-            {/* Pagination Button */}
-            {!noMoreData && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            {/* Load More Button */}
+            {!noMoreData && completions.length > 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, mb: 4 }}>
                 <Button
-                  variant='outlined'
-                  disabled={loading || noMoreData}
+                  variant="outlined"
+                  disabled={loadingMore}
                   onClick={() => fetchHistory(true)}
-                  sx={{ px: 4, borderRadius: '12px' }}
+                  sx={{ 
+                    px: 4, 
+                    py: 1,
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    boxShadow: 'none',
+                    borderColor: alpha(theme.palette.primary.main, 0.5),
+                    '&:hover': {
+                      boxShadow: theme.shadows[1],
+                      borderColor: theme.palette.primary.main,
+                    },
+                  }}
                 >
-                  {loading ? 'Loading...' : 'Load More'}
+                  {loadingMore ? 'Loading...' : 'Load More'}
                 </Button>
               </Box>
             )}
-          </Stack>
-        ) : (
-          !loading && (
-            <Paper
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                borderRadius: 2,
-                backgroundColor: theme.palette.background.paper,
-              }}
-            >
-              <Typography variant='h6' gutterBottom color='text.secondary'>
-                No completed tasks found
-              </Typography>
-              <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
-                Mark some tasks as complete to see them appear here
-              </Typography>
-              <Button variant='contained' component={Link} href='/tasks'>
-                Go to Tasks
-              </Button>
-            </Paper>
-          )
+          </>
         )}
+        
+        {/* Notifications */}
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={6000}
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert 
+            elevation={6} 
+            variant="filled" 
+            onClose={handleCloseNotification} 
+            severity={notification.severity}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </PageContainer>
   );
