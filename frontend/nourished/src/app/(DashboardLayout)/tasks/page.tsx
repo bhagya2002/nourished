@@ -23,6 +23,7 @@ import {
 
 import AddIcon from '@mui/icons-material/Add';
 import EventNoteIcon from '@mui/icons-material/EventNote';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TaskCard from './components/TaskCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { alpha } from '@mui/material/styles';
@@ -46,7 +47,7 @@ const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplet
           component={motion.div}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.8 } }}
           onAnimationComplete={onAnimationComplete}
           sx={{
             position: 'fixed',
@@ -59,6 +60,8 @@ const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplet
             justifyContent: 'center',
             pointerEvents: 'none',
             zIndex: 1500,
+            backdropFilter: 'blur(2px)',
+            background: 'rgba(255, 255, 255, 0.1)',
           }}
         >
           <Box
@@ -68,8 +71,8 @@ const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplet
               height: '100%',
             }}
           >
-            {/* Confetti particles */}
-            {[...Array(30)].map((_, i) => (
+            {/* More confetti particles for a richer effect */}
+            {[...Array(60)].map((_, i) => (
               <Box
                 component={motion.div}
                 key={i}
@@ -82,53 +85,115 @@ const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplet
                 animate={{
                   x: `${Math.random() * 100}%`,
                   y: `${Math.random() * 100}%`,
-                  scale: Math.random() * 0.5 + 0.5,
+                  scale: Math.random() * 0.8 + 0.3,
                   opacity: 0,
+                  rotate: Math.random() * 360,
                 }}
                 transition={{
-                  duration: 1.5 + Math.random(),
-                  ease: 'easeOut',
+                  duration: 2.5 + Math.random() * 1.5,
+                  ease: [0.23, 1, 0.32, 1], // Use cubic bezier for more dynamic movement
+                  delay: Math.random() * 0.5,
                 }}
                 sx={{
                   position: 'absolute',
-                  width: 8 + Math.random() * 8,
-                  height: 8 + Math.random() * 8,
-                  borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                  width: 8 + Math.random() * 12,
+                  height: 8 + Math.random() * 12,
+                  borderRadius: Math.random() > 0.3 ? '50%' : Math.random() > 0.5 ? '4px' : '0px',
                   backgroundColor: [
                     '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
                     '#FFC107', '#FF9800', '#FF5722', '#F44336',
                     '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
                     '#2196F3', '#03A9F4', '#00BCD4', '#009688',
                   ][Math.floor(Math.random() * 16)],
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 }}
               />
             ))}
             
-            {/* Success message */}
+            {/* Success message with improved animation */}
             <Box
               component={motion.div}
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.5, opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              initial={{ scale: 0.5, opacity: 0, y: 20 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1, 
+                y: 0,
+                transition: { 
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 20,
+                  delay: 0.2 
+                }
+              }}
+              exit={{ 
+                scale: 1.2, 
+                opacity: 0, 
+                transition: { duration: 0.5 } 
+              }}
               sx={{
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
-                background: 'rgba(255, 255, 255, 0.9)',
+                background: 'rgba(255, 255, 255, 0.95)',
                 borderRadius: '16px',
-                padding: '16px 32px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                padding: '20px 40px',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+                border: '1px solid rgba(0, 255, 0, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
               }}
             >
-              <CheckCircleIcon color="success" sx={{ fontSize: 32 }} />
-              <Typography variant="h6" color="success.main" fontWeight={600}>
-                Task Completed!
-              </Typography>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: [1, 1.2, 1], 
+                  opacity: 1,
+                  transition: { 
+                    duration: 0.8,
+                    times: [0, 0.5, 1],
+                    repeat: 1,
+                    repeatDelay: 0.5
+                  }
+                }}
+              >
+                <CheckCircleIcon 
+                  color="success" 
+                  sx={{ 
+                    fontSize: 40,
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                  }} 
+                />
+              </motion.div>
+              <Box>
+                <Typography 
+                  variant="h5" 
+                  color="success.main" 
+                  fontWeight={600}
+                  component={motion.h3}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ 
+                    opacity: 1, 
+                    x: 0,
+                    transition: { delay: 0.3 }
+                  }}
+                >
+                  Task Completed!
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  component={motion.p}
+                  initial={{ opacity: 0 }}
+                  animate={{ 
+                    opacity: 1,
+                    transition: { delay: 0.5 }
+                  }}
+                >
+                  Great job on your progress!
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -710,14 +775,40 @@ export default function TasksPage() {
       // Show celebration animation if task is being completed
       if (newCompletedState) {
         setShowCelebration(true);
+        
+        // Give the user more time to enjoy the celebration animation
+        // Keep it visible for 3 seconds
+        setTimeout(() => {
+          setShowCelebration(false);
+        }, 3000);
       }
 
-      // Optimistically update UI first
-      setTasks(
-        tasks.map((task) =>
-          task.id === taskId ? { ...task, completed: newCompletedState } : task
-        )
-      );
+      // For completed tasks, use a staggered approach:
+      // 1. First mark as complete optimistically but don't remove yet
+      // 2. After animation finishes, then update the filtered view (if needed)
+      if (newCompletedState && !showCompleted) {
+        // First, just update the completed status in the tasks array
+        setTasks(
+          tasks.map((task) =>
+            task.id === taskId ? { ...task, completed: newCompletedState } : task
+          )
+        );
+        
+        // After a delay, also update filtered tasks to remove it with animation
+        setTimeout(() => {
+          setFilteredTasks(
+            filteredTasks.filter((task) => task.id !== taskId)
+          );
+        }, 1500); // Delay the removal to allow animation to play
+      } else {
+        // For non-completed tasks or when showing completed tasks,
+        // just update the state normally
+        setTasks(
+          tasks.map((task) =>
+            task.id === taskId ? { ...task, completed: newCompletedState } : task
+          )
+        );
+      }
 
       // Simple timeout handling to prevent UI freezing
       const controller = new AbortController();
@@ -1025,6 +1116,7 @@ export default function TasksPage() {
                 onComplete={handleComplete}
                 onEdit={handleOpenEditDialog}
                 onDelete={handleDelete}
+                showCompleted={showCompleted}
               />
             </Grid>
           ))}

@@ -23,6 +23,8 @@ interface GoalProgressProps {
     title: string;
     description: string;
     deadline: string;
+    completedTasks?: number;
+    totalTasks?: number;
     tasks?: Array<{
       id: string;
       title: string;
@@ -51,10 +53,16 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ goals, isLoading }) => {
   };
   
   // Calculate progress percentage for a goal
-  const calculateProgress = (tasks?: Array<{ completed: boolean }>) => {
-    if (!tasks || tasks.length === 0) return 0;
-    const completedTasks = tasks.filter(task => task.completed).length;
-    return Math.round((completedTasks / tasks.length) * 100);
+  const calculateProgress = (goal: any) => {
+    // Always calculate from tasks array for consistency
+    if (!goal.tasks || goal.tasks.length === 0) return 0;
+    
+    // Count completed tasks
+    const completedTasks = goal.tasks.filter((task: any) => task.completed).length;
+    const totalTasks = goal.tasks.length;
+    
+    // Calculate percentage
+    return Math.round((completedTasks / totalTasks) * 100);
   };
   
   // Get top goals to display
@@ -122,7 +130,7 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ goals, isLoading }) => {
         ) : (
           <Grid container spacing={2}>
             {topGoals.map((goal, index) => {
-              const progress = calculateProgress(goal.tasks);
+              const progress = calculateProgress(goal);
               const daysRemaining = getDaysRemaining(goal.deadline);
               const isUrgent = daysRemaining <= 3 && daysRemaining >= 0;
               const isOverdue = daysRemaining < 0;
@@ -178,7 +186,9 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ goals, isLoading }) => {
                           Due: {formatDeadline(goal.deadline)}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {goal.tasks ? `${goal.tasks.filter(t => t.completed).length}/${goal.tasks.length} tasks` : 'No tasks'}
+                          {goal.tasks 
+                            ? `${goal.tasks.filter(t => t.completed).length}/${goal.tasks.length} tasks` 
+                            : 'No tasks'}
                         </Typography>
                       </Box>
                     </CardContent>

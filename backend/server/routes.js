@@ -11,6 +11,14 @@ function addHeartbeatRoute(app) {
   app.get("/heartbeat", (req, res) => {
     res.send("Hello World!");
   });
+
+  // Add a simple test endpoint
+  app.post("/test", (req, res) => {
+    res.json({
+      success: true,
+      message: "Test endpoint working"
+    });
+  });
 }
 
 function addGetUserInfo(app) {

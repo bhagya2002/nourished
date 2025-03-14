@@ -73,16 +73,6 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
         await updateProfile(user, { displayName: name });
       }
 
-      // Send token to the backend
-      await fetch('/api/auth/verifyToken', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ uid: user.uid }),
-      });
-
       // Redirect to dashboard
       router.push('/dashboard');
     } catch (err: any) {

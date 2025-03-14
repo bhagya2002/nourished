@@ -175,51 +175,6 @@ const getTaskIcon = (title: string | undefined) => {
   return <TaskAltIcon />;
 };
 
-// Confetti animation component
-const Confetti = ({ isVisible }: { isVisible: boolean }) => {
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ 
-                x: '50%', 
-                y: '50%', 
-                scale: 0,
-                opacity: 1
-              }}
-              animate={{ 
-                x: `${Math.random() * 100}%`, 
-                y: `${Math.random() * 100}%`, 
-                scale: Math.random() * 0.5 + 0.5,
-                opacity: 0
-              }}
-              transition={{ 
-                duration: 1 + Math.random(), 
-                ease: "easeOut" 
-              }}
-              style={{
-                position: 'absolute',
-                width: 8,
-                height: 8,
-                borderRadius: Math.random() > 0.5 ? '50%' : '0%',
-                backgroundColor: [
-                  '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', 
-                  '#FFC107', '#FF9800', '#FF5722', '#F44336',
-                  '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
-                  '#2196F3', '#03A9F4', '#00BCD4', '#009688'
-                ][Math.floor(Math.random() * 16)],
-              }}
-            />
-          ))}
-        </Box>
-      )}
-    </AnimatePresence>
-  );
-};
-
 interface TaskCardProps {
   task: {
     id: string;
@@ -231,6 +186,7 @@ interface TaskCardProps {
   onComplete: (taskId: string) => Promise<void>;
   onEdit: (task: any) => void;
   onDelete: (taskId: string) => Promise<void>;
+  showCompleted?: boolean; // Add this prop
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -238,6 +194,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onComplete,
   onEdit,
   onDelete,
+  showCompleted = false, // Default to false
 }) => {
   // Add safety check at the beginning of the component
   if (!task || typeof task !== 'object') {
@@ -254,7 +211,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [wasJustCompleted, setWasJustCompleted] = useState(false);
 
@@ -281,28 +237,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
     // If we're completing (not uncompleting), show animation
     if (!completed) {
       setIsCompleting(true);
-      setShowConfetti(true);
-      
-      // Set wasJustCompleted to true to keep the card visible during animation
       setWasJustCompleted(true);
       
-      // Hide confetti after animation completes
+      // Reset completing state after animation
       setTimeout(() => {
-        setShowConfetti(false);
-      }, 1500);
+        setIsCompleting(false);
+      }, 500);
     }
     
     try {
       await onComplete(id);
     } finally {
       setIsLoading(false);
-      
-      // If we just completed the task, keep the animation state for a moment
-      if (isCompleting) {
-        setTimeout(() => {
-          setIsCompleting(false);
-        }, 1000);
-      }
     }
   };
 
@@ -326,21 +272,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
         layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ 
-          opacity: 1, 
+          opacity: completed && !wasJustCompleted ? 0.85 : 1, 
           y: 0,
-          scale: isCompleting ? 1.03 : 1,
-          boxShadow: isCompleting ? '0 8px 24px rgba(0,0,0,0.15)' : undefined
+          scale: isCompleting ? 1.02 : 1,
+          x: completed && !wasJustCompleted && !showCompleted ? 20 : 0,
         }}
-        exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
+        exit={{ 
+          opacity: 0, 
+          y: -20,
+          transition: { duration: 0.3, ease: 'easeInOut' }
+        }}
         whileHover={{ 
           translateY: -4,
           boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
         }}
         transition={{ 
           duration: 0.3,
-          type: 'spring',
-          stiffness: 500,
-          damping: 30
+          ease: 'easeInOut'
         }}
         sx={{
           position: 'relative',
@@ -350,10 +298,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
           backgroundColor: 'background.paper',
           borderRadius: '12px',
           overflow: 'visible',
+          border: '1px solid',
+          borderColor: (theme) => completed || isCompleting 
+            ? alpha(theme.palette.success.main, 0.2)
+            : theme.palette.divider,
+          transition: 'all 0.3s ease-in-out',
         }}
       >
-        <Confetti isVisible={showConfetti} />
-        
         <CardContent 
           sx={{ 
             position: 'relative', 
@@ -368,10 +319,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
               height: '4px',
               background: (theme) => 
                 completed || isCompleting
-                  ? theme.palette.success.main 
-                  : theme.palette.primary.main,
-              transition: 'background-color 0.3s ease-in-out',
+                  ? `linear-gradient(90deg, ${theme.palette.success.light}, ${theme.palette.success.main})`
+                  : `linear-gradient(90deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+              transition: 'background 0.5s ease-in-out',
               opacity: completed || isCompleting ? 1 : 0.7,
+              boxShadow: completed || isCompleting 
+                ? '0 2px 8px rgba(76, 175, 80, 0.2)'
+                : 'none',
             },
           }}
         >
@@ -389,7 +343,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             color={(completed || isCompleting) ? 'success' : 'default'}
             disabled={isLoading}
             sx={{
-              animation: isLoading ? 'spin 1s linear infinite' : isCompleting ? 'pulse 0.5s ease-in-out' : 'none',
+              animation: isLoading ? 'spin 1s linear infinite' : 'none',
               '@keyframes spin': {
                 '0%': {
                   transform: 'rotate(0deg)',
@@ -398,17 +352,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   transform: 'rotate(360deg)',
                 },
               },
-              '@keyframes pulse': {
-                '0%': {
-                  transform: 'scale(1)',
-                },
-                '50%': {
-                  transform: 'scale(1.3)',
-                },
-                '100%': {
-                  transform: 'scale(1)',
-                },
-              },
+              transform: isCompleting ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.3s ease-in-out',
             }}
           >
             {completed || isCompleting ? (
