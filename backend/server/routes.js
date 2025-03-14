@@ -732,8 +732,8 @@ function addCreatePost(app) {
   });
 }
 
-function addGetUserPosts(app) {
-  app.post("/getUserPosts", async (req, res) => {
+function addGetUserWithFriendPosts(app) {
+  app.post("/getUserWithFriendPosts", async (req, res) => {
     try {
       let authResult = {};
       if (!req.headers.debug) {
@@ -748,7 +748,7 @@ function addGetUserPosts(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await postService.getUserPosts(authResult.uid);
+      const result = await postService.getUserWithFriendPosts(authResult.uid);
       if (result.success) {
         return res.status(200).json({
           success: true,
@@ -761,7 +761,7 @@ function addGetUserPosts(app) {
         });
       }
     } catch (err) {
-      console.error("Error in getUserPosts endpoint:", err);
+      console.error("Error in getUserWithFriendPosts endpoint:", err);
       return res.status(500).json({
         success: false,
         error: err.message || "Server error occurred"
@@ -1460,7 +1460,7 @@ module.exports = function injectRoutes(app) {
 
   // Posts
   addCreatePost(app);
-  addGetUserPosts(app);
+  addGetUserWithFriendPosts(app);
   addEditPost(app);
   addDeletePost(app);
   addLikePost(app);
