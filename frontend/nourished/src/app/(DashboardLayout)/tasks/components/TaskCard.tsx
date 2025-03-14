@@ -75,7 +75,12 @@ const FrequencyChip = styled(Chip)(({ theme }) => ({
 }));
 
 // Function to determine the appropriate icon based on task title
-const getTaskIcon = (title: string) => {
+const getTaskIcon = (title: string | undefined) => {
+  // If title is undefined or empty, return the default icon
+  if (!title) {
+    return <TaskAltIcon />;
+  }
+  
   const lowercaseTitle = title.toLowerCase();
   
   // Map of keywords to icons
@@ -222,7 +227,7 @@ interface TaskCardProps {
     description: string;
     completed: boolean;
     frequency?: string;
-  };
+  } | undefined;  // Make the entire task object potentially undefined
   onComplete: (taskId: string) => Promise<void>;
   onEdit: (task: any) => void;
   onDelete: (taskId: string) => Promise<void>;
@@ -234,6 +239,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Add safety check at the beginning of the component
+  if (!task || typeof task !== 'object') {
+    return null;
+  }
+
+  const {
+    id = '',
+    title = '',
+    description = '',
+    completed = false,
+    frequency,
+  } = task;
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -243,7 +261,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   // Reset wasJustCompleted when task changes
   useEffect(() => {
     setWasJustCompleted(false);
-  }, [task.id]);
+  }, [id]);  // Update dependency to use destructured id
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -261,7 +279,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     setIsLoading(true);
     
     // If we're completing (not uncompleting), show animation
-    if (!task.completed) {
+    if (!completed) {
       setIsCompleting(true);
       setShowConfetti(true);
       
@@ -275,7 +293,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
     
     try {
-      await onComplete(task.id);
+      await onComplete(id);
     } finally {
       setIsLoading(false);
       
@@ -295,7 +313,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   const handleDelete = async () => {
     handleMenuClose();
-    await onDelete(task.id);
+    await onDelete(id);
   };
 
   // We want to show all tasks, including completed ones if showCompleted is true
@@ -349,17 +367,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
               right: 0,
               height: '4px',
               background: (theme) => 
-                task.completed || isCompleting
+                completed || isCompleting
                   ? theme.palette.success.main 
                   : theme.palette.primary.main,
               transition: 'background-color 0.3s ease-in-out',
-              opacity: task.completed || isCompleting ? 1 : 0.7,
+              opacity: completed || isCompleting ? 1 : 0.7,
             },
           }}
         >
-          {task.frequency && (
+          {frequency && (
             <FrequencyChip
-              label={task.frequency}
+              label={frequency}
               size="small"
               color="primary"
               variant="outlined"
@@ -368,7 +386,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           
           <TaskStatusIcon
             onClick={handleComplete}
-            color={(task.completed || isCompleting) ? 'success' : 'default'}
+            color={(completed || isCompleting) ? 'success' : 'default'}
             disabled={isLoading}
             sx={{
               animation: isLoading ? 'spin 1s linear infinite' : isCompleting ? 'pulse 0.5s ease-in-out' : 'none',
@@ -393,7 +411,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               },
             }}
           >
-            {task.completed || isCompleting ? (
+            {completed || isCompleting ? (
               <CheckCircleIcon />
             ) : (
               <RadioButtonUncheckedIcon />
@@ -406,36 +424,36 @@ const TaskCard: React.FC<TaskCardProps> = ({
               display: 'flex', 
               alignItems: 'center', 
               mb: 1.5,
-              color: (theme) => task.completed || isCompleting ? theme.palette.text.secondary : theme.palette.primary.main
+              color: (theme) => completed || isCompleting ? theme.palette.text.secondary : theme.palette.primary.main
             }}
           >
-            {getTaskIcon(task.title)}
+            {getTaskIcon(title)}
           </Box>
 
           <Typography
             variant="h6"
             component={motion.h3}
             animate={{ 
-              textDecoration: (task.completed || isCompleting) ? 'line-through' : 'none',
-              color: (task.completed || isCompleting) ? 'text.secondary' : 'text.primary',
+              textDecoration: (completed || isCompleting) ? 'line-through' : 'none',
+              color: (completed || isCompleting) ? 'text.secondary' : 'text.primary',
             }}
             transition={{ duration: 0.3 }}
             sx={{ mb: 1 }}
           >
-            {task.title}
+            {title}
           </Typography>
 
           <Typography
             variant="body2"
             component={motion.p}
             animate={{ 
-              textDecoration: (task.completed || isCompleting) ? 'line-through' : 'none',
-              opacity: (task.completed || isCompleting) ? 0.7 : 1,
+              textDecoration: (completed || isCompleting) ? 'line-through' : 'none',
+              opacity: (completed || isCompleting) ? 0.7 : 1,
             }}
             transition={{ duration: 0.3 }}
             color="text.secondary"
           >
-            {task.description}
+            {description}
           </Typography>
 
           <Box sx={{ position: 'absolute', right: 8, bottom: 8 }}>
