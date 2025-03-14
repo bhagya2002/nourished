@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 import DashboardCard from '../shared/DashboardCard';
 import FlagIcon from '@mui/icons-material/Flag';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Link from 'next/link';
 

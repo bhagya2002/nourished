@@ -15,7 +15,6 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import { motion } from 'framer-motion';
 
 // Styled components for enhanced UI
 const StyledCard = styled(Card)(({ theme }) => ({

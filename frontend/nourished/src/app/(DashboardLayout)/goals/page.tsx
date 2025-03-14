@@ -1,10 +1,9 @@
 'use client';
 
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
-  Fab,
   Box,
   Dialog,
   DialogTitle,
@@ -16,7 +15,6 @@ import {
   ListItem,
   ListItemText,
   IconButton,
-  ListItemSecondaryAction,
   Alert,
   Snackbar,
   AlertColor,
@@ -30,17 +28,10 @@ import {
   Menu,
   MenuItem,
   Grid,
-  CardActions,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
@@ -793,7 +784,7 @@ export default function GoalsPage() {
         }
 
         // If we get here, response was not OK
-        let errorMessage = 'Failed to update task completion';
+        const errorMessage = 'Failed to update task completion';
 
         // Try to get a more specific error message if possible
         const contentType = response.headers.get('content-type');
