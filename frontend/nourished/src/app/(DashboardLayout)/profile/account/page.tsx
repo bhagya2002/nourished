@@ -11,8 +11,6 @@ import {
   Alert,
   Stack,
   Avatar,
-  IconButton,
-  Divider,
 } from '@mui/material';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';

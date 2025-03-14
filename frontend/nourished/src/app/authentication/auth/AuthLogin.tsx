@@ -8,7 +8,6 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CustomTextField from '@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField';
 import { signInWithEmailAndPassword, updateProfile } from 'firebase/auth';

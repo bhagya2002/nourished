@@ -14,31 +14,14 @@ import {
   Fab,
   Grid,
   Button,
-  IconButton,
   Snackbar,
   Typography,
-  Card,
-  CardContent,
-  CardActions,
   FormControlLabel,
   Switch,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
 
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import TaskCard from './components/TaskCard';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -810,7 +793,7 @@ export default function TasksPage() {
         }
 
         // If we get here, response was not OK
-        let errorMessage = 'Failed to update task completion';
+        const errorMessage = 'Failed to update task completion';
 
         // Try to get a more specific error message if possible
         const contentType = response.headers.get('content-type');

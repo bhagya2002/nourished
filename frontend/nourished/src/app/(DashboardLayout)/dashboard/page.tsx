@@ -7,9 +7,6 @@ import {
   CircularProgress,
   Typography,
   Button,
-  Chip,
-  Divider,
-  Stack,
 } from '@mui/material';
 import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
@@ -21,10 +18,7 @@ import StreakCounter from '@/app/(DashboardLayout)/components/dashboard/StreakCo
 import WellnessCategories from '@/app/(DashboardLayout)/components/dashboard/WellnessCategories';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Link from 'next/link';
 import GoalProgress from '@/app/(DashboardLayout)/components/dashboard/GoalProgress';
 
 const API_BASE_URL =

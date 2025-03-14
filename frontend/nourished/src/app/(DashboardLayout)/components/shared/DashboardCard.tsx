@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { Card, CardHeader, CardContent, Typography, Stack, Box, Divider, useTheme } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Box, useTheme } from "@mui/material";
 
 type Props = {
   title?: string;

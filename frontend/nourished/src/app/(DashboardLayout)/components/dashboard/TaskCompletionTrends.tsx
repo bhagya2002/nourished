@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from "next/dynamic";
-import { useTheme, Box, Typography, CircularProgress, Stack, ToggleButtonGroup, ToggleButton } from "@mui/material";
+import { useTheme, Box, Typography, CircularProgress, ToggleButtonGroup, ToggleButton } from "@mui/material";
 import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
 import { ApexOptions } from "apexcharts";
 

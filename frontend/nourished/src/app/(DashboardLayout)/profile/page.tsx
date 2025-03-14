@@ -10,16 +10,12 @@ import {
   Tabs,
   Stack,
   Chip,
-  IconButton,
   Button,
   CircularProgress,
-  Divider,
-  Card,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
-  ListItemSecondaryAction,
 } from '@mui/material';
 import {
   collection,
@@ -28,7 +24,6 @@ import {
   getDocs,
   query,
   where,
-  limit,
 } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
