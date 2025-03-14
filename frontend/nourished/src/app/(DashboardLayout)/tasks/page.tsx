@@ -6,6 +6,8 @@ import PageContainer from '@/app/(DashboardLayout)/components/container/PageCont
 import TaskEditDialog from './components/TaskEditDialog';
 import TaskCreateDialog from './components/TaskCreateDialog';
 import HappinessDialog from './components/HappinessDialog';
+import PageHeader from './components/PageHeader';
+import TaskSummary from './components/TaskSummary';
 import {
   Alert,
   Box,
@@ -39,11 +41,118 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import TaskCard from './components/TaskCard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { alpha } from '@mui/material/styles';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
 
 type NotificationSeverity = 'error' | 'warning' | 'info' | 'success';
+
+// Celebration component for task completion
+interface CelebrationProps {
+  isVisible: boolean;
+  onAnimationComplete: () => void;
+}
+
+const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplete }) => {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onAnimationComplete={onAnimationComplete}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 1500,
+          }}
+        >
+          <Box
+            sx={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+            }}
+          >
+            {/* Confetti particles */}
+            {[...Array(30)].map((_, i) => (
+              <Box
+                component={motion.div}
+                key={i}
+                initial={{
+                  x: '50%',
+                  y: '50%',
+                  scale: 0,
+                  opacity: 1,
+                }}
+                animate={{
+                  x: `${Math.random() * 100}%`,
+                  y: `${Math.random() * 100}%`,
+                  scale: Math.random() * 0.5 + 0.5,
+                  opacity: 0,
+                }}
+                transition={{
+                  duration: 1.5 + Math.random(),
+                  ease: 'easeOut',
+                }}
+                sx={{
+                  position: 'absolute',
+                  width: 8 + Math.random() * 8,
+                  height: 8 + Math.random() * 8,
+                  borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                  backgroundColor: [
+                    '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
+                    '#FFC107', '#FF9800', '#FF5722', '#F44336',
+                    '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+                    '#2196F3', '#03A9F4', '#00BCD4', '#009688',
+                  ][Math.floor(Math.random() * 16)],
+                }}
+              />
+            ))}
+            
+            {/* Success message */}
+            <Box
+              component={motion.div}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.5, opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '16px',
+                padding: '16px 32px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
+              <CheckCircleIcon color="success" sx={{ fontSize: 32 }} />
+              <Typography variant="h6" color="success.main" fontWeight={600}>
+                Task Completed!
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export default function TasksPage() {
   const router = useRouter();
@@ -69,6 +178,8 @@ export default function TasksPage() {
   const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
   const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
   const [ratingTaskTitle, setRatingTaskTitle] = useState<string>('');
+
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -607,9 +718,16 @@ export default function TasksPage() {
       // Show notification during toggle - this acts as a loading indicator
       setNotification({
         open: true,
-        message: 'Updating task status...',
-        severity: 'info',
+        message: newCompletedState 
+          ? `Great job! "${currentTask.title}" completed 🎉` 
+          : `"${currentTask.title}" marked as incomplete`,
+        severity: newCompletedState ? 'success' : 'info',
       });
+
+      // Show celebration animation if task is being completed
+      if (newCompletedState) {
+        setShowCelebration(true);
+      }
 
       // Optimistically update UI first
       setTasks(
@@ -851,6 +969,12 @@ export default function TasksPage() {
   return (
     <PageContainer title="Tasks" description="Manage your tasks">
       <Box sx={{ position: 'relative', minHeight: '70vh' }}>
+        {/* Celebration effect */}
+        <Celebration 
+          isVisible={showCelebration} 
+          onAnimationComplete={() => setShowCelebration(false)} 
+        />
+        
         {/* Loading overlay */}
         {isLoading && (
           <Box
@@ -871,7 +995,14 @@ export default function TasksPage() {
           </Box>
         )}
 
-        {/* Task filters and controls */}
+        {/* Page Header */}
+        <PageHeader 
+          title="My Tasks" 
+          subtitle="Organize and track your daily, weekly, and monthly tasks"
+          onCreateTask={handleOpenCreateDialog}
+        />
+
+        {/* Task filters */}
         <Box
           sx={{
             mb: 4,
@@ -880,54 +1011,29 @@ export default function TasksPage() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: 2,
+            background: (theme) => alpha(theme.palette.background.paper, 0.7),
+            p: 2,
+            borderRadius: '10px',
+            border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showCompleted}
-                  onChange={(e) => setShowCompleted(e.target.checked)}
-                />
-              }
-              label="Show Completed"
-            />
-            <Button
-              variant="outlined"
-              startIcon={<EventNoteIcon />}
-              onClick={() => router.push('/tasks/history')}
-              sx={{
-                ml: 2,
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                },
-              }}
-            >
-              History
-            </Button>
-          </Box>
-          <Fab
-            color="primary"
-            aria-label="add"
-            onClick={handleOpenCreateDialog}
-            sx={{
-              position: { xs: 'fixed', sm: 'static' },
-              bottom: { xs: 16, sm: 'auto' },
-              right: { xs: 16, sm: 'auto' },
-              zIndex: { xs: 1000, sm: 1 },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                transform: 'rotate(90deg)',
-              },
-            }}
-          >
-            <AddIcon />
-          </Fab>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showCompleted}
+                onChange={(e) => setShowCompleted(e.target.checked)}
+              />
+            }
+            label="Show Completed"
+          />
         </Box>
 
-        {/* Tasks grid */}
+        {/* Task Summary */}
+        {tasks.length > 0 && (
+          <TaskSummary tasks={tasks} />
+        )}
+
+        {/* Tasks grid with improved layout */}
         <Grid container spacing={3}>
           {filteredTasks.map((task) => (
             <Grid item xs={12} sm={6} md={4} key={task.id}>
@@ -946,34 +1052,72 @@ export default function TasksPage() {
                   textAlign: 'center',
                   py: 8,
                   px: 2,
-                  backgroundColor: 'background.paper',
-                  borderRadius: 1,
+                  backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.7),
+                  borderRadius: '16px',
                   boxShadow: 1,
+                  border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
                 }}
               >
-                <EventNoteIcon
-                  sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }}
-                />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No tasks found
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {showCompleted
-                    ? "You haven't completed any tasks yet"
-                    : "You don't have any active tasks"}
-                </Typography>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenCreateDialog}
-                  sx={{ mt: 3 }}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  Create Task
-                </Button>
+                  <EventNoteIcon
+                    sx={{ fontSize: 64, color: 'text.secondary', mb: 2, opacity: 0.7 }}
+                  />
+                  <Typography variant="h5" color="text.primary" gutterBottom fontWeight={600}>
+                    {showCompleted
+                      ? "You haven't completed any tasks yet"
+                      : "You don't have any active tasks"}
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: '600px', mx: 'auto' }}>
+                    {showCompleted
+                      ? "Complete some tasks to see your progress here. Your completed tasks will be displayed in this section."
+                      : "Create your first task to get started. Tasks help you stay organized and track your progress."}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={<AddIcon />}
+                    onClick={handleOpenCreateDialog}
+                    sx={{ 
+                      mt: 2,
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      px: 4,
+                      py: 1,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Create Task
+                  </Button>
+                </motion.div>
               </Box>
             </Grid>
           )}
         </Grid>
+
+        {/* Floating action button for mobile */}
+        <Box sx={{ display: { sm: 'none' } }}>
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={handleOpenCreateDialog}
+            sx={{
+              position: 'fixed',
+              bottom: 16,
+              right: 16,
+              zIndex: 1000,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'rotate(90deg)',
+              },
+            }}
+          >
+            <AddIcon />
+          </Fab>
+        </Box>
 
         {/* Notification snackbar */}
         <Snackbar

@@ -136,12 +136,14 @@ const StreakCounter: React.FC<StreakCounterProps> = ({
       title="Your Streak"
       action={
         <Tooltip title='Complete tasks daily to build your streak' arrow>
-          <Chip
-            label='Daily Streak'
-            size='small'
-            color='primary'
-            variant='outlined'
-          />
+          <span>
+            <Chip
+              label='Daily Streak'
+              size='small'
+              color='primary'
+              variant='outlined'
+            />
+          </span>
         </Tooltip>
       }
     >

@@ -296,22 +296,24 @@ export default function TaskHistoryPage() {
           />
           
           <Tooltip title="Refresh task history">
-            <IconButton 
-              onClick={() => fetchHistory()} 
-              color="primary"
-              disabled={loading}
-              sx={{ 
-                height: 40, 
-                width: 40,
-                transition: 'all 0.2s',
-                '&:hover': { 
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  transform: 'rotate(180deg)',
-                },
-              }}
-            >
-              <RefreshIcon />
-            </IconButton>
+            <span>
+              <IconButton 
+                onClick={() => fetchHistory()} 
+                color="primary"
+                disabled={loading}
+                sx={{ 
+                  height: 40, 
+                  width: 40,
+                  transition: 'all 0.2s',
+                  '&:hover': { 
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    transform: 'rotate(180deg)',
+                  },
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
 

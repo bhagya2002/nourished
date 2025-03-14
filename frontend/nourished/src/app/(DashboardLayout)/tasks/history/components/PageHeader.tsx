@@ -41,22 +41,24 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         }}
       >
         <Tooltip title="Go back to tasks">
-          <IconButton
-            onClick={() => router.push('/tasks')}
-            size="medium"
-            color="primary"
-            sx={{
-              mr: { xs: 0, sm: 2 },
-              backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              transition: 'all 0.2s',
-              '&:hover': { 
-                backgroundColor: alpha(theme.palette.primary.main, 0.2),
-                transform: 'translateX(-2px)',
-              },
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
+          <span>
+            <IconButton
+              onClick={() => router.push('/tasks')}
+              size="medium"
+              color="primary"
+              sx={{
+                mr: { xs: 0, sm: 2 },
+                backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                transition: 'all 0.2s',
+                '&:hover': { 
+                  backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                  transform: 'translateX(-2px)',
+                },
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+          </span>
         </Tooltip>
         
         <Box>
