@@ -9,7 +9,6 @@ import {
   useTheme,
   alpha,
   Collapse,
-  IconButton,
   Tooltip,
 } from '@mui/material';
 import { motion } from 'framer-motion';

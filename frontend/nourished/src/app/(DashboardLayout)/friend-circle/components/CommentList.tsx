@@ -3,13 +3,11 @@ import {
   List, 
   ListItem, 
   ListItemAvatar, 
-  ListItemText, 
   Avatar, 
   Typography, 
   IconButton, 
   Box, 
-  Divider,
-  Paper
+  Divider
 } from '@mui/material';
 import { Delete } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';

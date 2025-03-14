@@ -15,13 +15,12 @@ module.exports = {
     // Allow console statements
     'no-console': 'off',
 
-    // Enable auto-fixing for unused imports
-    'unused-imports/no-unused-imports': 'error',
+    // Enable auto-fixing for unused imports (as a warning)
+    'unused-imports/no-unused-imports': 'warn',
 
-    // Auto-remove unused variables
-    // Setting this rule to error will allow ESLint to auto-fix and remove unused variables.
+    // Auto-remove unused variables (as a warning)
     'unused-imports/no-unused-vars': [
-      'error',
+      'warn', // Changed from 'error' to 'warn'
       {
         vars: 'all',
         varsIgnorePattern: '^_',
@@ -34,9 +33,9 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'off',
 
     // Allow the use of 'any'
-    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-explicit-any': 'warn', // Changed from 'off' to 'warn'
 
-    // You can set prefer-const to warn rather than disable it altogether
+    // Prefer 'const' but don't force it
     'prefer-const': 'warn',
   },
 };

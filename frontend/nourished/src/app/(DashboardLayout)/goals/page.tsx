@@ -11,34 +11,21 @@ import {
   TextField,
   DialogActions,
   Button,
-  List,
-  ListItem,
-  ListItemText,
-  IconButton,
   Alert,
   Snackbar,
   AlertColor,
   Collapse,
-  ListItemButton,
-  ListItemIcon,
-  Card,
-  CardContent,
   Typography,
   Divider,
-  Menu,
-  MenuItem,
   Grid,
   Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
 import HappinessDialog from '../tasks/components/HappinessDialog';
 import TaskCard from '../tasks/components/TaskCard';
-import { MoreVert } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Import our new components

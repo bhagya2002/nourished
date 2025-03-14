@@ -4,19 +4,16 @@ import {
   Dialog, 
   DialogTitle, 
   DialogContent, 
-  DialogActions, 
   Button, 
   TextField, 
   Box, 
   IconButton,
   Typography,
-  Divider,
   useTheme,
   alpha
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Close, Send, ChatBubble } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
 import CommentList from './CommentList';
 import { Comment } from '../page';
 

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardHeader, 
@@ -16,8 +16,7 @@ import {
   Chip,
   Divider,
   alpha,
-  useTheme,
-  Badge
+  useTheme
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { 

@@ -3,7 +3,6 @@ import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Grid,
   LinearProgress,
   useTheme,
