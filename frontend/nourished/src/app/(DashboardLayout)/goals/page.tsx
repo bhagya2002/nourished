@@ -28,6 +28,7 @@ import {
   Menu,
   MenuItem,
   Grid,
+  Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -38,6 +39,12 @@ import TaskEditDialog from '../tasks/components/TaskEditDialog';
 import HappinessDialog from '../tasks/components/HappinessDialog';
 import TaskCard from '../tasks/components/TaskCard';
 import { MoreVert } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Import our new components
+import PageHeader from './components/PageHeader';
+import GoalCard from './components/GoalCard';
+import EmptyState from './components/EmptyState';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -95,6 +102,9 @@ export default function GoalsPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Add a state to track expanded goals (multiple can be expanded at once)
+  const [expandedGoals, setExpandedGoals] = useState<{[key: string]: boolean}>({});
+
   // Reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({
@@ -126,15 +136,23 @@ export default function GoalsPage() {
       });
       if (!response.ok) throw new Error('Failed to fetch goals');
       const goalsData = await response.json();
-      console.log(goalsData.data)
 
       // Ensure we're setting an array even if the API returns something else
       if (goalsData && goalsData.data && Array.isArray(goalsData.data)) {
-        goalsData.data.forEach((goal: any) => {
-          goal.tasks = goal.taskIds;
-          delete goal.taskIds;
-        });
-        setGoals(goalsData.data);
+        const goals = goalsData.data.map((goal: any) => ({
+          ...goal,
+          tasks: goal.taskIds || [],
+        }));
+        
+        // Set goals first
+        setGoals(goals);
+        
+        // Then fetch tasks for each goal
+        for (let index = 0; index < goals.length; index++) {
+          if (goals[index] && goals[index].id) {
+            await fetchGoalTasks(index, goals);
+          }
+        }
       } else {
         setGoals([]);
       }
@@ -149,8 +167,17 @@ export default function GoalsPage() {
     }
   };
 
-  const fetchGoalTasks = async (index: number) => {
-    const goalId = goals[index].id;
+  const fetchGoalTasks = async (index: number, currentGoals?: Goal[]) => {
+    // Use either the passed goals array or the current state
+    const goalsArray = currentGoals || goals;
+    
+    // Safety check to ensure the index and goal exist
+    if (!goalsArray[index] || !goalsArray[index].id) {
+      console.error('Invalid goal index or missing goal ID');
+      return;
+    }
+
+    const goalId = goalsArray[index].id;
     try {
       const response = await fetch(`${API_BASE_URL}/getGoalTasks`, {
         method: 'POST',
@@ -168,23 +195,18 @@ export default function GoalsPage() {
         : tasksData && Array.isArray(tasksData.data)
           ? tasksData.data
           : [];
+      
       setGoals((prevGoals) => {
+        // Additional safety check
+        if (!prevGoals[index]) return prevGoals;
+        
         const updatedGoal = { ...prevGoals[index] };
         updatedGoal.tasks = tasksArray;
         return prevGoals.map((goal, idx) => (idx === index ? updatedGoal : goal));
       });
-      setToast({
-        open: true,
-        message: 'Tasks fetched successfully!',
-        severity: 'success',
-      });
     } catch (error) {
       console.error('Error fetching tasks:', error);
-      setToast({
-        open: true,
-        message: 'Failed to fetch tasks',
-        severity: 'error',
-      });
+      console.error(`Failed to fetch tasks for goal ${goalId}`);
     }
   };
 
@@ -359,14 +381,33 @@ export default function GoalsPage() {
     }
   };
 
-  const handleGoalExpand = (index: number) => {
-    if (expandingGoalIndex !== index) {
-      // Fetch goal tasks if needed
-      if (goals[index].tasks && typeof goals[index].tasks[0] === 'string') {
-        fetchGoalTasks(index);
+  // Function to toggle goal expansion
+  const handleToggleGoalExpand = (goalId: string) => {
+    setExpandedGoals(prev => {
+      const newState = {...prev};
+      newState[goalId] = !prev[goalId];
+      
+      // If we're expanding, make sure we fetch the tasks
+      if (!prev[goalId]) {
+        const goalIndex = goals.findIndex(g => g.id === goalId);
+        if (goalIndex !== -1) {
+          if (goals[goalIndex].tasks && typeof goals[goalIndex].tasks[0] === 'string') {
+            fetchGoalTasks(goalIndex);
+          }
+        }
       }
+      
+      return newState;
+    });
+  };
+  
+  // Function to handle adding a task to a goal
+  const handleAddTaskToGoal = (goalId: string) => {
+    const goalIndex = goals.findIndex(g => g.id === goalId);
+    if (goalIndex !== -1) {
+      setExpandingGoalIndex(goalIndex);
+      setTaskCreateModalOpen(true);
     }
-    setExpandingGoalIndex(index === expandingGoalIndex ? -1 : index);
   };
 
   // Create a new task
@@ -441,13 +482,6 @@ export default function GoalsPage() {
           idx === expandingGoalIndex ? updatedGoal : goal
         );
       })
-      // setGoals((prevGoals) =>
-      //   prevGoals.map((goal, index) =>
-      //     index === expandingGoalIndex
-      //       ? { ...goal, tasks: [...goal.tasks, newTask] }
-      //       : goal
-      //   )
-      // );
       setToast({
         open: true,
         message: 'Task created successfully!',
@@ -957,7 +991,6 @@ export default function GoalsPage() {
   return (
     <PageContainer title='Goals' description='Create and manage your goals'>
       <Box sx={{ mt: 2 }}>
-
         {/* popup toast message */}
         <Snackbar
           open={toast.open}
@@ -975,214 +1008,98 @@ export default function GoalsPage() {
           </Alert>
         </Snackbar>
 
-        {/* Goals Page Title and Add Goal Button */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, ml: 2, mr: 2 }}>
-          <Typography variant="h3">Your Goals</Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={handleAddGoalClick}
+        {/* Page Header Component */}
+        <PageHeader 
+          title="Your Goals"
+          subtitle="Set and track goals to help you achieve your wellness objectives. Break down big aspirations into manageable tasks."
+          onCreateGoal={handleAddGoalClick}
+        />
+
+        {/* Goals List with Modern Cards */}
+        <AnimatePresence>
+          {goals.length === 0 ? (
+            <EmptyState onCreateGoal={handleAddGoalClick} />
+          ) : (
+            <Stack spacing={3} sx={{ p: 1 }}>
+              {goals.map((goal, index) => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  isExpanded={Boolean(expandedGoals[goal.id])}
+                  onEdit={() => handleEditGoalClick(index)}
+                  onDelete={() => handleDeleteGoalClick(index)}
+                  onToggleExpand={() => handleToggleGoalExpand(goal.id)}
+                  onAddTask={() => handleAddTaskToGoal(goal.id)}
+                  index={index}
+                />
+              ))}
+            </Stack>
+          )}
+        </AnimatePresence>
+
+        {/* Tasks list under expanded goals */}
+        {goals.map((goal, goalIndex) => (
+          expandedGoals[goal.id] && (
+            <Collapse
+              key={`tasks-${goal.id}`}
+              in={expandedGoals[goal.id]}
+              timeout="auto"
+              unmountOnExit
+              sx={{ px: 2, mt: -2, mb: 3 }}
             >
-              Add Goal
-            </Button>
-          </Box>
-        </Box>
-
-        {/* goals list */}
-        <List>
-          {goals.map((goal, index) => (
-            <Card key={index}
-              sx={{
-                mb: 2,
-                mr: 2,
-                ml: { xs: 4, sm: 6 },
-                display: 'flex',
-                flexDirection: 'row',
-                overflow: 'initial',
-                boxShadow: 4,
-                borderRadius: 4,
-                alignItems: 'center',
-              }}>
-
-              {/* progress bar */}
-              <Card
-                sx={{
-                  marginY: 2,
-                  width: { xs: 120, sm: 160 },
-                  transform: 'translateX(-32px)',
-                  ml: 0,
-                  pb: { xs: 16, sm: 20 },
-                  height: 0,
-                  backgroundColor: (() => {
-                    const percentage = Math.round((goal.completedTasks / goal.totalTasks) * 100);
-                    return percentage > 66
-                      ? 'secondary.main'
-                      : percentage > 33
-                      ? 'orange'
-                      : 'red';
-                  })(),
-                  opacity: 0.5,
-                  position: 'relative',
-                  borderRadius: 4,
-                  flexShrink: 0,
-                  userSelect: 'none',
-                  "&:after": {
-                    content: '"%"',
-                    position: 'absolute',
-                    bottom: { xs: 32, sm: 40 },
-                    right: 8,
-                    fontSize: { xs: 80, sm: 120 },
-                    fontWeight: 1000,
-                    color: 'common.white',
-                    opacity: 0.3,
-                  }
-                }}>
-                <Typography sx={{ position: 'absolute', top: { xs: 32, sm: 48 }, left: 8, textAlign: 'center', color: 'common.white', fontWeight: 1000, 
-                  fontSize: { 
-                    xs: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 60 : 80, 
-                    sm: Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 80 : 120 
-                  }}}>
-                  {Math.round((goal.completedTasks / goal.totalTasks) * 100) >= 100 ? 100 : Math.round((goal.completedTasks / goal.totalTasks) * 100)}
-                </Typography>
-              </Card>
-
-              {/* goal actions menu */}
-              <Menu id='goal-more-menu' anchorEl={anchorEl} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }} open={goalMoreActionsOpen} onClose={() => { setAnchorEl(null); }} MenuListProps={{ 'aria-labelledby': 'goal-more-button' }}>
-                <MenuItem onClick={() => { handleEditGoalClick(index); setAnchorEl(null); }}>
-                  <ListItemIcon>
-                    <EditIcon fontSize='small' color='primary' />
-                  </ListItemIcon>
-                  <ListItemText>Edit</ListItemText>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    handleDeleteGoalClick(index);
-                    setAnchorEl(null);
-                  }}
-                >
-                  <ListItemIcon>
-                    <DeleteIcon fontSize='small' color='error' />
-                  </ListItemIcon>
-                  <ListItemText>Delete</ListItemText>
-                </MenuItem>
-              </Menu>
-
-              {/* goal info */}
-              <CardContent
-                sx={{
-                  '&.MuiCardContent-root': { p: 0 },
-                  flex: 1,
-                  my: 2,
-                }}>
-                <ListItem disablePadding>
-                  {/* Goal details */}
-                  <ListItemButton onClick={() => handleGoalExpand(index)}
-                    sx={{
-                      p: 0,
-                      transform: 'translateX(-16px)',
-                      '&.MuiListItemButton-root': { p: 0, pr: { xs: 0, sm: 0 }, pl: { xs: 0, sm: 1 } },
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-evenly',
-                      alignItems: 'flex-start',
-                      minHeight: { xs: 120, sm: 160 }
-                    }}>
-                    <Typography color='common.grey' sx={{ opacity: 0.5, fontSize: 14, fontWeight: 600, pt: 0.5 }}>BEFORE {goal.deadline}</Typography>
-                    <Typography sx={{ fontSize: { xs: 18, sm: 21 }, fontWeight: 600, pt: 0.5 }}>{goal.title}</Typography>
-                    <Typography sx={{ fontSize: { xs: 14, sm: 16 }, fontWeight: 400, pt: 1 }}>{goal.description}</Typography>
-                  </ListItemButton>
-
-                  {/* goal actions trigger button */}
-                  <IconButton aria-label='goal-actions' aria-haspopup='true' aria-expanded={goalMoreActionsOpen ? 'true' : undefined} id='goal-more-button'
-                    onClick={(e) => setAnchorEl(e.currentTarget)}
-                    sx={{
-                      position: 'absolute',
-                      right: 8,
-                      top: 0,
-                    }}>
-                    <MoreVert color='primary' />
-                  </IconButton>
-                </ListItem>
-
-                {/* Tasks list under each goal */}
-                <Collapse
-                  in={index === expandingGoalIndex}
-                  timeout='auto'
-                  unmountOnExit
-                >
-                  {/* goal tasks list */}
-                  <Divider sx={{ my: 1 }} />
-                  <Grid container alignItems='stretch' columnSpacing={2} rowSpacing={1} sx={{ pl: 2, pr: 2 }}>
-                    {goals[index].tasks !== undefined &&
-                      goals[index].tasks.map((task: any, taskIndex: number) => (
-                        <Grid item xs={12} sm={6} key={taskIndex}>
-                          <TaskCard
-                            task={task}
-                            onComplete={handleComplete}
-                            onEdit={() => {setTaskEditModalOpen(true); setTaskEditingIndex(taskIndex);}}
-                            onDelete={handleGoalTaskDelete}
-                          />
-                        </Grid>
-                      ))
-                    }
-
-                    {/* Add new task button */}
-                    <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      <Card
-                        onClick={() => setTaskCreateModalOpen(true)}
-                        sx={(theme) => ({
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                          '&:hover': {
-                            transform: 'translateY(-4px)',
-                            boxShadow: theme.shadows[8],
-                          },
-                          borderRadius: '12px',
-                          marginY: 2,
-                          width: "100%",
-                          m: 0,
-                          height: 112,
-                          backgroundColor: theme.palette.background.paper,
-                          position: 'relative',
-                          flexShrink: 0,
-                          userSelect: 'none',
-                          "&:before": {
-                            content: '"Add"',
-                            position: 'absolute',
-                            top: 30,
-                            left: 8,
-                            fontSize: { xs: 40, sm: 64 },
-                            fontWeight: 1000,
-                            color: 'secondary.light',
-                            opacity: 0.7,
-                          },
-                          "&:after": {
-                            content: '"Task"',
-                            position: 'absolute',
-                            bottom: 24,
-                            right: 8,
-                            fontSize: { xs: 40, sm: 64 },
-                            fontWeight: 1000,
-                            color: 'secondary.light',
-                            opacity: 0.7,
-                          }
-                        })}>
-                          <Typography sx={{ fontSize: 96, fontWeight: 1000, color: 'secondary.light', opacity: 0.3 }}>
-                            New
-                          </Typography>
-                      </Card>
-                    </Grid>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" sx={{ mb: 2, ml: 1 }}>
+                Tasks for {goal.title}
+              </Typography>
+              <Grid container spacing={2}>
+                {goal.tasks && goal.tasks.length > 0 && goal.tasks.map((task: any, taskIndex: number) => (
+                  <Grid item xs={12} sm={6} md={4} key={task.id || taskIndex}>
+                    <TaskCard
+                      task={task}
+                      onComplete={() => handleComplete(task.id)}
+                      onEdit={() => {
+                        setExpandingGoalIndex(goalIndex);
+                        setTaskEditingIndex(taskIndex);
+                        setTaskEditModalOpen(true);
+                      }}
+                      onDelete={() => handleGoalTaskDelete(task.id)}
+                    />
                   </Grid>
-                </Collapse>
-              </CardContent>
-            </Card>
-          ))}
-        </List>
+                ))}
+                <Grid item xs={12} sm={6} md={4}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      fullWidth
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        setExpandingGoalIndex(goalIndex);
+                        setTaskCreateModalOpen(true);
+                      }}
+                      sx={{
+                        height: '100%',
+                        minHeight: 150,
+                        borderRadius: 2,
+                        borderStyle: 'dashed',
+                        borderWidth: 2,
+                        textTransform: 'none',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      Add New Task
+                    </Button>
+                  </motion.div>
+                </Grid>
+              </Grid>
+            </Collapse>
+          )
+        ))}
 
         {/* add/edit goal form dialog */}
         <Dialog open={goalModalOpen} onClose={handleClose}>
@@ -1243,7 +1160,7 @@ export default function GoalsPage() {
             onClose={() => setTaskCreateModalOpen(false)}
             onCreate={handleGoalTaskCreate}
             userTasks={
-              goals[expandingGoalIndex] !== undefined &&
+              expandingGoalIndex >= 0 && goals[expandingGoalIndex] !== undefined &&
                 Array.isArray(goals[expandingGoalIndex].tasks)
                 ? goals[expandingGoalIndex].tasks
                 : []
