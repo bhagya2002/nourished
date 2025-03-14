@@ -29,7 +29,13 @@ import { db } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import { IconEdit, IconMail, IconMapPin, IconCalendar, IconUsers } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconMail,
+  IconMapPin,
+  IconCalendar,
+  IconUsers,
+} from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 
@@ -43,7 +49,7 @@ function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
   return (
     <div
-      role="tabpanel"
+      role='tabpanel'
       hidden={value !== index}
       id={`profile-tabpanel-${index}`}
       aria-labelledby={`profile-tab-${index}`}
@@ -74,13 +80,22 @@ const ProfilePage = () => {
     };
   } | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [allActivity, setAllActivity] = useState<any[]>([]);
-  const [friendsList, setFriendsList] = useState<Array<{
-    id: string;
-    name: string;
-    email: string;
-    photoURL?: string;
-  }>>([]);
+  const [allActivity, setAllActivity] = useState<
+    Array<{
+      id: string;
+      title: string;
+      completedAt: string;
+      happiness?: number;
+    }>
+  >([]);
+  const [friendsList, setFriendsList] = useState<
+    Array<{
+      id: string;
+      name: string;
+      email: string;
+      photoURL?: string;
+    }>
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -94,12 +109,12 @@ const ProfilePage = () => {
       if (user) {
         try {
           // Fetch user profile data
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-          
-        if (userSnap.exists()) {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
             const data = userSnap.data();
-            
+
             // Calculate average happiness from tasks
             const tasksQuery = query(
               collection(db, 'tasks'),
@@ -107,15 +122,20 @@ const ProfilePage = () => {
               where('completed', '==', true)
             );
             const tasksSnap = await getDocs(tasksQuery);
-            const tasks = tasksSnap.docs.map(doc => doc.data());
-            
+            const tasks = tasksSnap.docs.map((doc) => doc.data());
+
             const happinessValues = tasks
-              .filter(task => task.happiness !== undefined)
-              .map(task => task.happiness);
-            
-            const avgHappiness = happinessValues.length > 0
-              ? Math.round((happinessValues.reduce((a, b) => a + b, 0) / happinessValues.length) * 10) / 10
-              : 0;
+              .filter((task) => task.happiness !== undefined)
+              .map((task) => task.happiness);
+
+            const avgHappiness =
+              happinessValues.length > 0
+                ? Math.round(
+                    (happinessValues.reduce((a, b) => a + b, 0) /
+                      happinessValues.length) *
+                      10
+                  ) / 10
+                : 0;
 
             // Calculate current streak
             const today = new Date();
@@ -123,22 +143,26 @@ const ProfilePage = () => {
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            const hasCompletedToday = tasks.some(task => {
+            const hasCompletedToday = tasks.some((task) => {
               const completedDate = new Date(task.completedAt);
               completedDate.setHours(0, 0, 0, 0);
               return completedDate.getTime() === today.getTime();
             });
 
-            const hasCompletedYesterday = tasks.some(task => {
+            const hasCompletedYesterday = tasks.some((task) => {
               const completedDate = new Date(task.completedAt);
               completedDate.setHours(0, 0, 0, 0);
               return completedDate.getTime() === yesterday.getTime();
             });
 
-            const currentStreak = hasCompletedToday ? (hasCompletedYesterday ? data.currentStreak : 1) : 0;
+            const currentStreak = hasCompletedToday
+              ? hasCompletedYesterday
+                ? data.currentStreak
+                : 1
+              : 0;
 
-          setUserData({
-            id: user.uid,
+            setUserData({
+              id: user.uid,
               name: data.name || 'Anonymous',
               email: data.email,
               friends: data.friends || [],
@@ -181,16 +205,20 @@ const ProfilePage = () => {
             where('completed', '==', true)
           );
           const activitySnap = await getDocs(activityQuery);
-          const allActivityData = activitySnap.docs.map(doc => ({
+          const allActivityData = activitySnap.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data()
+            title: doc.data().title,
+            completedAt: doc.data().completedAt,
+            happiness: doc.data().happiness,
           }));
-          
+
           // Sort by completion date
-          allActivityData.sort((a, b) => 
-            new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+          allActivityData.sort(
+            (a, b) =>
+              new Date(b.completedAt).getTime() -
+              new Date(a.completedAt).getTime()
           );
-          
+
           setAllActivity(allActivityData);
           setRecentActivity(allActivityData.slice(0, 5));
         } catch (error) {
@@ -211,7 +239,12 @@ const ProfilePage = () => {
   if (loading || isLoading) {
     return (
       <PageContainer title='Loading...' description='Please wait'>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <Box
+          display='flex'
+          justifyContent='center'
+          alignItems='center'
+          minHeight='400px'
+        >
           <CircularProgress />
         </Box>
       </PageContainer>
@@ -242,12 +275,12 @@ const ProfilePage = () => {
                   width: '100%',
                   borderRadius: 2,
                   overflow: 'hidden',
-                  background: (theme) => 
+                  background: (theme) =>
                     `linear-gradient(45deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
                   mb: -8,
                 }}
               />
-              
+
               {/* Profile Info */}
               <Box
                 sx={{
@@ -269,31 +302,31 @@ const ProfilePage = () => {
                   }}
                 />
                 <Box sx={{ flex: 1, mb: 2 }}>
-                  <Typography variant="h4" fontWeight="bold">
+                  <Typography variant='h4' fontWeight='bold'>
                     {userData.name}
                   </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction='row' spacing={1} alignItems='center'>
                     <IconMail size={16} />
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       {userData.email}
                     </Typography>
                     {userData.location && (
                       <>
                         <IconMapPin size={16} />
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant='body2' color='text.secondary'>
                           {userData.location}
                         </Typography>
                       </>
                     )}
                   </Stack>
                 </Box>
-            <Button
-                  variant="contained"
+                <Button
+                  variant='contained'
                   startIcon={<IconEdit size={18} />}
                   onClick={() => router.push('/profile/account')}
                 >
                   Edit Profile
-            </Button>
+                </Button>
               </Box>
             </Box>
 
@@ -301,41 +334,41 @@ const ProfilePage = () => {
             <Box sx={{ px: 3, py: 2 }}>
               <Grid container spacing={3}>
                 <Grid item xs={12} sm={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                  <Box textAlign='center'>
+                    <Typography variant='h4' fontWeight='bold' color='primary'>
                       {userData.stats?.tasksCompleted || 0}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       Tasks Completed
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                  <Box textAlign='center'>
+                    <Typography variant='h4' fontWeight='bold' color='primary'>
                       {userData.stats?.currentStreak || 0}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       Current Streak
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                  <Box textAlign='center'>
+                    <Typography variant='h4' fontWeight='bold' color='primary'>
                       {userData.friends.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       Friends
                     </Typography>
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={3}>
-                  <Box textAlign="center">
-                    <Typography variant="h4" fontWeight="bold" color="primary">
+                  <Box textAlign='center'>
+                    <Typography variant='h4' fontWeight='bold' color='primary'>
                       {userData.stats?.averageHappiness || 0}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant='body2' color='text.secondary'>
                       Avg. Happiness
                     </Typography>
                   </Box>
@@ -348,8 +381,8 @@ const ProfilePage = () => {
               <Tabs
                 value={tabValue}
                 onChange={handleTabChange}
-                aria-label="profile tabs"
-                variant="standard"
+                aria-label='profile tabs'
+                variant='standard'
                 sx={{
                   minHeight: 48,
                   '& .MuiTabs-flexContainer': {
@@ -357,9 +390,9 @@ const ProfilePage = () => {
                   },
                 }}
               >
-                <Tab label="Overview" sx={{ minHeight: 48 }} />
-                <Tab label="Activity" sx={{ minHeight: 48 }} />
-                <Tab label="Friends" sx={{ minHeight: 48 }} />
+                <Tab label='Overview' sx={{ minHeight: 48 }} />
+                <Tab label='Activity' sx={{ minHeight: 48 }} />
+                <Tab label='Friends' sx={{ minHeight: 48 }} />
               </Tabs>
             </Box>
           </DashboardCard>
@@ -370,20 +403,21 @@ const ProfilePage = () => {
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
-                <DashboardCard title="About">
-                  <Typography variant="body1" paragraph>
+                <DashboardCard title='About'>
+                  <Typography variant='body1' paragraph>
                     {userData.bio}
                   </Typography>
                   <Stack spacing={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
+                    <Box display='flex' alignItems='center' gap={1}>
                       <IconCalendar size={20} />
-                      <Typography variant="body2">
-                        Joined {new Date(userData.joinedDate!).toLocaleDateString()}
+                      <Typography variant='body2'>
+                        Joined{' '}
+                        {new Date(userData.joinedDate!).toLocaleDateString()}
                       </Typography>
                     </Box>
-                    <Box display="flex" alignItems="center" gap={1}>
+                    <Box display='flex' alignItems='center' gap={1}>
                       <IconUsers size={20} />
-                      <Typography variant="body2">
+                      <Typography variant='body2'>
                         {userData.friends.length} Friends
                       </Typography>
                     </Box>
@@ -391,19 +425,21 @@ const ProfilePage = () => {
                 </DashboardCard>
               </Grid>
               <Grid item xs={12} md={8}>
-                <DashboardCard title="Recent Activity">
+                <DashboardCard title='Recent Activity'>
                   <List>
                     {recentActivity.map((activity) => (
                       <ListItem key={activity.id}>
                         <ListItemText
                           primary={activity.title}
-                          secondary={new Date(activity.completedAt).toLocaleDateString()}
+                          secondary={new Date(
+                            activity.completedAt
+                          ).toLocaleDateString()}
                         />
                         <Chip
-                          label="Completed"
-                          color="success"
-                          size="small"
-                          variant="outlined"
+                          label='Completed'
+                          color='success'
+                          size='small'
+                          variant='outlined'
                         />
                       </ListItem>
                     ))}
@@ -414,7 +450,7 @@ const ProfilePage = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <DashboardCard title="Activity History">
+            <DashboardCard title='Activity History'>
               <List>
                 {allActivity.map((activity) => (
                   <ListItem key={activity.id}>
@@ -422,11 +458,21 @@ const ProfilePage = () => {
                       primary={activity.title}
                       secondary={
                         <>
-                          <Typography component="span" variant="body2" color="text.secondary">
-                            Completed on {format(new Date(activity.completedAt), 'PPp')}
+                          <Typography
+                            component='span'
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            Completed on{' '}
+                            {format(new Date(activity.completedAt), 'PPp')}
                           </Typography>
                           {activity.happiness && (
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                            <Typography
+                              component='span'
+                              variant='body2'
+                              color='text.secondary'
+                              sx={{ ml: 2 }}
+                            >
                               Happiness: {activity.happiness}/5
                             </Typography>
                           )}
@@ -434,49 +480,59 @@ const ProfilePage = () => {
                       }
                     />
                     <Chip
-                      label="Completed"
-                      color="success"
-                      size="small"
-                      variant="outlined"
+                      label='Completed'
+                      color='success'
+                      size='small'
+                      variant='outlined'
                     />
                   </ListItem>
                 ))}
                 {allActivity.length === 0 && (
-                  <Typography color="text.secondary" align="center" sx={{ py: 3 }}>
+                  <Typography
+                    color='text.secondary'
+                    align='center'
+                    sx={{ py: 3 }}
+                  >
                     No completed tasks yet
                   </Typography>
                 )}
               </List>
-      </DashboardCard>
+            </DashboardCard>
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            <DashboardCard title="Friends">
-            <List>
+            <DashboardCard title='Friends'>
+              <List>
                 {friendsList.map((friend) => (
                   <ListItem key={friend.id}>
                     <ListItemAvatar>
-                      <Avatar src={friend.photoURL || '/images/profile/user-1.jpg'} />
+                      <Avatar
+                        src={friend.photoURL || '/images/profile/user-1.jpg'}
+                      />
                     </ListItemAvatar>
                     <ListItemText
                       primary={friend.name}
                       secondary={friend.email}
                     />
                     <Button
-                      variant="outlined"
-                      size="small"
+                      variant='outlined'
+                      size='small'
                       onClick={() => router.push(`/profile/${friend.id}`)}
                     >
                       View Profile
                     </Button>
-                </ListItem>
-              ))}
+                  </ListItem>
+                ))}
                 {friendsList.length === 0 && (
-                  <Typography color="text.secondary" align="center" sx={{ py: 3 }}>
+                  <Typography
+                    color='text.secondary'
+                    align='center'
+                    sx={{ py: 3 }}
+                  >
                     No friends added yet
                   </Typography>
                 )}
-            </List>
+              </List>
             </DashboardCard>
           </TabPanel>
         </Grid>
