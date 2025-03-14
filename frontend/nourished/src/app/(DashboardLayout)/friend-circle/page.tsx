@@ -29,7 +29,7 @@ export type Post = {
   name: string;
   email: string;
   content: string;
-  goal: Goal;
+  goal: Goal | null;
   createdAt: string;
   likes: string[];
   comments: Comment[];
@@ -234,7 +234,7 @@ export default function FriendCirclePage() {
               ...post,
               content: postContent,
               goal:
-                goals.find((goal) => goal.id === postGoalLinkId) || post.goal,
+                goals.find((goal) => goal.id === postGoalLinkId) || null,
             };
           }
           return post;
