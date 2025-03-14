@@ -70,16 +70,23 @@ const GoalCard: React.FC<GoalCardProps> = ({
   
   // Calculate task statistics
   const taskStats = useMemo(() => {
-    const totalTasks = goal.tasks?.length || 0;
-    const completedTasks = goal.tasks?.filter(task => task.completed)?.length || 0;
-    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    // Use the goal's own totalTasks and completedTasks properties 
+    // instead of recalculating from the tasks array
+    const { totalTasks, completedTasks } = goal;
+    
+    // Make sure they're numbers
+    const total = typeof totalTasks === 'number' ? totalTasks : 0;
+    const completed = typeof completedTasks === 'number' ? completedTasks : 0;
+    
+    // Calculate percentage, ensure we don't divide by zero
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     
     return {
-      total: totalTasks,
-      completed: completedTasks,
+      total,
+      completed,
       percentage
     };
-  }, [goal.tasks]);
+  }, [goal.totalTasks, goal.completedTasks]);
   
   // Format date for display
   const formatDeadline = (dateString: string) => {
@@ -212,7 +219,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
             />
             <Chip
               icon={<CheckCircleIcon />}
-              label={`${taskStats.completed}/${taskStats.total} tasks`}
+              label={`${goal.tasks.filter(t => t.completed).length}/${goal.tasks.length} tasks`}
               color="primary"
               size="small"
               variant="outlined"

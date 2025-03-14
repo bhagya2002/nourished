@@ -45,6 +45,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PageHeader from './components/PageHeader';
 import GoalCard from './components/GoalCard';
 import EmptyState from './components/EmptyState';
+import GoalSummary from './components/GoalSummary';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -722,36 +723,59 @@ export default function GoalsPage() {
     if (isLoading) return;
 
     try {
+      // Safety check for expandingGoalIndex
+      if (expandingGoalIndex < 0 || expandingGoalIndex >= goals.length) {
+        console.error('Invalid goal index:', expandingGoalIndex);
+        return;
+      }
+
       const currentTask = goals[expandingGoalIndex].tasks.find((task) => task.id === taskId);
-      if (!currentTask) return;
+      if (!currentTask) {
+        console.error('Task not found:', taskId);
+        return;
+      }
       
       // New completed state (toggle current state)
       const newCompletedState = !currentTask.completed;
 
-      setToast({ open: true, message: 'Updating task status...', severity: 'info' });
+      setToast({ 
+        open: true, 
+        message: newCompletedState ? 'Task completed ✓' : 'Task marked incomplete', 
+        severity: newCompletedState ? 'success' : 'info' 
+      });
 
       // Optimistically update UI first
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-        updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks + 1 : updatedGoal.completedTasks - 1;
         const updatedTasks = [...updatedGoal.tasks];
         const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-        updatedTasks[taskIndex].completed = newCompletedState;
+        
+        if (taskIndex === -1) return prevGoals;
+        
+        // Update task completion status
+        updatedTasks[taskIndex] = {
+          ...updatedTasks[taskIndex],
+          completed: newCompletedState
+        };
+        
+        // Update goal's tasks and completion count
         updatedGoal.tasks = updatedTasks;
+        updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks + 1 : updatedGoal.completedTasks - 1;
+        
+        // Debug log
+        console.log('Task completion update:', {
+          goalId: updatedGoal.id,
+          goalTitle: updatedGoal.title,
+          taskId,
+          newCompletedState,
+          completedTasks: updatedGoal.completedTasks,
+          totalTasks: updatedGoal.totalTasks,
+        });
+        
         return prevGoals.map((goal, idx) =>
           idx === expandingGoalIndex ? updatedGoal : goal
         );
       });
-
-      // Simple timeout handling to prevent UI freezing
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      console.log(
-        `Sending toggle request for task ${taskId} to ${
-          newCompletedState ? 'complete' : 'incomplete'
-        }`
-      );
 
       // Send toggle request to server
       try {
@@ -764,7 +788,6 @@ export default function GoalsPage() {
               taskId,
               completed: newCompletedState,
             }),
-            signal: controller.signal,
           });
         };
 
@@ -790,19 +813,9 @@ export default function GoalsPage() {
           }
         }
 
-        clearTimeout(timeoutId);
-
         // First check if the request was successful based on status code
         if (response.ok) {
-          // Success! Show success notification
-          setToast({
-            open: true,
-            message: newCompletedState
-              ? 'Task marked complete!'
-              : 'Task marked incomplete!',
-            severity: 'success',
-          });
-
+          // Success! The optimistic update was correct, no need to fetch all goals
           // If marked as complete, open the happiness rating dialog
           if (newCompletedState) {
             setRatingTaskId(taskId);
@@ -810,78 +823,13 @@ export default function GoalsPage() {
             // Small delay to allow notification to be seen before showing happiness dialog
             setTimeout(() => {
               setHappinessDialogOpen(true);
-            }, 500);
+            }, 1000);
           }
-
-          // Task was already optimistically updated, no need to refresh
           return;
         }
 
         // If we get here, response was not OK
-        const errorMessage = 'Failed to update task completion';
-
-        // Try to get a more specific error message if possible
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.indexOf('application/json') !== -1) {
-          try {
-            const freshToken = await refreshToken();
-            if (freshToken) {
-              const result = await makeRequest(freshToken);
-              // Convert response to JSON to access properties
-              const resultData = await result.json().catch(() => ({}));
-              if (!resultData.success) {
-                throw new Error(
-                  resultData.error || 'Failed to update task status'
-                );
-              }
-              return resultData;
-            } else {
-              throw new Error('Failed to refresh authentication token');
-            }
-          } catch (refreshError) {
-            console.error('Error refreshing token:', refreshError);
-            setToast({
-              open: true,
-              message: 'Failed to toggle task completion',
-              severity: 'error',
-            });
-    
-            // Revert the optimistic UI update
-            setGoals((prevGoals) => {
-              const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-              updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
-              const updatedTasks = [...updatedGoal.tasks];
-              const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-              updatedTasks[taskIndex].completed = !newCompletedState;
-              updatedGoal.tasks = updatedTasks;
-              return prevGoals.map((goal, idx) =>
-                idx === expandingGoalIndex ? updatedGoal : goal
-              );
-            });
-            router.push('/authentication/login');
-            throw refreshError;
-          }
-        } else {
-          setToast({
-            open: true,
-            message: 'Failed to toggle task completion',
-            severity: 'error',
-          });
-  
-          // Revert the optimistic UI update
-          setGoals((prevGoals) => {
-            const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-            updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
-            const updatedTasks = [...updatedGoal.tasks];
-            const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-            updatedTasks[taskIndex].completed = !newCompletedState;
-            updatedGoal.tasks = updatedTasks;
-            return prevGoals.map((goal, idx) =>
-              idx === expandingGoalIndex ? updatedGoal : goal
-            );
-          });
-          throw new Error('Failed to update task status');
-        }
+        throw new Error('Failed to update task completion');
       } catch (error) {
         console.error('Error toggling task completion:', error);
         setToast({
@@ -893,11 +841,21 @@ export default function GoalsPage() {
         // Revert the optimistic UI update
         setGoals((prevGoals) => {
           const updatedGoal = { ...prevGoals[expandingGoalIndex] };
-          updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks - 1 : updatedGoal.completedTasks + 1;
           const updatedTasks = [...updatedGoal.tasks];
           const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-          updatedTasks[taskIndex].completed = !newCompletedState;
+          
+          if (taskIndex === -1) return prevGoals;
+          
+          // Revert task completion status
+          updatedTasks[taskIndex] = {
+            ...updatedTasks[taskIndex],
+            completed: !newCompletedState
+          };
+          
+          // Update goal's tasks and completion count
           updatedGoal.tasks = updatedTasks;
+          updatedGoal.completedTasks = updatedTasks.filter(t => t.completed).length;
+          
           return prevGoals.map((goal, idx) =>
             idx === expandingGoalIndex ? updatedGoal : goal
           );
@@ -911,7 +869,7 @@ export default function GoalsPage() {
         severity: 'error',
       });
     }
-  }
+  };
 
   const handleSubmitHappiness = async (taskId: string, rating: number) => {
     try {
@@ -1010,10 +968,13 @@ export default function GoalsPage() {
 
         {/* Page Header Component */}
         <PageHeader 
-          title="Your Goals"
-          subtitle="Set and track goals to help you achieve your wellness objectives. Break down big aspirations into manageable tasks."
+          title="Goals"
+          subtitle="Set and track your personal goals"
           onCreateGoal={handleAddGoalClick}
         />
+
+        {/* Goal Summary */}
+        <GoalSummary goals={goals} />
 
         {/* Goals List with Modern Cards */}
         <AnimatePresence>
@@ -1021,7 +982,7 @@ export default function GoalsPage() {
             <EmptyState onCreateGoal={handleAddGoalClick} />
           ) : (
             <Stack spacing={3} sx={{ p: 1 }}>
-              {goals.map((goal, index) => (
+          {goals.map((goal, index) => (
                 <GoalCard
                   key={goal.id}
                   goal={goal}
@@ -1039,66 +1000,67 @@ export default function GoalsPage() {
 
         {/* Tasks list under expanded goals */}
         {goals.map((goal, goalIndex) => (
-          expandedGoals[goal.id] && (
-            <Collapse
-              key={`tasks-${goal.id}`}
-              in={expandedGoals[goal.id]}
-              timeout="auto"
-              unmountOnExit
-              sx={{ px: 2, mt: -2, mb: 3 }}
-            >
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" sx={{ mb: 2, ml: 1 }}>
-                Tasks for {goal.title}
-              </Typography>
-              <Grid container spacing={2}>
-                {goal.tasks && goal.tasks.length > 0 && goal.tasks.map((task: any, taskIndex: number) => (
-                  <Grid item xs={12} sm={6} md={4} key={task.id || taskIndex}>
-                    <TaskCard
-                      task={task}
-                      onComplete={() => handleComplete(task.id)}
-                      onEdit={() => {
-                        setExpandingGoalIndex(goalIndex);
-                        setTaskEditingIndex(taskIndex);
-                        setTaskEditModalOpen(true);
-                      }}
-                      onDelete={() => handleGoalTaskDelete(task.id)}
-                    />
-                  </Grid>
-                ))}
-                <Grid item xs={12} sm={6} md={4}>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      fullWidth
-                      startIcon={<AddIcon />}
-                      onClick={() => {
-                        setExpandingGoalIndex(goalIndex);
-                        setTaskCreateModalOpen(true);
-                      }}
-                      sx={{
-                        height: '100%',
-                        minHeight: 150,
-                        borderRadius: 2,
-                        borderStyle: 'dashed',
-                        borderWidth: 2,
-                        textTransform: 'none',
-                        fontSize: '1.1rem'
-                      }}
-                    >
-                      Add New Task
-                    </Button>
-                  </motion.div>
+          <Collapse
+            key={`tasks-${goal.id}`}
+            in={expandedGoals[goal.id]}
+            timeout="auto"
+            unmountOnExit
+            sx={{ px: 2, mt: -2, mb: 3 }}
+          >
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" sx={{ mb: 2, ml: 1 }}>
+              Tasks for {goal.title}
+            </Typography>
+            <Grid container spacing={2}>
+              {goal.tasks && goal.tasks.length > 0 && goal.tasks.map((task: any, taskIndex: number) => (
+                <Grid item xs={12} sm={6} md={4} key={task.id || taskIndex}>
+                  <TaskCard
+                    task={task}
+                    onComplete={async (taskId) => {
+                      setExpandingGoalIndex(goalIndex);
+                      await handleComplete(taskId);
+                    }}
+                    onEdit={() => {
+                      setExpandingGoalIndex(goalIndex);
+                      setTaskEditingIndex(taskIndex);
+                      setTaskEditModalOpen(true);
+                    }}
+                    onDelete={() => handleGoalTaskDelete(task.id)}
+                  />
                 </Grid>
+              ))}
+              <Grid item xs={12} sm={6} md={4}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    fullWidth
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      setExpandingGoalIndex(goalIndex);
+                      setTaskCreateModalOpen(true);
+                    }}
+                    sx={{
+                      height: '100%',
+                      minHeight: 150,
+                      borderRadius: 2,
+                      borderStyle: 'dashed',
+                      borderWidth: 2,
+                      textTransform: 'none',
+                      fontSize: '1.1rem'
+                    }}
+                  >
+                    Add New Task
+                  </Button>
+                </motion.div>
               </Grid>
-            </Collapse>
-          )
+            </Grid>
+          </Collapse>
         ))}
 
         {/* add/edit goal form dialog */}
