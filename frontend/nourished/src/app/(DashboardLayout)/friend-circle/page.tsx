@@ -733,7 +733,7 @@ export default function FriendCirclePage() {
                           <Box sx={{ mb: 3 }}>
                             <PostCard
                               post={post}
-                              currentUserId={user?.email || ''}
+                              currentUserId={user?.uid || ''}
                               onLike={handlePostLike}
                               onComment={handleCommentClick}
                               onEdit={handleEditPost}

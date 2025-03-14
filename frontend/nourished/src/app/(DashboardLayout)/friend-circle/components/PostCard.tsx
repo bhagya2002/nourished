@@ -115,6 +115,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
   const isMenuOpen = Boolean(anchorEl);
+  const [isLiked, setIsLiked] = useState(post.likes.includes(currentUserId));
   const isCurrentUserPost = post.email === currentUserId;
   
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -147,6 +148,8 @@ const PostCard: React.FC<PostCardProps> = ({
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 700);
     }
+
+    setIsLiked(!isLiked);
   };
 
   const formatDate = (dateString: string) => {
@@ -171,7 +174,6 @@ const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const isLiked = post.likes.includes(currentUserId);
   const likeCount = post.likes.length;
   const commentCount = post.comments.length;
 
