@@ -18,7 +18,21 @@ process.emitWarning = (function(originalEmitWarning) {
 
 // TODO: Load any additional stuff
 app.use(express.json());
-app.use(cors());
+
+// Set up CORS with more specific configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Add a middleware to log requests (simplified)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 routes(app);
 
 // Set up automated task reset scheduler
