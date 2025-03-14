@@ -87,7 +87,7 @@ export default function FriendCirclePage() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/getUserPosts`, {
+      const response = await fetch(`${API_BASE_URL}/getUserWithFriendPosts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

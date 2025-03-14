@@ -4,6 +4,13 @@ module.exports.createPost = async function createPost(uid, post) {
   try {
     // Set the uid on the post
     post.uid = uid;
+    if (post.name.trim() === "") {
+      const userResult = await db.queryDatabaseSingle(uid, "users");
+      if (!userResult.success) {
+        return userResult;
+      }
+      post.name = userResult.data.name;
+    }
     // Create a new post document in the "posts" collection
     const result = await db.addSingleDoc("posts", post);
     if (!result.success) {
@@ -36,6 +43,42 @@ module.exports.editPost = async function editPost(uid, postId, fieldToChange, ne
   if (result.success) {
     return await db.updateField("posts", postId, fieldToChange, newValue);
   } else return result;
+}
+
+module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(uid) {
+  try {
+    const userResult = await db.queryDatabaseSingle(uid, "users");
+    if (!userResult.success) {
+      return userResult;
+    }
+
+    const allUids = [...userResult.data.friends, uid];
+
+    // Initialize an array to hold all the promises for fetching user and friend posts
+    const postFetchPromises = [];
+
+    // For each friend, get their posts from function getUserPosts(uid)
+    for (const singleUid of allUids) {
+      const getPostsRes = await this.getUserPosts(singleUid);
+      if (!getPostsRes.success) {
+        return getPostsRes;
+      }
+      postFetchPromises.push(getPostsRes.data);
+    }
+    
+    // Wait for all promises to resolve and get the posts
+    const posts = await Promise.all(postFetchPromises);
+
+    // Flatten the array of posts arrays into a single array
+    const flattenedPosts = posts.reduce((acc, val) => acc.concat(val), []);
+
+    // Sort the posts by date
+    flattenedPosts.sort((a, b) => b.date - a.date);
+
+    return { success: true, data: flattenedPosts };
+  } catch (err) {
+    return { success: false, error: err };
+  }
 }
 
 module.exports.getUserPosts = async function getUserPosts(uid) {
