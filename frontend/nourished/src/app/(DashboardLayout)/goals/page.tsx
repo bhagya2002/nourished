@@ -760,7 +760,7 @@ export default function GoalsPage() {
         
         // Update goal's tasks and completion count
         updatedGoal.tasks = updatedTasks;
-        updatedGoal.completedTasks = updatedTasks.filter(t => t.completed).length;
+        updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks + 1 : updatedGoal.completedTasks - 1;
         
         // Debug log
         console.log('Task completion update:', {
@@ -769,7 +769,7 @@ export default function GoalsPage() {
           taskId,
           newCompletedState,
           completedTasks: updatedGoal.completedTasks,
-          totalTasks: updatedGoal.tasks.length
+          totalTasks: updatedGoal.totalTasks,
         });
         
         return prevGoals.map((goal, idx) =>

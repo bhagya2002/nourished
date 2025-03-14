@@ -50,11 +50,11 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
     
     // Overall completion rate - fixed calculation
     const totalTasks = goals.reduce((sum, goal) => {
-      return sum + (goal.tasks?.length || 0);
+      return sum + (goal.totalTasks || 0);
     }, 0);
     
     const completedTasks = goals.reduce((sum, goal) => {
-      return sum + (goal.tasks?.filter(t => t.completed)?.length || 0);
+      return sum + (goal.completedTasks || 0);
     }, 0);
     
     // Calculate completion rate, ensure we don't divide by zero
