@@ -18,6 +18,7 @@
     "mocha": "11.1.0",
     "monocart-coverage-reports": "2.12.1",
     "punycode": "^2.3.1",
+    "dotenv": "16.4.7",
     "sinon": "19.0.2",
     "winston": "3.17.0"
   },
