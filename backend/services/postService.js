@@ -17,7 +17,12 @@ module.exports.createPost = async function createPost(uid, post) {
       return { success: false, error: result.error };
     }
     // Update the user's document in the "users" collection by adding the new post id to the posts array
-    const updateResult = await db.updateFieldArray("users", uid, "posts", result.id);
+    const updateResult = await db.updateFieldArray(
+      "users",
+      uid,
+      "posts",
+      result.id,
+    );
     if (!updateResult.success) {
       return { success: false, error: updateResult.error };
     }
@@ -36,16 +41,23 @@ module.exports.createPost = async function createPost(uid, post) {
   } catch (err) {
     return { success: false, error: err };
   }
-}
+};
 
-module.exports.editPost = async function editPost(uid, postId, fieldToChange, newValue) {
+module.exports.editPost = async function editPost(
+  uid,
+  postId,
+  fieldToChange,
+  newValue,
+) {
   const result = await db.queryDatabaseSingle(uid, "users");
   if (result.success) {
     return await db.updateField("posts", postId, fieldToChange, newValue);
   } else return result;
-}
+};
 
-module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(uid) {
+module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
+  uid,
+) {
   try {
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
@@ -65,7 +77,7 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(ui
       }
       postFetchPromises.push(getPostsRes.data);
     }
-    
+
     // Wait for all promises to resolve and get the posts
     const posts = await Promise.all(postFetchPromises);
 
@@ -79,7 +91,7 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(ui
   } catch (err) {
     return { success: false, error: err };
   }
-}
+};
 
 module.exports.getUserPosts = async function getUserPosts(uid) {
   try {
@@ -95,7 +107,7 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
     }
 
     // Initialize an array to hold all the promises for fetching goal details
-    const goalFetchPromises = postsResult.data.map(post => {
+    const goalFetchPromises = postsResult.data.map((post) => {
       if (post.goalId) {
         return db.queryDatabaseSingle(post.goalId, "goals");
       } else {
@@ -121,18 +133,23 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
   } catch (err) {
     return { success: false, error: err };
   }
-}
+};
 
 module.exports.deletePost = async function deletePost(uid, postId) {
   const result = await db.removeFromFieldArray("users", uid, "posts", postId);
-  const userLikeResult = await db.removeFromFieldArray("users", uid, "likes", postId);
+  const userLikeResult = await db.removeFromFieldArray(
+    "users",
+    uid,
+    "likes",
+    postId,
+  );
   if (!result.success) {
     return result;
   } else if (!userLikeResult.success) {
     return userLikeResult;
   }
   return await db.deleteSingleDoc("posts", postId);
-}
+};
 
 module.exports.likePost = async function likePost(uid, postId) {
   const result = await db.queryDatabaseSingle(postId, "posts");
@@ -148,27 +165,47 @@ module.exports.likePost = async function likePost(uid, postId) {
   // Check if the user has already liked the post, if not, like it, if so, remove the like
   const isLiked = post.likes.includes(uid);
   if (isLiked) {
-    const updateResult = await db.removeFromFieldArray("posts", postId, "likes", uid);
+    const updateResult = await db.removeFromFieldArray(
+      "posts",
+      postId,
+      "likes",
+      uid,
+    );
     if (!updateResult.success) {
       return updateResult;
     }
-    post.likes = post.likes.filter(id => id !== uid);
+    post.likes = post.likes.filter((id) => id !== uid);
     // update the user doc with like/unlike postId
-    const userUpdateResult = await db.updateFieldArray("users", uid, "likes", postId);
+    const userUpdateResult = await db.updateFieldArray(
+      "users",
+      uid,
+      "likes",
+      postId,
+    );
     if (!userUpdateResult.success) {
       return userUpdateResult;
     }
   } else {
-    const updateResult = await db.updateFieldArray("posts", postId, "likes", uid);
+    const updateResult = await db.updateFieldArray(
+      "posts",
+      postId,
+      "likes",
+      uid,
+    );
     if (!updateResult.success) {
       return updateResult;
     }
     post.likes.push(uid);
     // update the user doc with like/unlike postId
-    const userUpdateResult = await db.removeFromFieldArray("users", uid, "likes", postId);
+    const userUpdateResult = await db.removeFromFieldArray(
+      "users",
+      uid,
+      "likes",
+      postId,
+    );
     if (!userUpdateResult.success) {
       return userUpdateResult;
     }
   }
   return { success: true, data: { post } };
-}
+};

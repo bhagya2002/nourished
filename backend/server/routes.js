@@ -16,7 +16,7 @@ function addHeartbeatRoute(app) {
   app.post("/test", (req, res) => {
     res.json({
       success: true,
-      message: "Test endpoint working"
+      message: "Test endpoint working",
     });
   });
 }
@@ -28,7 +28,7 @@ function addGetUserInfo(app) {
       if (!authResult.uid) {
         return res.status(401).json({
           success: false,
-          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
         });
       }
 
@@ -36,19 +36,19 @@ function addGetUserInfo(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.message || "Failed to fetch user information"
+          error: result.message || "Failed to fetch user information",
         });
       }
     } catch (err) {
       console.error("Error in getUserInfo endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -56,15 +56,16 @@ function addGetUserInfo(app) {
 
 function addFriendConnection(app) {
   app.post("/addFriendConnection", async (req, res) => {
-    if (await userService.addFriendConnection(req.body.uid1, req.body.uid2)) res.sendStatus(200);
+    if (await userService.addFriendConnection(req.body.uid1, req.body.uid2))
+      res.sendStatus(200);
     else res.sendStatus(500);
-  })
+  });
 }
 
 function addGetFriendRecommendation(app) {
   app.post("/getFriendRecommendation", async (req, res) => {
     res.send(await userService.getFriendRecommendations(req.body.uid));
-  })
+  });
 }
 
 function addGetUserProfile(app) {
@@ -74,7 +75,7 @@ function addGetUserProfile(app) {
       if (!authResult.uid) {
         return res.status(401).json({
           success: false,
-          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
         });
       }
 
@@ -83,16 +84,19 @@ function addGetUserProfile(app) {
       if (!userResult.success) {
         return res.status(404).json({
           success: false,
-          error: "User not found"
+          error: "User not found",
         });
       }
 
       // Get task history
-      const taskHistoryResult = await taskService.getTaskHistory(req.body.userId);
-      
+      const taskHistoryResult = await taskService.getTaskHistory(
+        req.body.userId,
+      );
+
       // Check if users are friends
       const currentUserResult = await userService.getUserInfo(authResult.uid);
-      const isFriend = currentUserResult.success && 
+      const isFriend =
+        currentUserResult.success &&
         currentUserResult.data.friends?.includes(req.body.userId);
 
       return res.status(200).json({
@@ -100,14 +104,16 @@ function addGetUserProfile(app) {
         data: {
           ...userResult.data,
           isFriend,
-          taskHistory: taskHistoryResult.success ? taskHistoryResult.data : null
-        }
+          taskHistory: taskHistoryResult.success
+            ? taskHistoryResult.data
+            : null,
+        },
       });
     } catch (err) {
       console.error("Error in getUserProfile endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -117,7 +123,9 @@ function addCreateTask(app) {
   app.post("/createTask", async (req, res) => {
     try {
       if (!req.body.task) {
-        return res.status(400).json({ success: false, error: "Task data is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Task data is required" });
       }
 
       let authResult = {};
@@ -126,7 +134,7 @@ function addCreateTask(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -134,24 +142,28 @@ function addCreateTask(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await taskService.createTask(authResult.uid, req.body.task, req.body.goalId ?? null);
+      const result = await taskService.createTask(
+        authResult.uid,
+        req.body.task,
+        req.body.goalId ?? null,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
           message: "Task created successfully",
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create task"
+          error: result.error || "Failed to create task",
         });
       }
     } catch (err) {
       console.error("Error in createTask endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -166,22 +178,34 @@ function addDeleteTask(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await taskService.deleteTask(authResult.uid, req.body.taskId, req.body.goalId ?? null);
+      const result = await taskService.deleteTask(
+        authResult.uid,
+        req.body.taskId,
+        req.body.goalId ?? null,
+      );
       if (result.success) {
-        return res.status(200).json({ success: true, message: "Task deleted successfully" });
+        return res
+          .status(200)
+          .json({ success: true, message: "Task deleted successfully" });
       } else {
-        return res.status(500).json({ success: false, error: result.error || "Failed to delete task" });
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to delete task",
+        });
       }
     } catch (err) {
       console.error("Error in deleteTask endpoint:", err);
-      return res.status(500).json({ success: false, error: err.message || "Server error occurred" });
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
     }
   });
 }
@@ -195,7 +219,7 @@ function addEditTask(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -206,17 +230,25 @@ function addEditTask(app) {
         authResult.uid,
         req.body.taskId,
         req.body.fieldToChange,
-        req.body.newValue
+        req.body.newValue,
       );
 
       if (result.success) {
-        return res.status(200).json({ success: true, message: "Task updated successfully" });
+        return res
+          .status(200)
+          .json({ success: true, message: "Task updated successfully" });
       } else {
-        return res.status(500).json({ success: false, error: result.error || "Failed to update task" });
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to update task",
+        });
       }
     } catch (err) {
       console.error("Error in editTask endpoint:", err);
-      return res.status(500).json({ success: false, error: err.message || "Server error occurred" });
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
     }
   });
 }
@@ -226,12 +258,16 @@ function addToggleTaskCompletion(app) {
     try {
       // Validate required fields
       if (!req.body.taskId) {
-        return res.status(400).json({ success: false, error: "Task ID is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Task ID is required" });
       }
 
       // Ensure completed status is provided
       if (req.body.completed === undefined) {
-        return res.status(400).json({ success: false, error: "Completed status is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Completed status is required" });
       }
 
       let authResult = {};
@@ -240,51 +276,58 @@ function addToggleTaskCompletion(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      console.log(`Processing toggle task completion. UID: ${authResult.uid}, TaskID: ${req.body.taskId}, Completed: ${req.body.completed}`);
+      console.log(
+        `Processing toggle task completion. UID: ${authResult.uid}, TaskID: ${req.body.taskId}, Completed: ${req.body.completed}`,
+      );
 
       try {
         const result = await taskService.toggleTaskCompletion(
           authResult.uid,
           req.body.taskId,
-          req.body.completed
+          req.body.completed,
         );
 
-        console.log(`Toggle task completion result:`, result);
+        console.log("Toggle task completion result:", result);
 
         if (result.success) {
           // Get fresh task data and include it in the response for immediate UI update
           // This avoids stale data in the UI without requiring additional API calls
           const freshTaskDataPromise = taskService.getUserTasks(authResult.uid);
           const taskHistoryPromise = taskService.getTaskHistory(authResult.uid);
-          
+
           const [freshTaskData, freshTaskHistory] = await Promise.all([
             freshTaskDataPromise,
-            taskHistoryPromise
+            taskHistoryPromise,
           ]);
-          
+
           return res.status(200).json({
             success: true,
-            message: req.body.completed ? "Task marked as complete" : "Task marked as incomplete",
+            message: req.body.completed
+              ? "Task marked as complete"
+              : "Task marked as incomplete",
             data: {
               tasks: freshTaskData.success ? freshTaskData.data : [],
-              recentActivity: freshTaskHistory.success ? {
-                completions: freshTaskHistory.data.completions?.slice(0, 5) || [],
-                streaks: freshTaskHistory.data.streaks
-              } : null
-            }
+              recentActivity: freshTaskHistory.success
+                ? {
+                    completions:
+                      freshTaskHistory.data.completions?.slice(0, 5) || [],
+                    streaks: freshTaskHistory.data.streaks,
+                  }
+                : null,
+            },
           });
         } else {
           // Always return JSON format
           return res.status(500).json({
             success: false,
-            error: result.error || "Failed to update task completion"
+            error: result.error || "Failed to update task completion",
           });
         }
       } catch (serviceErr) {
@@ -292,9 +335,10 @@ function addToggleTaskCompletion(app) {
         // Ensure we send a properly formatted JSON response
         return res.status(500).json({
           success: false,
-          error: typeof serviceErr === 'object' ?
-            (serviceErr.message || "Service error occurred") :
-            String(serviceErr)
+          error:
+            typeof serviceErr === "object"
+              ? serviceErr.message || "Service error occurred"
+              : String(serviceErr),
         });
       }
     } catch (err) {
@@ -302,9 +346,10 @@ function addToggleTaskCompletion(app) {
       // Ensure all errors are converted to JSON responses
       return res.status(500).json({
         success: false,
-        error: typeof err === 'object' ?
-          (err.message || "Server error occurred") :
-          String(err)
+        error:
+          typeof err === "object"
+            ? err.message || "Server error occurred"
+            : String(err),
       });
     }
   });
@@ -319,7 +364,7 @@ function addGetUserTasks(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -330,19 +375,19 @@ function addGetUserTasks(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch tasks"
+          error: result.error || "Failed to fetch tasks",
         });
       }
     } catch (err) {
       console.error("Error in getUserTasks endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -357,7 +402,7 @@ function addGetGoalTasks(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -368,19 +413,19 @@ function addGetGoalTasks(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch goal tasks"
+          error: result.error || "Failed to fetch goal tasks",
         });
       }
     } catch (err) {
       console.error("Error in getGoalTasks endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -395,31 +440,34 @@ function addCreateGoal(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await goalService.createGoal(authResult.uid, req.body.goal);
+      const result = await goalService.createGoal(
+        authResult.uid,
+        req.body.goal,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
           data: result.data,
-          message: "Goal created successfully"
+          message: "Goal created successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create goal"
+          error: result.error || "Failed to create goal",
         });
       }
     } catch (err) {
       console.error("Error in createGoal endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -434,30 +482,33 @@ function addDeleteGoal(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await goalService.deleteGoal(authResult.uid, req.body.goalId);
+      const result = await goalService.deleteGoal(
+        authResult.uid,
+        req.body.goalId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Goal deleted successfully"
+          message: "Goal deleted successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to delete goal"
+          error: result.error || "Failed to delete goal",
         });
       }
     } catch (err) {
       console.error("Error in deleteGoal endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -472,7 +523,7 @@ function addEditGoal(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -483,25 +534,25 @@ function addEditGoal(app) {
         authResult.uid,
         req.body.goalId,
         req.body.fieldToChange,
-        req.body.newValue
+        req.body.newValue,
       );
 
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Goal updated successfully"
+          message: "Goal updated successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to update goal"
+          error: result.error || "Failed to update goal",
         });
       }
     } catch (err) {
       console.error("Error in editGoal endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -516,7 +567,7 @@ function addGetUserGoals(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -527,19 +578,19 @@ function addGetUserGoals(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch user goals"
+          error: result.error || "Failed to fetch user goals",
         });
       }
     } catch (err) {
       console.error("Error in getUserGoals endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -554,7 +605,7 @@ function addGetTaskHistory(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -565,25 +616,25 @@ function addGetTaskHistory(app) {
         authResult.uid,
         req.body.startDate,
         req.body.endDate,
-        req.body.lastDoc
+        req.body.lastDoc,
       );
 
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch task history"
+          error: result.error || "Failed to fetch task history",
         });
       }
     } catch (err) {
       console.error("Error in getTaskHistory endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -596,7 +647,7 @@ function addSubmitHappinessRating(app) {
       if (!authResult.uid) {
         return res.status(401).json({
           success: false,
-          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
         });
       }
 
@@ -606,14 +657,14 @@ function addSubmitHappinessRating(app) {
       if (!taskId) {
         return res.status(400).json({
           success: false,
-          error: "Task ID is required"
+          error: "Task ID is required",
         });
       }
 
       if (!rating || rating < 1 || rating > 5 || !Number.isInteger(rating)) {
         return res.status(400).json({
           success: false,
-          error: "Valid happiness rating (1-5) is required"
+          error: "Valid happiness rating (1-5) is required",
         });
       }
 
@@ -621,7 +672,7 @@ function addSubmitHappinessRating(app) {
       if (isNaN(parsedDate.getTime())) {
         return res.status(400).json({
           success: false,
-          error: "Invalid date format"
+          error: "Invalid date format",
         });
       }
 
@@ -630,25 +681,25 @@ function addSubmitHappinessRating(app) {
         authResult.uid,
         taskId,
         rating,
-        parsedDate.toISOString()
+        parsedDate.toISOString(),
       );
 
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to submit happiness rating"
+          error: result.error || "Failed to submit happiness rating",
         });
       }
     } catch (err) {
       console.error("Error in submitHappinessRating endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -661,7 +712,7 @@ function addGetHappinessData(app) {
       if (!authResult.uid) {
         return res.status(401).json({
           success: false,
-          error: `Authentication failed: ${authResult.message || "Invalid token"}`
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
         });
       }
 
@@ -672,25 +723,25 @@ function addGetHappinessData(app) {
       const result = await taskService.getHappinessData(
         authResult.uid,
         startDate,
-        endDate
+        endDate,
       );
 
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch happiness data"
+          error: result.error || "Failed to fetch happiness data",
         });
       }
     } catch (err) {
       console.error("Error in getHappinessData endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -700,7 +751,9 @@ function addCreatePost(app) {
   app.post("/createPost", async (req, res) => {
     try {
       if (!req.body.post) {
-        return res.status(400).json({ success: false, error: "Post data is required" });
+        return res
+          .status(400)
+          .json({ success: false, error: "Post data is required" });
       }
 
       let authResult = {};
@@ -709,7 +762,7 @@ function addCreatePost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -717,24 +770,27 @@ function addCreatePost(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await postService.createPost(authResult.uid, req.body.post);
+      const result = await postService.createPost(
+        authResult.uid,
+        req.body.post,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
           message: "Post created successfully",
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create post"
+          error: result.error || "Failed to create post",
         });
       }
     } catch (err) {
       console.error("Error in createPost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -749,7 +805,7 @@ function addGetUserWithFriendPosts(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -760,19 +816,19 @@ function addGetUserWithFriendPosts(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch user posts"
+          error: result.error || "Failed to fetch user posts",
         });
       }
     } catch (err) {
       console.error("Error in getUserWithFriendPosts endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -787,7 +843,7 @@ function addEditPost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -798,25 +854,25 @@ function addEditPost(app) {
         authResult.uid,
         req.body.postId,
         req.body.fieldToChange,
-        req.body.newValue
+        req.body.newValue,
       );
 
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Post updated successfully"
+          message: "Post updated successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to update post"
+          error: result.error || "Failed to update post",
         });
       }
     } catch (err) {
       console.error("Error in editPost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -831,30 +887,33 @@ function addDeletePost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await postService.deletePost(authResult.uid, req.body.postId);
+      const result = await postService.deletePost(
+        authResult.uid,
+        req.body.postId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Post deleted successfully"
+          message: "Post deleted successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to delete post"
+          error: result.error || "Failed to delete post",
         });
       }
     } catch (err) {
       console.error("Error in deletePost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -869,7 +928,7 @@ function addGetCommentsOnPost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -880,19 +939,19 @@ function addGetCommentsOnPost(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch comments on post"
+          error: result.error || "Failed to fetch comments on post",
         });
       }
     } catch (err) {
       console.error("Error in getCommentsOnPost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -907,31 +966,34 @@ function addCommentOnPost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await commentService.createComment(authResult.uid, req.body.data);
+      const result = await commentService.createComment(
+        authResult.uid,
+        req.body.data,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
           data: result.data,
-          message: "Comment added successfully"
+          message: "Comment added successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create comment"
+          error: result.error || "Failed to create comment",
         });
       }
     } catch (err) {
       console.error("Error in commentOnPost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -946,7 +1008,7 @@ function addDeleteCommentOnPost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -957,19 +1019,19 @@ function addDeleteCommentOnPost(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Comment deleted successfully"
+          message: "Comment deleted successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to delete comment"
+          error: result.error || "Failed to delete comment",
         });
       }
     } catch (err) {
       console.error("Error in deleteCommentOnPost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -984,31 +1046,34 @@ function addLikePost(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await postService.likePost(authResult.uid, req.body.postId);
+      const result = await postService.likePost(
+        authResult.uid,
+        req.body.postId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
           message: "Post liked successfully",
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to like post"
+          error: result.error || "Failed to like post",
         });
       }
     } catch (err) {
       console.error("Error in likePost endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1023,30 +1088,33 @@ function addCreateChallenge(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.createChallenge(authResult.uid, req.body.data);
+      const result = await challengeService.createChallenge(
+        authResult.uid,
+        req.body.data,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Challenge created successfully"
+          message: "Challenge created successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create challenge"
+          error: result.error || "Failed to create challenge",
         });
       }
     } catch (err) {
       console.error("Error in createChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1061,30 +1129,33 @@ function addDeleteChallenge(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.deleteChallenge(authResult.uid, req.body.challengeId);
+      const result = await challengeService.deleteChallenge(
+        authResult.uid,
+        req.body.challengeId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "Challenge deleted successfully"
+          message: "Challenge deleted successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to delete challenge"
+          error: result.error || "Failed to delete challenge",
         });
       }
     } catch (err) {
       console.error("Error in deleteChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1099,30 +1170,33 @@ function addAddUserToChallenge(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.addUserToChallenge(authResult.uid, req.body.challengeId);
+      const result = await challengeService.addUserToChallenge(
+        authResult.uid,
+        req.body.challengeId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "User added successfully"
+          message: "User added successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to add user"
+          error: result.error || "Failed to add user",
         });
       }
     } catch (err) {
       console.error("Error in addUserToChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1137,30 +1211,33 @@ function addRemoveUserFromChallenge(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.removeUserFromChallenge(authResult.uid, req.body.challengeId);
+      const result = await challengeService.removeUserFromChallenge(
+        authResult.uid,
+        req.body.challengeId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: "User removed successfully"
+          message: "User removed successfully",
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to remove user"
+          error: result.error || "Failed to remove user",
         });
       }
     } catch (err) {
       console.error("Error in removeUserFromChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1175,7 +1252,7 @@ function addIncrementChallenge(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -1186,19 +1263,19 @@ function addIncrementChallenge(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: `Challenge incremented by ${req.body.data.amount}`
+          message: `Challenge incremented by ${req.body.data.amount}`,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to increment challenge"
+          error: result.error || "Failed to increment challenge",
         });
       }
     } catch (err) {
       console.error("Error in incrementChallenge endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1213,30 +1290,32 @@ function addGetChallengeInfo(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await challengeService.getChallengeInfo(req.body.challengeId);
+      const result = await challengeService.getChallengeInfo(
+        req.body.challengeId,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data
+          message: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to get challenge info"
+          error: result.error || "Failed to get challenge info",
         });
       }
     } catch (err) {
       console.error("Error in getChallengeInfo endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1251,30 +1330,33 @@ function addCreateInvite(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await inviteService.createInvite(authResult.uid, req.body.data);
+      const result = await inviteService.createInvite(
+        authResult.uid,
+        req.body.data,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data
+          message: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to create the invite"
+          error: result.error || "Failed to create the invite",
         });
       }
     } catch (err) {
       console.error("Error in addCreateInvite endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1289,30 +1371,33 @@ function addAcceptInvite(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
 
-      const result = await inviteService.acceptInvite(authResult.uid, req.body.data);
+      const result = await inviteService.acceptInvite(
+        authResult.uid,
+        req.body.data,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data
+          message: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to accept the invite"
+          error: result.error || "Failed to accept the invite",
         });
       }
     } catch (err) {
       console.error("Error in addAcceptInvite endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1327,7 +1412,7 @@ function addDeclineInvite(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -1338,19 +1423,19 @@ function addDeclineInvite(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data
+          message: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to decline the invite"
+          error: result.error || "Failed to decline the invite",
         });
       }
     } catch (err) {
       console.error("Error in declineInvite endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1365,7 +1450,7 @@ function addGetUserInvites(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
@@ -1376,19 +1461,19 @@ function addGetUserInvites(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data
+          message: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to fetch user invites"
+          error: result.error || "Failed to fetch user invites",
         });
       }
     } catch (err) {
       console.error("Error in getUserInvites endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: err.message || "Server error occurred"
+        error: err.message || "Server error occurred",
       });
     }
   });
@@ -1404,35 +1489,38 @@ function addResetRecurringTasks(app) {
         if (!authResult.uid) {
           return res.status(401).json({
             success: false,
-            error: `Authentication failed! ${authResult.message || "Invalid token"}`
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
           });
         }
       } else {
         authResult.uid = req.body.token;
       }
-      
+
       console.log(`Manual trigger of task reset by user: ${authResult.uid}`);
-      
+
       // Call the reset function
       const result = await taskService.resetRecurringTasks();
-      
+
       if (result.success) {
         return res.status(200).json({
           success: true,
           message: `Task reset completed: ${result.message}`,
-          data: result.data
+          data: result.data,
         });
       } else {
         return res.status(500).json({
           success: false,
-          error: result.error || "Failed to reset recurring tasks"
+          error: result.error || "Failed to reset recurring tasks",
         });
       }
     } catch (err) {
       console.error("Error in resetRecurringTasks endpoint:", err);
       return res.status(500).json({
         success: false,
-        error: typeof err === 'object' ? (err.message || "Server error occurred") : String(err)
+        error:
+          typeof err === "object"
+            ? err.message || "Server error occurred"
+            : String(err),
       });
     }
   });
@@ -1494,4 +1582,4 @@ module.exports = function injectRoutes(app) {
 
   // Reset Recurring Tasks
   addResetRecurringTasks(app);
-}
+};
