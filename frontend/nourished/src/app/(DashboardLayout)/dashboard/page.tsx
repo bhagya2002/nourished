@@ -1,13 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Grid,
-  Box,
-  CircularProgress,
-  Typography,
-  Button,
-} from '@mui/material';
+import { Grid, Box, CircularProgress, Typography, Button } from '@mui/material';
 import { useAuth } from '@/context/AuthContext'; // Import Auth Context
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 // components
@@ -34,14 +28,14 @@ const formatDate = (dateString: string) => {
   });
 };
 
-// Helper function to format time
-const formatTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+// // Helper function to format time
+// const formatTime = (dateString: string) => {
+//   const date = new Date(dateString);
+//   return date.toLocaleTimeString('en-US', {
+//     hour: '2-digit',
+//     minute: '2-digit',
+//   });
+// };
 
 const Dashboard = () => {
   console.log('🔥 Dashboard.tsx is rendering...');
@@ -69,13 +63,13 @@ const Dashboard = () => {
     if (userProfile?.firstName) {
       return userProfile.firstName;
     }
-    
+
     if (userProfile?.name) {
       // Split on spaces and get first part if we have full name
       const nameParts = userProfile.name.trim().split(/\s+/);
       return nameParts[0];
     }
-    
+
     // Fallback to display name from Firebase Auth
     if (user?.displayName) {
       // Split on spaces and get first part
@@ -95,15 +89,18 @@ const Dashboard = () => {
       const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           token,
-          userId: user.uid // Using the current user's ID to get their own profile
+          userId: user.uid, // Using the current user's ID to get their own profile
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        console.error('Failed to fetch user profile:', errorData || response.statusText);
+        console.error(
+          'Failed to fetch user profile:',
+          errorData || response.statusText
+        );
         throw new Error('Failed to fetch user profile');
       }
 
@@ -213,10 +210,18 @@ const Dashboard = () => {
 
         if (!response.ok) {
           const responseText = await response.text();
-          if (response.status === 401 && (responseText.includes('token has expired') || responseText.includes('auth/id-token-expired'))) {
+          if (
+            response.status === 401 &&
+            (responseText.includes('token has expired') ||
+              responseText.includes('auth/id-token-expired'))
+          ) {
             throw new Error('token_expired');
           } else {
-            throw new Error(`Server error: ${response.status} - ${responseText || 'Failed to fetch task history'}`);
+            throw new Error(
+              `Server error: ${response.status} - ${
+                responseText || 'Failed to fetch task history'
+              }`
+            );
           }
         }
         return response;
@@ -250,10 +255,13 @@ const Dashboard = () => {
       // Store both completions and streak data
       setCompletedTasks(data.data.completions || []);
       setStreakData(data.data.streaks || null);
-
     } catch (error) {
       console.error('Error fetching recent completions:', error);
-      setHistoryError(error instanceof Error ? error.message : 'Failed to load recent completions');
+      setHistoryError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to load recent completions'
+      );
     } finally {
       setIsLoadingHistory(false);
     }
@@ -358,32 +366,32 @@ const Dashboard = () => {
   // New function to fetch goals
   const fetchGoals = async () => {
     if (!token) return;
-    
+
     setIsLoadingGoals(true);
     setGoalsError(null);
-    
+
     try {
       // Add timeout to prevent long-hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
-      
+
       const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         const text = await response.text();
         console.error(`Server responded with ${response.status}: ${text}`);
         throw new Error(`Server error: ${response.status}`);
       }
-      
+
       const goalsData = await response.json();
-      
+
       if (goalsData && goalsData.success && Array.isArray(goalsData.data)) {
         // For each goal, fetch its tasks
         const goalsWithTasks = await Promise.all(
@@ -391,12 +399,15 @@ const Dashboard = () => {
             try {
               // Only fetch tasks if the goal has taskIds
               if (goal.taskIds && goal.taskIds.length > 0) {
-                const taskResponse = await fetch(`${API_BASE_URL}/getGoalTasks`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ token, goalId: goal.id }),
-                });
-                
+                const taskResponse = await fetch(
+                  `${API_BASE_URL}/getGoalTasks`,
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, goalId: goal.id }),
+                  }
+                );
+
                 if (taskResponse.ok) {
                   const taskData = await taskResponse.json();
                   if (taskData.success && Array.isArray(taskData.data)) {
@@ -412,14 +423,16 @@ const Dashboard = () => {
             }
           })
         );
-        
+
         setGoals(goalsWithTasks);
       } else {
         setGoals([]);
       }
     } catch (error) {
       console.error('Error fetching goals:', error);
-      setGoalsError(error instanceof Error ? error.message : 'Failed to load goals');
+      setGoalsError(
+        error instanceof Error ? error.message : 'Failed to load goals'
+      );
     } finally {
       setIsLoadingGoals(false);
     }
@@ -526,11 +539,11 @@ const Dashboard = () => {
   }
 
   return (
-    <PageContainer title="Dashboard" description="Welcome to your dashboard">
+    <PageContainer title='Dashboard' description='Welcome to your dashboard'>
       {/* Welcome Message */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          variant="h1"
+          variant='h1'
           sx={{
             fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
             fontWeight: 600,
@@ -543,7 +556,7 @@ const Dashboard = () => {
         >
           Welcome back,{' '}
           <Box
-            component="span"
+            component='span'
             sx={{
               background: (theme) =>
                 `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
@@ -557,7 +570,7 @@ const Dashboard = () => {
           </Box>
         </Typography>
         <Typography
-          variant="subtitle1"
+          variant='subtitle1'
           sx={{
             color: 'text.secondary',
             fontWeight: 400,
@@ -595,7 +608,9 @@ const Dashboard = () => {
               <DashboardCard title='Recent Activity'>
                 <Box sx={{ p: 2 }}>
                   {isLoadingHistory ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                    <Box
+                      sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
+                    >
                       <CircularProgress size={24} />
                     </Box>
                   ) : completedTasks.length > 0 ? (
@@ -625,10 +640,7 @@ const Dashboard = () => {
                           >
                             {task.title}
                           </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
+                          <Typography variant='caption' color='text.secondary'>
                             {formatDate(task.completedAt)}
                           </Typography>
                         </Box>
@@ -649,10 +661,7 @@ const Dashboard = () => {
 
         {/* Second Row: Goals */}
         <Grid item xs={12}>
-          <GoalProgress 
-            goals={goals}
-            isLoading={isLoadingGoals}
-          />
+          <GoalProgress goals={goals} isLoading={isLoadingGoals} />
         </Grid>
 
         {/* Third Row: Charts */}

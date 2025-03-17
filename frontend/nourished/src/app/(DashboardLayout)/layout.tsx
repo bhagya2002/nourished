@@ -47,7 +47,7 @@ export default function RootLayout({ children }: Props) {
         {/* ------------------------------------------- */}
         {/* Main Wrapper */}
         {/* ------------------------------------------- */}
-        <PageWrapper 
+        <PageWrapper
           className='page-wrapper'
           sx={{
             marginLeft: { xs: 0, lg: 0 }, // No margin on mobile, small margin on desktop
@@ -58,8 +58,8 @@ export default function RootLayout({ children }: Props) {
           {/* ------------------------------------------- */}
           {/* Header */}
           {/* ------------------------------------------- */}
-          <Header 
-            toggleMobileSidebar={() => setMobileSidebarOpen(true)} 
+          <Header
+            toggleMobileSidebar={() => setMobileSidebarOpen(true)}
             toggleSidebar={toggleSidebar}
             isSidebarOpen={isSidebarOpen}
           />

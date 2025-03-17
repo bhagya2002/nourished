@@ -6,16 +6,14 @@ import {
   styled,
   Stack,
   IconButton,
-  Badge,
-  Button,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import PropTypes from 'prop-types';
-import Link from 'next/link';
 // components
 import Profile from './Profile';
-import { IconBellRinging, IconMenu, IconMenuOrder } from '@tabler/icons-react';
+import { IconMenuOrder } from '@tabler/icons-react';
+import MenuOpenOutlinedIcon from '@mui/icons-material/MenuOpenOutlined';
 
 interface ItemType {
   toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
@@ -23,7 +21,11 @@ interface ItemType {
   isSidebarOpen?: boolean;
 }
 
-const Header = ({ toggleMobileSidebar, toggleSidebar, isSidebarOpen }: ItemType) => {
+const Header = ({
+  toggleMobileSidebar,
+  toggleSidebar,
+  isSidebarOpen,
+}: ItemType) => {
   const theme = useTheme();
   const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
 
@@ -55,9 +57,8 @@ const Header = ({ toggleMobileSidebar, toggleSidebar, isSidebarOpen }: ItemType)
             },
           }}
         >
-          <IconMenu width='20' height='20' />
+          <MenuOpenOutlinedIcon sx={{ width: 24, height: 24 }} />
         </IconButton>
-
         {lgUp && toggleSidebar && (
           <IconButton
             color='primary'
@@ -69,15 +70,15 @@ const Header = ({ toggleMobileSidebar, toggleSidebar, isSidebarOpen }: ItemType)
               position: 'relative',
               zIndex: 1200,
               '&:hover': {
-                backgroundColor: theme.palette.primary.light || 'rgba(0, 0, 0, 0.04)',
+                backgroundColor:
+                  theme.palette.primary.light || 'rgba(0, 0, 0, 0.04)',
               },
             }}
           >
             <IconMenuOrder width='20' height='20' />
           </IconButton>
         )}
-
-        <IconButton
+        {/* <IconButton
           size='large'
           aria-label='show notifications'
           color='inherit'
@@ -87,10 +88,10 @@ const Header = ({ toggleMobileSidebar, toggleSidebar, isSidebarOpen }: ItemType)
           <Badge variant='dot' color='primary'>
             <IconBellRinging size='21' stroke='1.5' />
           </Badge>
-        </IconButton>
+        </IconButton> */}
         <Box flexGrow={1} />
         <Stack spacing={1} direction='row' alignItems='center'>
-          <Button
+          {/* <Button
             variant='contained'
             component={Link}
             href='/authentication/login'
@@ -98,7 +99,7 @@ const Header = ({ toggleMobileSidebar, toggleSidebar, isSidebarOpen }: ItemType)
             color='primary'
           >
             Login
-          </Button>
+          </Button> */}
           <Profile />
         </Stack>
       </ToolbarStyled>

@@ -1,9 +1,9 @@
-import React from "react";
-import Menuitems from "./MenuItems";
-import { usePathname } from "next/navigation";
-import { Box, List, useTheme } from "@mui/material";
-import NavItem from "./NavItem";
-import NavGroup from "./NavGroup/NavGroup";
+import React from 'react';
+import Menuitems from './MenuItems';
+import { usePathname } from 'next/navigation';
+import { Box, List, useTheme } from '@mui/material';
+import NavItem from './NavItem';
+import NavGroup from './NavGroup/NavGroup';
 
 interface SidebarItemsProps {
   toggleMobileSidebar?: (event: React.MouseEvent<HTMLElement>) => void;
@@ -15,16 +15,16 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
   const theme = useTheme();
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         px: 3,
         '& .MuiList-root': {
           py: 1,
         },
       }}
     >
-      <List 
-        sx={{ 
+      <List
+        sx={{
           pt: 0,
           '& .MuiListItemButton-root': {
             borderRadius: '10px',
@@ -46,9 +46,9 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
               background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             },
           },
-        }} 
-        className="sidebarNav" 
-        component="div"
+        }}
+        className='sidebarNav'
+        component='div'
       >
         {Menuitems.map((item) => {
           // {/********SubHeader**********/}

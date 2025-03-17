@@ -71,7 +71,7 @@ const ProfilePage = () => {
     friends: string[];
     joinedDate?: string;
     location?: string;
-    bio?: string;
+    // bio?: string;
     stats?: {
       tasksCompleted: number;
       currentStreak: number;
@@ -167,8 +167,7 @@ const ProfilePage = () => {
               email: data.email,
               friends: data.friends || [],
               joinedDate: data.createdAt || new Date().toISOString(),
-              location: data.location || 'Not specified',
-              bio: data.bio || 'No bio yet',
+              // bio: data.bio || 'No bio yet',
               stats: {
                 tasksCompleted: tasks.length,
                 currentStreak: currentStreak,
@@ -325,7 +324,7 @@ const ProfilePage = () => {
                   startIcon={<IconEdit size={18} />}
                   onClick={() => router.push('/profile/account')}
                 >
-                  Edit Profile
+                  Change Password
                 </Button>
               </Box>
             </Box>
@@ -404,17 +403,17 @@ const ProfilePage = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <DashboardCard title='About'>
-                  <Typography variant='body1' paragraph>
+                  {/* <Typography variant='body1' paragraph>
                     {userData.bio}
-                  </Typography>
+                  </Typography> */}
                   <Stack spacing={2}>
-                    <Box display='flex' alignItems='center' gap={1}>
+                    {/* <Box display='flex' alignItems='center' gap={1}>
                       <IconCalendar size={20} />
                       <Typography variant='body2'>
                         Joined{' '}
                         {new Date(userData.joinedDate!).toLocaleDateString()}
                       </Typography>
-                    </Box>
+                    </Box> */}
                     <Box display='flex' alignItems='center' gap={1}>
                       <IconUsers size={20} />
                       <Typography variant='body2'>

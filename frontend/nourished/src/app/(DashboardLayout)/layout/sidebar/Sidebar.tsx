@@ -1,4 +1,11 @@
-import { useMediaQuery, Box, Drawer, Typography, Avatar, useTheme } from '@mui/material';
+import {
+  useMediaQuery,
+  Box,
+  Drawer,
+  Typography,
+  Avatar,
+  useTheme,
+} from '@mui/material';
 import SidebarItems from './SidebarItems';
 import { Sidebar } from 'react-mui-sidebar';
 import { IconLeaf } from '@tabler/icons-react';
@@ -33,38 +40,38 @@ const MSidebar = ({
 
   // Modern logo component
   const Logo = () => (
-    <Box 
-      sx={{ 
-        display: 'flex', 
+    <Box
+      sx={{
+        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         my: 3,
         transition: 'all 0.3s ease',
       }}
     >
-      <Avatar 
-        sx={{ 
-          width: 56, 
-          height: 56, 
+      <Avatar
+        sx={{
+          width: 56,
+          height: 56,
           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          mb: 1
+          mb: 1,
         }}
       >
         <IconLeaf size={30} />
       </Avatar>
-      
+
       {isSidebarOpen && (
-        <Typography 
-          variant="h5" 
-          sx={{ 
+        <Typography
+          variant='h5'
+          sx={{
             fontWeight: 600,
             backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             color: 'transparent',
             letterSpacing: '0.5px',
-            mt: 1
+            mt: 1,
           }}
         >
           Nourished
@@ -87,9 +94,9 @@ const MSidebar = ({
         {/* Sidebar for desktop */}
         {/* ------------------------------------------- */}
         <Drawer
-          anchor="left"
+          anchor='left'
           open={true}
-          variant="permanent"
+          variant='permanent'
           PaperProps={{
             sx: {
               width: isSidebarOpen ? sidebarWidth : collapsedWidth,
@@ -141,10 +148,10 @@ const MSidebar = ({
 
   return (
     <Drawer
-      anchor="left"
+      anchor='left'
       open={isMobileSidebarOpen}
       onClose={onSidebarClose}
-      variant="temporary"
+      variant='temporary'
       PaperProps={{
         sx: {
           width: sidebarWidth,
@@ -163,8 +170,8 @@ const MSidebar = ({
           width={sidebarWidth}
           collapsewidth={collapsedWidth}
           isCollapse={false}
-          mode="light"
-          direction="ltr"
+          mode='light'
+          direction='ltr'
           themeColor={theme.palette.primary.main}
           themeSecondaryColor={theme.palette.secondary.main}
           showProfile={false}

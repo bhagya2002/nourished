@@ -33,11 +33,10 @@ const AccountPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    location: '',
     bio: '',
     currentPassword: '',
     newPassword: '',
@@ -55,10 +54,10 @@ const AccountPage = () => {
         try {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
-          
+
           if (userSnap.exists()) {
             const data = userSnap.data();
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               name: data.name || '',
               email: user.email || '',
@@ -79,7 +78,7 @@ const AccountPage = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -91,7 +90,7 @@ const AccountPage = () => {
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     setIsSaving(true);
     setError(null);
     setSuccess(null);
@@ -100,7 +99,6 @@ const AccountPage = () => {
       const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         name: formData.name,
-        location: formData.location,
         bio: formData.bio,
       });
       setSuccess('Profile updated successfully');
@@ -126,16 +124,18 @@ const AccountPage = () => {
         formData.currentPassword
       );
       await reauthenticateWithCredential(user, credential);
-      
+
       // Update email
       await updateEmail(user, formData.email);
       await updateDoc(doc(db, 'users', user.uid), {
         email: formData.email,
       });
-      
+
       setSuccess('Email updated successfully');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to update email');
+      setError(
+        error instanceof Error ? error.message : 'Failed to update email'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -161,20 +161,22 @@ const AccountPage = () => {
         formData.currentPassword
       );
       await reauthenticateWithCredential(user, credential);
-      
+
       // Update password
       await updatePassword(user, formData.newPassword);
       setSuccess('Password updated successfully');
-      
+
       // Clear password fields
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       }));
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to update password');
+      setError(
+        error instanceof Error ? error.message : 'Failed to update password'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -182,8 +184,13 @@ const AccountPage = () => {
 
   if (loading || isLoading) {
     return (
-      <PageContainer title="Loading..." description="Please wait">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <PageContainer title='Loading...' description='Please wait'>
+        <Box
+          display='flex'
+          justifyContent='center'
+          alignItems='center'
+          minHeight='400px'
+        >
           <CircularProgress />
         </Box>
       </PageContainer>
@@ -191,26 +198,29 @@ const AccountPage = () => {
   }
 
   return (
-    <PageContainer title="Account Settings" description="Manage your account settings">
+    <PageContainer
+      title='Account Settings'
+      description='Manage your account settings'
+    >
       <Grid container spacing={3}>
         {/* Profile Settings */}
-        <Grid item xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <form onSubmit={handleProfileUpdate}>
-            <DashboardCard title="Profile Settings">
+            <DashboardCard title='Profile Settings'>
               <Stack spacing={3}>
-                <Box display="flex" alignItems="center" gap={2}>
+                <Box display='flex' alignItems='center' gap={2}>
                   <Avatar
                     src={user?.photoURL || '/images/profile/user-1.jpg'}
                     sx={{ width: 100, height: 100 }}
                   />
                   <Box>
-                    <Typography variant="subtitle1" gutterBottom>
+                    <Typography variant='subtitle1' gutterBottom>
                       Profile Picture
                     </Typography>
                     <Button
-                      variant="outlined"
+                      variant='outlined'
                       startIcon={<IconCamera size={18} />}
-                      size="small"
+                      size='small'
                     >
                       Change Avatar
                     </Button>
@@ -218,8 +228,8 @@ const AccountPage = () => {
                 </Box>
 
                 <TextField
-                  label="Display Name"
-                  name="name"
+                  label='Display Name'
+                  name='name'
                   value={formData.name}
                   onChange={handleInputChange}
                   fullWidth
@@ -227,16 +237,8 @@ const AccountPage = () => {
                 />
 
                 <TextField
-                  label="Location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  fullWidth
-                />
-
-                <TextField
-                  label="Bio"
-                  name="bio"
+                  label='Bio'
+                  name='bio'
                   value={formData.bio}
                   onChange={handleInputChange}
                   multiline
@@ -245,8 +247,8 @@ const AccountPage = () => {
                 />
 
                 <Button
-                  type="submit"
-                  variant="contained"
+                  type='submit'
+                  variant='contained'
                   disabled={isSaving}
                   fullWidth
                 >
@@ -255,22 +257,22 @@ const AccountPage = () => {
               </Stack>
             </DashboardCard>
           </form>
-        </Grid>
+        </Grid> */}
 
         {/* Security Settings */}
         <Grid item xs={12} md={6}>
           <Stack spacing={3}>
             {/* Email Settings */}
-            <form onSubmit={handleEmailUpdate}>
+            {/* <form onSubmit={handleEmailUpdate}>
               <DashboardCard
-                title="Email Settings"
+                title='Email Settings'
                 action={<IconMail size={20} />}
               >
                 <Stack spacing={3}>
                   <TextField
-                    label="Email Address"
-                    name="email"
-                    type="email"
+                    label='Email Address'
+                    name='email'
+                    type='email'
                     value={formData.email}
                     onChange={handleInputChange}
                     fullWidth
@@ -278,9 +280,9 @@ const AccountPage = () => {
                   />
 
                   <TextField
-                    label="Current Password"
-                    name="currentPassword"
-                    type="password"
+                    label='Current Password'
+                    name='currentPassword'
+                    type='password'
                     value={formData.currentPassword}
                     onChange={handleInputChange}
                     fullWidth
@@ -288,8 +290,8 @@ const AccountPage = () => {
                   />
 
                   <Button
-                    type="submit"
-                    variant="contained"
+                    type='submit'
+                    variant='contained'
                     disabled={isSaving}
                     fullWidth
                   >
@@ -297,19 +299,19 @@ const AccountPage = () => {
                   </Button>
                 </Stack>
               </DashboardCard>
-            </form>
+            </form> */}
 
             {/* Password Settings */}
             <form onSubmit={handlePasswordUpdate}>
               <DashboardCard
-                title="Password Settings"
+                title='Password Settings'
                 action={<IconLock size={20} />}
               >
                 <Stack spacing={3}>
                   <TextField
-                    label="Current Password"
-                    name="currentPassword"
-                    type="password"
+                    label='Current Password'
+                    name='currentPassword'
+                    type='password'
                     value={formData.currentPassword}
                     onChange={handleInputChange}
                     fullWidth
@@ -317,9 +319,9 @@ const AccountPage = () => {
                   />
 
                   <TextField
-                    label="New Password"
-                    name="newPassword"
-                    type="password"
+                    label='New Password'
+                    name='newPassword'
+                    type='password'
                     value={formData.newPassword}
                     onChange={handleInputChange}
                     fullWidth
@@ -327,9 +329,9 @@ const AccountPage = () => {
                   />
 
                   <TextField
-                    label="Confirm New Password"
-                    name="confirmPassword"
-                    type="password"
+                    label='Confirm New Password'
+                    name='confirmPassword'
+                    type='password'
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     fullWidth
@@ -337,8 +339,8 @@ const AccountPage = () => {
                   />
 
                   <Button
-                    type="submit"
-                    variant="contained"
+                    type='submit'
+                    variant='contained'
                     disabled={isSaving}
                     fullWidth
                   >
@@ -354,12 +356,12 @@ const AccountPage = () => {
       {/* Error/Success Messages */}
       <Box mt={3}>
         {error && (
-          <Alert severity="error" onClose={() => setError(null)}>
+          <Alert severity='error' onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
         {success && (
-          <Alert severity="success" onClose={() => setSuccess(null)}>
+          <Alert severity='success' onClose={() => setSuccess(null)}>
             {success}
           </Alert>
         )}
@@ -368,4 +370,4 @@ const AccountPage = () => {
   );
 };
 
-export default AccountPage; 
+export default AccountPage;

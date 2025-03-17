@@ -239,9 +239,9 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} disabled={submitting}>
+        {/* <Button onClick={onClose} disabled={submitting}>
           Skip
-        </Button>
+        </Button> */}
         <Button
           variant='contained'
           onClick={handleSubmit}

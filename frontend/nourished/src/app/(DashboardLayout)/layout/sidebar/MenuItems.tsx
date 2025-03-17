@@ -6,7 +6,6 @@ import {
   IconStack,
   IconUser,
   IconFriends,
-  IconSettings,
 } from '@tabler/icons-react';
 
 import { uniqueId } from 'lodash';
@@ -67,12 +66,6 @@ const Menuitems = [
     title: 'Profile',
     icon: IconUser,
     href: '/profile',
-  },
-  {
-    id: uniqueId(),
-    title: 'Settings',
-    icon: IconSettings,
-    href: '/settings',
   },
   {
     id: uniqueId(),

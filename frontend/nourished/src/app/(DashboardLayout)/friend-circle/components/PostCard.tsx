@@ -1,33 +1,33 @@
 'use client';
 import React, { useState } from 'react';
-import { 
-  Card, 
-  CardHeader, 
-  CardContent, 
-  CardActions, 
-  Avatar, 
-  IconButton, 
-  Typography, 
-  Menu, 
-  MenuItem, 
-  ListItemIcon, 
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardActions,
+  Avatar,
+  IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+  ListItemIcon,
   ListItemText,
   Box,
   Chip,
   Divider,
   alpha,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { 
-  MoreVert, 
-  Favorite, 
-  FavoriteBorderOutlined, 
-  ChatBubbleOutlineRounded, 
-  Edit, 
+import {
+  MoreVert,
+  Favorite,
+  FavoriteBorderOutlined,
+  ChatBubbleOutlineRounded,
+  Edit,
   Delete,
   Flag,
-  Share
+  Share,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Post } from '../page';
@@ -52,7 +52,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   '&:hover': {
     boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
     transform: 'translateY(-2px)',
-  }
+  },
 }));
 
 const StyledAvatar = styled(Avatar)(({ theme }) => ({
@@ -73,18 +73,18 @@ const GoalChip = styled(Chip)(({ theme }) => ({
 }));
 
 const LikeButton = styled(IconButton, {
-  shouldForwardProp: (prop) => prop !== 'isLiked'
+  shouldForwardProp: (prop) => prop !== 'isLiked',
 })<{ isLiked?: boolean }>(({ theme, isLiked }) => ({
   transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
   color: isLiked ? '#ff3366' : 'inherit',
   position: 'relative',
-  '&:hover': { 
-    transform: 'scale(1.15)', 
+  '&:hover': {
+    transform: 'scale(1.15)',
     color: isLiked ? '#ff3366' : alpha('#ff3366', 0.7),
   },
   '&:active': {
     transform: 'scale(0.9)',
-  }
+  },
 }));
 
 const HeartAnimation = styled(motion.div)({
@@ -108,7 +108,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onLike,
   onComment,
   onEdit,
-  onDelete
+  onDelete,
 }) => {
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -116,7 +116,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const isMenuOpen = Boolean(anchorEl);
   const [isLiked, setIsLiked] = useState(post.likes.includes(currentUserId));
   const isCurrentUserPost = post.email === currentUserId;
-  
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -142,7 +142,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const handleLike = () => {
     triggerHapticFeedback();
     onLike(post.id);
-    
+
     if (!isLiked) {
       setShowHeartAnimation(true);
       setTimeout(() => setShowHeartAnimation(false), 700);
@@ -158,7 +158,7 @@ const PostCard: React.FC<PostCardProps> = ({
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffMins < 60) {
       return `${diffMins}m ago`;
     } else if (diffHours < 24) {
@@ -168,7 +168,7 @@ const PostCard: React.FC<PostCardProps> = ({
     } else {
       return new Intl.DateTimeFormat('en-US', {
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       }).format(date);
     }
   };
@@ -191,68 +191,72 @@ const PostCard: React.FC<PostCardProps> = ({
           }
           action={
             isCurrentUserPost && (
-              <IconButton 
-                aria-label="settings" 
+              <IconButton
+                aria-label='settings'
                 onClick={handleMenuOpen}
-                size="small"
-                sx={{ 
+                size='small'
+                sx={{
                   color: 'text.secondary',
                   '&:hover': {
                     backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  }
+                  },
                 }}
               >
-                <MoreVert fontSize="small" />
+                <MoreVert fontSize='small' />
               </IconButton>
             )
           }
           title={
-            <Typography variant="subtitle2" fontWeight={600}>
+            <Typography variant='subtitle2' fontWeight={600}>
               {post.name || 'Anonymous'}
             </Typography>
           }
           subheader={
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant='caption' color='text.secondary'>
               {formatDate(post.createdAt)}
             </Typography>
           }
           sx={{ pb: 1 }}
         />
-        
+
         <CardContent sx={{ pt: 0, pb: 1 }}>
-          <Typography variant="body2" sx={{ mb: 1.5, whiteSpace: 'pre-wrap' }}>
+          <Typography variant='body2' sx={{ mb: 1.5, whiteSpace: 'pre-wrap' }}>
             {post.content}
           </Typography>
-          
+
           {post.goal && (
             <Box sx={{ mt: 2, mb: 1 }}>
-              <GoalChip 
-                icon={<Flag fontSize="small" />}
+              <GoalChip
+                icon={<Flag fontSize='small' />}
                 label={post.goal.title}
-                size="small"
-                variant="outlined"
+                size='small'
+                variant='outlined'
               />
             </Box>
           )}
         </CardContent>
-        
+
         <Box sx={{ px: 2, pb: 1 }}>
           <Divider />
         </Box>
-        
+
         <CardActions sx={{ px: 2, py: 0.5, justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ position: 'relative' }}>
-              <LikeButton 
+              <LikeButton
                 onClick={handleLike}
                 isLiked={isLiked}
-                size="small"
+                size='small'
                 sx={{ mr: 0.5 }}
                 aria-label={isLiked ? 'Unlike' : 'Like'}
               >
-                {isLiked ? <Favorite fontSize="small" /> : <FavoriteBorderOutlined fontSize="small" />}
+                {isLiked ? (
+                  <Favorite fontSize='small' />
+                ) : (
+                  <FavoriteBorderOutlined fontSize='small' />
+                )}
               </LikeButton>
-              
+
               <AnimatePresence>
                 {showHeartAnimation && (
                   <HeartAnimation
@@ -261,57 +265,57 @@ const PostCard: React.FC<PostCardProps> = ({
                     exit={{ opacity: 0, scale: 0 }}
                     transition={{ duration: 0.6, type: 'spring' }}
                   >
-                    <Favorite fontSize="small" sx={{ color: '#ff3366' }} />
+                    <Favorite fontSize='small' sx={{ color: '#ff3366' }} />
                   </HeartAnimation>
                 )}
               </AnimatePresence>
             </Box>
-            
+
             {likeCount > 0 && (
-              <Typography 
-                variant="caption" 
-                color={isLiked ? "#ff3366" : "text.secondary"} 
+              <Typography
+                variant='caption'
+                color={isLiked ? '#ff3366' : 'text.secondary'}
                 sx={{ mr: 2, fontWeight: isLiked ? 600 : 400 }}
               >
                 {likeCount}
               </Typography>
             )}
-            
+
             <IconButton
               onClick={() => onComment(post.id, commentCount)}
-              size="small"
-              sx={{ 
+              size='small'
+              sx={{
                 mr: 0.5,
                 transition: 'all 0.2s',
-                '&:hover': { transform: 'scale(1.1)' }
+                '&:hover': { transform: 'scale(1.1)' },
               }}
             >
-              <ChatBubbleOutlineRounded fontSize="small" />
+              <ChatBubbleOutlineRounded fontSize='small' />
             </IconButton>
             {commentCount > 0 && (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant='caption' color='text.secondary'>
                 {commentCount}
               </Typography>
             )}
           </Box>
-          
-          <IconButton 
-            size="small" 
-            sx={{ 
+
+          {/* <IconButton
+            size='small'
+            sx={{
               color: 'text.secondary',
               transition: 'all 0.2s',
-              '&:hover': { 
+              '&:hover': {
                 transform: 'scale(1.1)',
-                color: theme.palette.primary.main
-              }
+                color: theme.palette.primary.main,
+              },
             }}
-            aria-label="Share post"
+            aria-label='Share post'
           >
-            <Share fontSize="small" />
-          </IconButton>
+            <Share fontSize='small' />
+          </IconButton> */}
         </CardActions>
       </StyledCard>
-      
+
       <Menu
         anchorEl={anchorEl}
         open={isMenuOpen}
@@ -328,20 +332,20 @@ const PostCard: React.FC<PostCardProps> = ({
             mt: 1,
             '& .MuiMenuItem-root': {
               px: 2,
-              py: 1.5
-            }
-          }
+              py: 1.5,
+            },
+          },
         }}
       >
         <MenuItem onClick={handleEdit}>
           <ListItemIcon>
-            <Edit fontSize="small" color="primary" />
+            <Edit fontSize='small' color='primary' />
           </ListItemIcon>
           <ListItemText>Edit Post</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDelete}>
           <ListItemIcon>
-            <Delete fontSize="small" color="error" />
+            <Delete fontSize='small' color='error' />
           </ListItemIcon>
           <ListItemText>Delete Post</ListItemText>
         </MenuItem>
@@ -350,4 +354,4 @@ const PostCard: React.FC<PostCardProps> = ({
   );
 };
 
-export default PostCard; 
+export default PostCard;
