@@ -584,16 +584,12 @@ const Dashboard = () => {
             <Grid item xs={12} md={6}>
               {userProfile === null ? (
                 <CircularProgress />
-              ) : userProfile.plantHealth !== undefined ? (
+              ) : (
                 <>
                   <PlantHealthVisualizer
-                    plantHealth={userProfile.plantHealth}
+                    plantHealth={userProfile.plantHealth ?? 5}
                   />
                 </>
-              ) : (
-                <Typography variant="body2" color="textSecondary">
-                  No plant health data available.
-                </Typography>
               )}
             </Grid>
             <Grid item xs={12} md={6}>
