@@ -1,12 +1,12 @@
 const express = require("express");
 const routes = require("./routes.js");
-const app = express();
-const port = 3010;
 const cors = require("cors");
-const taskService = require("../services/taskService");
+const taskService = require("../services/taskService.js");
+
+const app = express();
+const port = process.env.PORT || 3010;
 
 // Suppress punycode deprecation warning by using userland punycode instead
-// This patches the warning while we continue to use dependencies that might rely on it
 process.emitWarning = (function (originalEmitWarning) {
   return function (warning, ...args) {
     if (typeof warning === "string" && warning.includes("punycode")) {
@@ -16,25 +16,31 @@ process.emitWarning = (function (originalEmitWarning) {
   };
 })(process.emitWarning);
 
-// TODO: Load any additional stuff
+// Middleware
 app.use(express.json());
 
 // Set up CORS with more specific configuration
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
 );
 
-// Add a middleware to log requests (simplified)
+// Log all requests
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
   next();
 });
 
+// Health check route
+app.get("/", (req, res) => {
+  res.send("Server is running on Vercel!");
+});
+
+// Load routes
 routes(app);
 
 // Set up automated task reset scheduler
@@ -52,7 +58,6 @@ function setupTaskResetScheduler() {
       console.error("Error in task reset job:", err);
     }
 
-    // Schedule the next run
     scheduleNextRun();
   };
 
@@ -67,17 +72,23 @@ function setupTaskResetScheduler() {
       `Next task reset scheduled for midnight (${tomorrow.toISOString()}), in ${Math.round(timeUntilMidnight / 1000 / 60)} minutes`,
     );
 
-    // Set timeout for next run
     setTimeout(runResetJob, timeUntilMidnight);
   };
 
-  // Also run immediately when server starts to catch any tasks that should have been reset
-  runResetJob();
+  runResetJob(); // Run immediately on startup
 }
 
-app.listen(port, () => {
-  console.log(`Nourished backend listening on port ${port}`);
+// ✅ Only start the server locally
+if (process.env.NODE_ENV !== "production") {
+  app.listen(port, () => {
+    console.log(`Local backend listening on port ${port}`);
+    setupTaskResetScheduler();
+  });
+} else {
+  console.log(
+    "Running in Vercel serverless mode. Task scheduling is disabled.",
+  );
+}
 
-  // Start the task reset scheduler
-  setupTaskResetScheduler();
-});
+// ✅ Export app for Vercel deployment
+module.exports = app;
