@@ -27,7 +27,6 @@ import {
   Edit,
   Delete,
   Flag,
-  Share,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Post } from '../page';

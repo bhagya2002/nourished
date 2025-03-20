@@ -9,11 +9,7 @@ import {
   Menu,
   Button,
   IconButton,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
-import { IconListCheck, IconMail, IconUser } from '@tabler/icons-react';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Typography,
   Grid,
   Box,
   TextField,
@@ -10,14 +9,13 @@ import {
   CircularProgress,
   Alert,
   Stack,
-  Avatar,
 } from '@mui/material';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import { IconCamera, IconLock, IconMail } from '@tabler/icons-react';
+import { IconLock } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import {
   updateEmail,

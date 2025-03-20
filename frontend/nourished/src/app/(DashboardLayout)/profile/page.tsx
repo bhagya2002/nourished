@@ -33,7 +33,6 @@ import {
   IconEdit,
   IconMail,
   IconMapPin,
-  IconCalendar,
   IconUsers,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
