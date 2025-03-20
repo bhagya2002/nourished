@@ -4,7 +4,7 @@ module.exports.createPost = async function createPost(uid, post) {
   try {
     // Set the uid on the post
     post.uid = uid;
-    if (post.name.trim() === "") {
+    if (!post.name || post.name.trim() === "") {
       const userResult = await db.queryDatabaseSingle(uid, "users");
       if (!userResult.success) {
         return userResult;
