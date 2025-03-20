@@ -1,30 +1,31 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Grid, Box, CircularProgress, Typography, Button } from '@mui/material';
-import { useAuth } from '@/context/AuthContext'; // Import Auth Context
-import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Grid, Box, CircularProgress, Typography, Button } from "@mui/material";
+import { useAuth } from "@/context/AuthContext"; // Import Auth Context
+import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 // components
-import TaskOverview from '@/app/(DashboardLayout)/components/dashboard/TaskOverview';
-import TaskCompletionTrends from '@/app/(DashboardLayout)/components/dashboard/TaskCompletionTrends';
-import HappinessTrends from '@/app/(DashboardLayout)/components/dashboard/HappinessTrends';
-import StreakCounter from '@/app/(DashboardLayout)/components/dashboard/StreakCounter';
-import WellnessCategories from '@/app/(DashboardLayout)/components/dashboard/WellnessCategories';
-import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import GoalProgress from '@/app/(DashboardLayout)/components/dashboard/GoalProgress';
+import TaskOverview from "@/app/(DashboardLayout)/components/dashboard/TaskOverview";
+import TaskCompletionTrends from "@/app/(DashboardLayout)/components/dashboard/TaskCompletionTrends";
+import HappinessTrends from "@/app/(DashboardLayout)/components/dashboard/HappinessTrends";
+import StreakCounter from "@/app/(DashboardLayout)/components/dashboard/StreakCounter";
+import WellnessCategories from "@/app/(DashboardLayout)/components/dashboard/WellnessCategories";
+import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import GoalProgress from "@/app/(DashboardLayout)/components/dashboard/GoalProgress";
+import PlantHealthVisualizer from "../components/dashboard/PlantHealthVisualizer";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
 // Helper function to format dates
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 };
 
@@ -38,8 +39,6 @@ const formatDate = (dateString: string) => {
 // };
 
 const Dashboard = () => {
-  console.log('🔥 Dashboard.tsx is rendering...');
-
   const [tasks, setTasks] = useState<any[]>([]);
   const [completedTasks, setCompletedTasks] = useState<any[]>([]);
   const [streakData, setStreakData] = useState<any>(null);
@@ -78,7 +77,7 @@ const Dashboard = () => {
     }
 
     // Final fallback
-    return 'there';
+    return "there";
   };
 
   // Fetch user profile
@@ -87,8 +86,8 @@ const Dashboard = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
           userId: user.uid, // Using the current user's ID to get their own profile
@@ -98,29 +97,27 @@ const Dashboard = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         console.error(
-          'Failed to fetch user profile:',
+          "Failed to fetch user profile:",
           errorData || response.statusText
         );
-        throw new Error('Failed to fetch user profile');
+        throw new Error("Failed to fetch user profile");
       }
 
       const data = await response.json();
       if (data.success) {
         setUserProfile(data.data);
       } else {
-        console.error('User profile fetch was not successful:', data.error);
+        console.error("User profile fetch was not successful:", data.error);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
   };
 
   useEffect(() => {
-    console.log('🚀 Dashboard Auth Debug:', { user, token, loading });
-
     if (!loading && !user) {
-      console.log('❌ No user, redirecting to login...');
-      router.push('/login');
+      console.log("❌ No user, redirecting to login...");
+      router.push("/login");
     }
   }, [user, token, loading, router]);
 
@@ -135,8 +132,8 @@ const Dashboard = () => {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
 
         const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
           signal: controller.signal,
         });
@@ -152,37 +149,37 @@ const Dashboard = () => {
         const tasksData = await response.json();
 
         if (!tasksData.success) {
-          throw new Error(tasksData.error || 'Failed to load tasks');
+          throw new Error(tasksData.error || "Failed to load tasks");
         }
 
         setTasks(tasksData.data || []);
       } catch (fetchError) {
         if (
           fetchError instanceof DOMException &&
-          fetchError.name === 'AbortError'
+          fetchError.name === "AbortError"
         ) {
-          console.error('Request timed out. Server might be overloaded.');
+          console.error("Request timed out. Server might be overloaded.");
           throw new Error(
-            'Request timed out. The server might be overloaded. Please try again later.'
+            "Request timed out. The server might be overloaded. Please try again later."
           );
         }
         if (
           fetchError instanceof TypeError &&
-          fetchError.message === 'Failed to fetch'
+          fetchError.message === "Failed to fetch"
         ) {
           console.error(
-            'Cannot connect to server. Please ensure the backend is running.'
+            "Cannot connect to server. Please ensure the backend is running."
           );
           throw new Error(
-            'Cannot connect to the server. Please check if the backend server is running.'
+            "Cannot connect to the server. Please check if the backend server is running."
           );
         }
         throw fetchError;
       }
     } catch (error) {
-      console.error('Error fetching tasks:', error);
+      console.error("Error fetching tasks:", error);
       setTaskError(
-        error instanceof Error ? error.message : 'Failed to load tasks'
+        error instanceof Error ? error.message : "Failed to load tasks"
       );
     } finally {
       setIsLoadingTasks(false);
@@ -202,8 +199,8 @@ const Dashboard = () => {
 
       const makeRequest = async (currentToken: string) => {
         const response = await fetch(`${API_BASE_URL}/getTaskHistory`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: currentToken }),
           signal: controller.signal,
         });
@@ -212,14 +209,14 @@ const Dashboard = () => {
           const responseText = await response.text();
           if (
             response.status === 401 &&
-            (responseText.includes('token has expired') ||
-              responseText.includes('auth/id-token-expired'))
+            (responseText.includes("token has expired") ||
+              responseText.includes("auth/id-token-expired"))
           ) {
-            throw new Error('token_expired');
+            throw new Error("token_expired");
           } else {
             throw new Error(
               `Server error: ${response.status} - ${
-                responseText || 'Failed to fetch task history'
+                responseText || "Failed to fetch task history"
               }`
             );
           }
@@ -231,13 +228,12 @@ const Dashboard = () => {
       try {
         response = await makeRequest(token);
       } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
+        if (error.message === "token_expired" && refreshToken) {
           const freshToken = await refreshToken();
           if (freshToken) {
             response = await makeRequest(freshToken);
           } else {
-            throw new Error('Authentication error. Please log in again.');
+            throw new Error("Authentication error. Please log in again.");
           }
         } else {
           throw error;
@@ -249,18 +245,18 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to load task history data');
+        throw new Error(data.error || "Failed to load task history data");
       }
 
       // Store both completions and streak data
       setCompletedTasks(data.data.completions || []);
       setStreakData(data.data.streaks || null);
     } catch (error) {
-      console.error('Error fetching recent completions:', error);
+      console.error("Error fetching recent completions:", error);
       setHistoryError(
         error instanceof Error
           ? error.message
-          : 'Failed to load recent completions'
+          : "Failed to load recent completions"
       );
     } finally {
       setIsLoadingHistory(false);
@@ -282,8 +278,8 @@ const Dashboard = () => {
       // Call the getHappinessData endpoint
       const makeRequest = async (currentToken: string) => {
         const response = await fetch(`${API_BASE_URL}/getHappinessData`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: currentToken }),
           signal: controller.signal,
         });
@@ -294,14 +290,14 @@ const Dashboard = () => {
           // Handle token expiration
           if (
             response.status === 401 &&
-            (responseText.includes('token has expired') ||
-              responseText.includes('auth/id-token-expired'))
+            (responseText.includes("token has expired") ||
+              responseText.includes("auth/id-token-expired"))
           ) {
-            throw new Error('token_expired');
+            throw new Error("token_expired");
           } else {
             throw new Error(
               `Server error: ${response.status} - ${
-                responseText || 'Failed to fetch happiness data'
+                responseText || "Failed to fetch happiness data"
               }`
             );
           }
@@ -314,30 +310,28 @@ const Dashboard = () => {
       try {
         response = await makeRequest(token);
       } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
+        if (error.message === "token_expired" && refreshToken) {
           const freshToken = await refreshToken();
 
           if (freshToken) {
-            console.log('Token refreshed, retrying request');
             response = await makeRequest(freshToken);
           } else {
-            console.error('Failed to refresh token');
-            throw new Error('Authentication error. Please log in again.');
+            console.error("Failed to refresh token");
+            throw new Error("Authentication error. Please log in again.");
           }
         } else if (
           error instanceof DOMException &&
-          error.name === 'AbortError'
+          error.name === "AbortError"
         ) {
           throw new Error(
-            'Request timed out. The server might be overloaded. Please try again later.'
+            "Request timed out. The server might be overloaded. Please try again later."
           );
         } else if (
           error instanceof TypeError &&
-          error.message === 'Failed to fetch'
+          error.message === "Failed to fetch"
         ) {
           throw new Error(
-            'Cannot connect to the server. Please check if the backend server is running.'
+            "Cannot connect to the server. Please check if the backend server is running."
           );
         } else {
           throw error;
@@ -349,14 +343,14 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (!data.success) {
-        throw new Error(data.error || 'Failed to load happiness data');
+        throw new Error(data.error || "Failed to load happiness data");
       }
 
       setHappinessData(data.data?.ratings || []);
     } catch (error) {
-      console.error('Error fetching happiness data:', error);
+      console.error("Error fetching happiness data:", error);
       setHappinessError(
-        error instanceof Error ? error.message : 'Failed to load happiness data'
+        error instanceof Error ? error.message : "Failed to load happiness data"
       );
     } finally {
       setIsLoadingHappiness(false);
@@ -376,8 +370,8 @@ const Dashboard = () => {
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
 
       const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
         signal: controller.signal,
       });
@@ -402,8 +396,8 @@ const Dashboard = () => {
                 const taskResponse = await fetch(
                   `${API_BASE_URL}/getGoalTasks`,
                   {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ token, goalId: goal.id }),
                   }
                 );
@@ -429,9 +423,9 @@ const Dashboard = () => {
         setGoals([]);
       }
     } catch (error) {
-      console.error('Error fetching goals:', error);
+      console.error("Error fetching goals:", error);
       setGoalsError(
-        error instanceof Error ? error.message : 'Failed to load goals'
+        error instanceof Error ? error.message : "Failed to load goals"
       );
     } finally {
       setIsLoadingGoals(false);
@@ -450,12 +444,12 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <PageContainer title='Loading...' description='Please wait'>
+      <PageContainer title="Loading..." description="Please wait">
         <Box
-          display='flex'
-          justifyContent='center'
-          alignItems='center'
-          height='80vh'
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          height="80vh"
         >
           <CircularProgress />
         </Box>
@@ -466,26 +460,26 @@ const Dashboard = () => {
   // Show task loading state
   if (isLoadingTasks) {
     return (
-      <PageContainer title='Dashboard' description='Your personal dashboard'>
+      <PageContainer title="Dashboard" description="Your personal dashboard">
         <Box>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Box
                 sx={{
                   p: 4,
-                  textAlign: 'center',
-                  bgcolor: 'background.paper',
+                  textAlign: "center",
+                  bgcolor: "background.paper",
                   borderRadius: 2,
                   boxShadow: 1,
                 }}
               >
                 <CircularProgress size={40} />
-                <Typography variant='h6' sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ mt: 2 }}>
                   Loading your tasks...
                 </Typography>
                 <Typography
-                  variant='body2'
-                  color='text.secondary'
+                  variant="body2"
+                  color="text.secondary"
                   sx={{ mt: 1 }}
                 >
                   This should only take a few seconds
@@ -501,30 +495,30 @@ const Dashboard = () => {
   // Show error state
   if (taskError) {
     return (
-      <PageContainer title='Dashboard' description='Your personal dashboard'>
+      <PageContainer title="Dashboard" description="Your personal dashboard">
         <Box>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Box
                 sx={{
                   p: 4,
-                  textAlign: 'center',
-                  bgcolor: 'error.light',
-                  color: 'error.contrastText',
+                  textAlign: "center",
+                  bgcolor: "error.light",
+                  color: "error.contrastText",
                   borderRadius: 2,
                   boxShadow: 1,
                 }}
               >
                 <ErrorOutlineIcon sx={{ fontSize: 48 }} />
-                <Typography variant='h6' sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ mt: 2 }}>
                   Error Loading Tasks
                 </Typography>
-                <Typography variant='body2' sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1 }}>
                   {taskError}
                 </Typography>
                 <Button
-                  variant='contained'
-                  color='primary'
+                  variant="contained"
+                  color="primary"
                   sx={{ mt: 2 }}
                   onClick={() => fetchTasks()}
                 >
@@ -539,42 +533,42 @@ const Dashboard = () => {
   }
 
   return (
-    <PageContainer title='Dashboard' description='Welcome to your dashboard'>
+    <PageContainer title="Dashboard" description="Welcome to your dashboard">
       {/* Welcome Message */}
       <Box sx={{ mb: 3 }}>
         <Typography
-          variant='h1'
+          variant="h1"
           sx={{
-            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
             fontWeight: 600,
-            letterSpacing: '-0.5px',
-            color: 'text.primary',
+            letterSpacing: "-0.5px",
+            color: "text.primary",
             fontFamily: "'Inter', sans-serif",
             lineHeight: 1.2,
             mb: 0.5,
           }}
         >
-          Welcome back,{' '}
+          Welcome back,{" "}
           <Box
-            component='span'
+            component="span"
             sx={{
               background: (theme) =>
                 `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              color: 'transparent',
-              display: 'inline',
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+              display: "inline",
             }}
           >
             {getFirstName()}
           </Box>
         </Typography>
         <Typography
-          variant='subtitle1'
+          variant="subtitle1"
           sx={{
-            color: 'text.secondary',
+            color: "text.secondary",
             fontWeight: 400,
-            letterSpacing: '0.15px',
+            letterSpacing: "0.15px",
           }}
         >
           Here's an overview of your wellness journey
@@ -583,6 +577,35 @@ const Dashboard = () => {
 
       {/* Rest of the dashboard content */}
       <Grid container spacing={3}>
+        {/* Third Row: Charts */}
+        <Grid item xs={12}>
+          <Grid container spacing={3}>
+            {/* Plant and Streak */}
+            <Grid item xs={12} md={6}>
+              {userProfile === null ? (
+                <CircularProgress />
+              ) : userProfile.plantHealth !== undefined ? (
+                <>
+                  <PlantHealthVisualizer
+                    plantHealth={userProfile.plantHealth}
+                  />
+                </>
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  No plant health data available.
+                </Typography>
+              )}
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <StreakCounter
+                taskHistory={completedTasks}
+                isLoading={isLoadingHistory}
+                streakData={streakData}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
+
         {/* First Row: Key Metrics */}
         <Grid item xs={12}>
           <Grid container spacing={3}>
@@ -595,21 +618,21 @@ const Dashboard = () => {
             </Grid>
 
             {/* Streak Counter */}
-            <Grid item xs={12} sm={4}>
+            {/* <Grid item xs={12} sm={4}>
               <StreakCounter
                 taskHistory={completedTasks}
                 isLoading={isLoadingHistory}
                 streakData={streakData}
               />
-            </Grid>
+            </Grid> */}
 
             {/* Recent Activity */}
             <Grid item xs={12} sm={4}>
-              <DashboardCard title='Recent Activity'>
+              <DashboardCard title="Recent Activity">
                 <Box sx={{ p: 2 }}>
                   {isLoadingHistory ? (
                     <Box
-                      sx={{ display: 'flex', justifyContent: 'center', p: 2 }}
+                      sx={{ display: "flex", justifyContent: "center", p: 2 }}
                     >
                       <CircularProgress size={24} />
                     </Box>
@@ -619,36 +642,36 @@ const Dashboard = () => {
                         key={index}
                         sx={{
                           py: 1.5,
-                          display: 'flex',
-                          alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
                           borderBottom:
                             index < completedTasks.slice(0, 3).length - 1
-                              ? '1px solid'
-                              : 'none',
-                          borderColor: 'divider',
+                              ? "1px solid"
+                              : "none",
+                          borderColor: "divider",
                         }}
                       >
                         <CheckCircleIcon
-                          color='success'
-                          sx={{ mr: 1.5, fontSize: '1rem' }}
+                          color="success"
+                          sx={{ mr: 1.5, fontSize: "1rem" }}
                         />
                         <Box>
                           <Typography
-                            variant='body2'
+                            variant="body2"
                             noWrap
-                            sx={{ maxWidth: '140px' }}
+                            sx={{ maxWidth: "140px" }}
                           >
                             {task.title}
                           </Typography>
-                          <Typography variant='caption' color='text.secondary'>
+                          <Typography variant="caption" color="text.secondary">
                             {formatDate(task.completedAt)}
                           </Typography>
                         </Box>
                       </Box>
                     ))
                   ) : (
-                    <Box sx={{ py: 2, textAlign: 'center' }}>
-                      <Typography variant='body2' color='text.secondary'>
+                    <Box sx={{ py: 2, textAlign: "center" }}>
+                      <Typography variant="body2" color="text.secondary">
                         No completed tasks yet
                       </Typography>
                     </Box>
