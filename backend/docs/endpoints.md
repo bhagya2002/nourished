@@ -208,3 +208,47 @@
     "token": "6YiMTawgQlStxfG2ysMkkkQ4c2s2"
 }
 ```
+
+## getAITip
+```JSON
+{
+    "token": "6YiMTawgQlStxfG2ysMkkkQ4c2s2"
+}
+```
+
+## getAITaskRecommendation
+```JSON
+{
+    "token": "6YiMTawgQlStxfG2ysMkkkQ4c2s2"
+}
+```
+
+## followUser
+```JSON
+{
+    "token":  "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "followee": "xXBvrDlSBqZceNDt5JcHu9C8iEI3"
+}
+```
+
+## unfollowUser
+```JSON
+{
+    "token":  "70Mv9hV2R5bDLMT5QV5gCIeUFDe2",
+    "followee": "xXBvrDlSBqZceNDt5JcHu9C8iEI3"
+}
+```
+
+## getFollowers
+```JSON
+{
+    "token":  "xXBvrDlSBqZceNDt5JcHu9C8iEI3"
+}
+```
+
+## getFollowing
+```JSON
+{
+    "token":  "70Mv9hV2R5bDLMT5QV5gCIeUFDe2"
+}
+```
