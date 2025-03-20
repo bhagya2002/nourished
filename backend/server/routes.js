@@ -1,4 +1,5 @@
 const userService = require("../services/userService");
+const aiService = require("../services/aiService");
 const taskService = require("../services/taskService");
 const goalService = require("../services/goalService");
 const authService = require("../services/authService");
@@ -316,10 +317,10 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                    completions:
-                      freshTaskHistory.data.completions?.slice(0, 5) || [],
-                    streaks: freshTaskHistory.data.streaks,
-                  }
+                  completions:
+                    freshTaskHistory.data.completions?.slice(0, 5) || [],
+                  streaks: freshTaskHistory.data.streaks,
+                }
                 : null,
             },
           });
@@ -1526,6 +1527,232 @@ function addResetRecurringTasks(app) {
   });
 }
 
+function addGetAITip(app) {
+  app.post("/getAITip", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await aiService.AITips(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to get AI Tip for user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getAITip endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addGetAITaskRecommendation(app) {
+  app.post("/getAITaskRecommendation", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await aiService.AITaskRecommendation(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to get AI recommendation for user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getAIRecommendation endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addFollowUser(app) {
+  app.post("/followUser", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.followUser(authResult.uid, req.body.followee);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to follow user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in followUser endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addUnfollowUser(app) {
+  app.post("/unfollowUser", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.unfollowUser(authResult.uid, req.body.followee);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to unfollow user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in unfollwUser endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addGetFollowers(app) {
+  app.post("/getFollowers", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.getFollowers(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to get followers",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getFollowers endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addGetFollowing(app) {
+  app.post("/getFollowing", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.getFollowing(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to get following",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getFollowing endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
 module.exports = function injectRoutes(app) {
   addHeartbeatRoute(app);
 
@@ -1582,4 +1809,14 @@ module.exports = function injectRoutes(app) {
 
   // Reset Recurring Tasks
   addResetRecurringTasks(app);
+
+  // AI Recommendations
+  addGetAITip(app);
+  addGetAITaskRecommendation(app);
+
+  // Followers
+  addFollowUser(app);
+  addUnfollowUser(app);
+  addGetFollowers(app);
+  addGetFollowing(app);
 };
