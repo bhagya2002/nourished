@@ -387,6 +387,7 @@ export default function GoalsPage() {
       
       return newState;
     });
+    setExpandingGoalIndex(goals.findIndex(g => g.id === goalId));
   };
   
   // Function to handle adding a task to a goal
@@ -1103,7 +1104,7 @@ export default function GoalsPage() {
         </Dialog>
 
         {/* add/edit task form dialog */}
-        <div>
+        <Box>
           <TaskCreateDialog
             open={taskCreateModalOpen}
             onClose={() => setTaskCreateModalOpen(false)}
@@ -1143,7 +1144,7 @@ export default function GoalsPage() {
                 }
               />
             )}
-        </div>
+        </Box>
         <HappinessDialog
           open={happinessDialogOpen}
           taskId={ratingTaskId || ''}
