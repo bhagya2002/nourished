@@ -259,7 +259,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         return;
       }
       
-      // Parse the JSON response (keep fallback for unexpected formats)
+      // Parse the JSON response
       let data;
       try {
         data = JSON.parse(responseText);
@@ -269,36 +269,38 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         return;
       }
       
-      // Check if we have valid data (keep fallback for invalid data)
+      // Check if we have valid data
       if (!data.success || !data.message) {
         console.warn('AI API returned success:false or no message:', data);
         provideFallbackSuggestion();
         return;
       }
       
-      // Clean up the response data - ensure we don't have trailing special chars
-      if (typeof data.message.title === 'string') {
-        data.message.title = data.message.title.trim();
+      // Clean up the response data
+      const suggestion = data.message;
+      if (typeof suggestion.title === 'string') {
+        suggestion.title = suggestion.title.trim();
       }
       
-      if (typeof data.message.description === 'string') {
-        data.message.description = data.message.description.trim();
+      if (typeof suggestion.description === 'string') {
+        suggestion.description = suggestion.description.trim();
       }
       
       // If we have data but it's missing required fields, use fallback
-      if (!data.message.title || !data.message.description) {
-        console.warn('AI returned incomplete message data:', data.message);
+      if (!suggestion.title || !suggestion.description) {
+        console.warn('AI returned incomplete message data:', suggestion);
         provideFallbackSuggestion();
         return;
       }
       
       // We have valid data! Set it and animate
-      console.log('Successfully received AI recommendation:', data.message);
-      setAiSuggestion(data.message);
+      console.log('Successfully received AI recommendation:', suggestion);
+      setAiSuggestion(suggestion);
       
       // Start typing effect with the actual suggestion
-      const fullText = data.message.title + (data.message.description ? ': ' + data.message.description : '');
+      const fullText = suggestion.title + ': ' + suggestion.description;
       simulateTyping(fullText);
+      
     } catch (error) {
       console.error('Error fetching AI suggestion:', error);
       provideFallbackSuggestion();
@@ -540,8 +542,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                       }
                     }}
                   >
-                    {/* Safe string rendering with explicit trimming */}
-                    {typeof typingEffect === 'string' ? typingEffect.trim() : ''}
+                    {typingEffect}
                   </Typography>
                   
                   <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
