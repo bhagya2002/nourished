@@ -292,7 +292,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
             <ListItemIcon>
               <EditIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Edit Goal</ListItemText>
+            <ListItemText>Edit</ListItemText>
           </MenuItem>
           <MenuItem 
             onClick={() => { onDelete(); setAnchorEl(null); }}
@@ -301,7 +301,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
             <ListItemIcon>
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
-            <ListItemText>Delete Goal</ListItemText>
+            <ListItemText>Delete</ListItemText>
           </MenuItem>
         </Menu>
       </Card>
