@@ -71,7 +71,7 @@ Make sure you select from the JSON field labelled 'taskID'. Return just the task
 module.exports.AITips = async function AITips(uid) {
     const cacheCheck = getCachedResult(uid, 0);
     if (cacheCheck) {
-        return { success: true, data: cacheCheck }
+        return { success: true, message: cacheCheck }
     }
 
     // Call the newer implementation
@@ -90,7 +90,7 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(uid)
         // Check cache first
         const cacheCheck = getCachedResult(uid, 1);
         if (cacheCheck) {
-            return { success: true, data: cacheCheck }
+            return { success: true, message: cacheCheck }
         }
         
         const happinessData = await taskService.getHappinessData(uid);
@@ -150,7 +150,7 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
         // Check cache first
         const cacheCheck = getCachedResult(uid, 0);
         if (cacheCheck) {
-            return { success: true, data: cacheCheck }
+            return { success: true, message: cacheCheck }
         }
         
         // Get user's happiness data and task history for personalization
@@ -235,7 +235,7 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
 module.exports.AITaskRecommendation = async function AITaskRecommendation(uid) {
     const cacheCheck = getCachedResult(uid, 1);
     if (cacheCheck) {
-        return { success: true, data: cacheCheck }
+        return { success: true, message: cacheCheck }
     }
     
     // Call the newer implementation
