@@ -17,7 +17,6 @@ import GoalProgress from "@/app/(DashboardLayout)/components/dashboard/GoalProgr
 import PlantHealthVisualizer from "../components/dashboard/PlantHealthVisualizer";
 import PlantGrowthInfo from "../components/dashboard/PlantGrowthInfo";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
-import LightbulbIcon from '@mui/icons-material/Lightbulb';
 import DailyTipButton from '../components/shared/DailyTipButton';
 import DailyTipDialog from '../components/shared/DailyTipDialog';
 

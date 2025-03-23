@@ -5,7 +5,6 @@ import {
   Typography,
   Grid,
   Box,
-  Avatar,
   Tab,
   Tabs,
   Stack,
