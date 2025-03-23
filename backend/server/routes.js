@@ -1852,7 +1852,7 @@ function addDeleteMood(app) {
 
       // Call the service to delete the mood entry
       const result = await moodService.deleteMood(authResult.uid, date);
-      
+
       if (!result.success) {
         return res.status(400).json({
           success: false,
@@ -1897,7 +1897,7 @@ function addUpdateMood(app) {
 
       // Call the service to update the mood entry
       const result = await moodService.updateMood(authResult.uid, date, note, rating);
-      
+
       if (!result.success) {
         return res.status(400).json({
           success: false,

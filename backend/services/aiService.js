@@ -7,6 +7,9 @@ const client = new openai.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const tipByUID = new Map();
+const taskRecommendationByUID = new Map();
+
 // Task recommendation prompt
 const taskRecommendationPrompt = `You are an AI wellness coach specializing in personalized task recommendations. 
 Your role is to analyze a user's task history and happiness ratings to suggest new, personalized tasks that will help them maintain and improve their wellbeing.
@@ -52,6 +55,29 @@ IMPORTANT: Return ONLY a raw JSON object without any markdown formatting or back
     "description": "A thoughtful, personalized explanation with specific guidance"
 }`;
 
+const apiPrompt = `You are a professional data scientist who specializes in looking at user data and 
+providing personalized tips that help your users create and maintain healthy habits. 
+You will be given json objects that contain a task title and an associated rating of their happiness that scales from
+1 to 5. `;
+const promptReturn = `You will have to return a small (100 characters MAX) personalized tip for this user.When you give a tip, make it similar to the titles and descriptions of the inputted data.`;
+const idReturn = `You will have to return a singular taskId that will best help the user continue to be healthy. 
+Make sure you select from the JSON field labelled 'taskID'. Return just the taskid, no extra explanation or reasoning.`;
+
+/**
+ * Legacy function name for backward compatibility that now directly calls getWellnessTip
+ * @param {string} uid - User ID
+ * @returns {Object} Result from getWellnessTip
+ */
+module.exports.AITips = async function AITips(uid) {
+    const cacheCheck = getCachedResult(uid, 0);
+    if (cacheCheck) {
+        return { success: true, data: cacheCheck }
+    }
+
+    // Call the newer implementation
+    return module.exports.getWellnessTip(uid);
+}
+
 /**
  * Generates a personalized task recommendation based on user happiness data
  * @param {string} uid - User ID
@@ -60,6 +86,13 @@ IMPORTANT: Return ONLY a raw JSON object without any markdown formatting or back
 module.exports.getTaskRecommendation = async function getTaskRecommendation(uid) {
     try {
         console.log("getTaskRecommendation called for uid:", uid);
+        
+        // Check cache first
+        const cacheCheck = getCachedResult(uid, 1);
+        if (cacheCheck) {
+            return { success: true, data: cacheCheck }
+        }
+        
         const happinessData = await taskService.getHappinessData(uid);
         
         if (!happinessData.success || !happinessData.data || !happinessData.data.ratings) {
@@ -83,6 +116,8 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(uid)
         try {
             // Try to parse the response as JSON
             const parsedSuggestion = JSON.parse(suggestion);
+            // Store in cache
+            taskRecommendationByUID.set(uid, { date: new Date(), data: parsedSuggestion });
             return { 
                 success: true, 
                 message: parsedSuggestion
@@ -111,6 +146,12 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(uid)
 module.exports.getWellnessTip = async function getWellnessTip(uid) {
     try {
         console.log("getWellnessTip called for uid:", uid);
+        
+        // Check cache first
+        const cacheCheck = getCachedResult(uid, 0);
+        if (cacheCheck) {
+            return { success: true, data: cacheCheck }
+        }
         
         // Get user's happiness data and task history for personalization
         const happinessData = await taskService.getHappinessData(uid);
@@ -154,7 +195,8 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
         try {
             // Parse the JSON response
             const parsedTip = JSON.parse(tipContent);
-            
+            // Store in cache
+            tipByUID.set(uid, { date: new Date(), data: parsedTip });
             return {
                 success: true,
                 message: parsedTip
@@ -163,12 +205,17 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
             console.error("Failed to parse AI tip response as JSON");
             
             // If parsing fails, return a simple format with the raw content
+            const fallbackTip = {
+                title: "Daily Wellness Tip",
+                description: tipContent.replace(/```json|```/g, '').trim()
+            };
+            
+            // Store fallback in cache
+            tipByUID.set(uid, { date: new Date(), data: fallbackTip });
+            
             return {
                 success: true,
-                message: {
-                    title: "Daily Wellness Tip",
-                    description: tipContent.replace(/```json|```/g, '').trim()
-                }
+                message: fallbackTip
             };
         }
     } catch (error) {
@@ -186,16 +233,24 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
  * @returns {Object} Result from getTaskRecommendation
  */
 module.exports.AITaskRecommendation = async function AITaskRecommendation(uid) {
-    console.log("AITaskRecommendation called for uid:", uid);
+    const cacheCheck = getCachedResult(uid, 1);
+    if (cacheCheck) {
+        return { success: true, data: cacheCheck }
+    }
+    
+    // Call the newer implementation
     return module.exports.getTaskRecommendation(uid);
 }
 
-/**
- * Legacy function name for backward compatibility that now directly calls getWellnessTip
- * @param {string} uid - User ID
- * @returns {Object} Result from getWellnessTip
- */
-module.exports.AITips = async function AITips(uid) {
-    console.log("AITips (legacy) called for uid:", uid);
-    return module.exports.getWellnessTip(uid);
+function getCachedResult(uid, type) {
+    const cache = type === 0 ? tipByUID : taskRecommendationByUID;
+    const cacheLookup = cache.get(uid);
+    if (cacheLookup && getDayDifference(new Date(cacheLookup.date), new Date()) < 1) {
+        return cacheLookup.data;
+    }
+    return null;
+}
+
+function getDayDifference(first, second) {
+    return Math.round((second - first) / (1000 * 60 * 60 * 24));
 }
