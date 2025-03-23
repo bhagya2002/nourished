@@ -34,6 +34,8 @@ const DialogHeader = styled(DialogTitle)(({ theme }) => ({
   alignItems: 'center',
   padding: theme.spacing(2, 3),
   backgroundColor: theme.palette.background.default,
+  fontWeight: 600,
+  fontSize: '1.25rem'
 }));
 
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
@@ -91,9 +93,7 @@ const PostDialog: React.FC<PostDialogProps> = ({
       maxWidth="sm"
     >
       <DialogHeader>
-        <Typography variant="h6" fontWeight={600}>
-          {isEditing ? 'Edit Post' : 'Create New Post'}
-        </Typography>
+        {isEditing ? 'Edit Post' : 'Create New Post'}
         <IconButton edge="end" color="inherit" onClick={onClose} aria-label="close">
           <Close />
         </IconButton>

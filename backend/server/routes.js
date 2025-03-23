@@ -1613,11 +1613,14 @@ function addGetAITip(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await aiService.AITips(authResult.uid);
+      // Use the new getWellnessTip function instead of AITips
+      const result = await aiService.getWellnessTip(authResult.uid);
+      console.log("Wellness tip result:", result);
+      
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data,
+          message: result.message,
         });
       } else {
         return res.status(500).json({
@@ -1652,10 +1655,13 @@ function addGetAITaskRecommendation(app) {
       }
 
       const result = await aiService.AITaskRecommendation(authResult.uid);
+      console.log("AI recommendation result:", result);
+      
       if (result.success) {
+        console.log("Sending AI suggestion to frontend:", result.message);
         return res.status(200).json({
           success: true,
-          message: result.data,
+          message: result.message,
         });
       } else {
         return res.status(500).json({

@@ -37,6 +37,7 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import DefaultAvatar from '../components/shared/DefaultAvatar';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -289,9 +290,8 @@ const ProfilePage = () => {
                   gap: 2,
                 }}
               >
-                <Avatar
-                  src={user.photoURL || '/images/profile/user-1.jpg'}
-                  alt={userData.name}
+                <DefaultAvatar
+                  name={userData?.name}
                   sx={{
                     width: 120,
                     height: 120,
@@ -504,9 +504,7 @@ const ProfilePage = () => {
                 {friendsList.map((friend) => (
                   <ListItem key={friend.id}>
                     <ListItemAvatar>
-                      <Avatar
-                        src={friend.photoURL || '/images/profile/user-1.jpg'}
-                      />
+                      <DefaultAvatar name={friend.name} />
                     </ListItemAvatar>
                     <ListItemText
                       primary={friend.name}

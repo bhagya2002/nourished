@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Grid, Box, CircularProgress, Typography, Button, Chip } from "@mui/material";
+import { Grid, Box, CircularProgress, Typography, Button, Chip, Tooltip } from "@mui/material";
 import { useAuth } from "@/context/AuthContext"; // Import Auth Context
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 // components
@@ -17,6 +17,9 @@ import GoalProgress from "@/app/(DashboardLayout)/components/dashboard/GoalProgr
 import PlantHealthVisualizer from "../components/dashboard/PlantHealthVisualizer";
 import PlantGrowthInfo from "../components/dashboard/PlantGrowthInfo";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import DailyTipButton from '../components/shared/DailyTipButton';
+import DailyTipDialog from '../components/shared/DailyTipDialog';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
@@ -57,6 +60,7 @@ const Dashboard = () => {
   const [isLoadingGoals, setIsLoadingGoals] = useState(false);
   const [goalsError, setGoalsError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [tipDialogOpen, setTipDialogOpen] = useState(false);
 
   // Function to get user's first name
   const getFirstName = () => {
@@ -434,6 +438,47 @@ const Dashboard = () => {
     }
   };
 
+  // Handle opening the daily tip dialog
+  const handleOpenTipDialog = () => {
+    setTipDialogOpen(true);
+  };
+  
+  // Fetch the AI daily tip
+  const fetchDailyTip = async () => {
+    if (!token) {
+      return { 
+        success: false, 
+        error: 'Authentication required. Please log in again.' 
+      };
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/getAITip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error fetching AI tip:', errorText);
+        return {
+          success: false,
+          error: 'Failed to fetch your daily tip. Please try again.'
+        };
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error('Error in fetchDailyTip:', err);
+      return {
+        success: false,
+        error: 'Connection error. Please check your internet connection.'
+      };
+    }
+  };
+
   useEffect(() => {
     if (user && token) {
       fetchUserProfile();
@@ -536,45 +581,73 @@ const Dashboard = () => {
 
   return (
     <PageContainer title="Dashboard" description="Welcome to your dashboard">
+      {/* Daily Tip Dialog */}
+      <DailyTipDialog 
+        open={tipDialogOpen} 
+        onClose={() => setTipDialogOpen(false)} 
+        fetchTip={fetchDailyTip}
+      />
+      
       {/* Welcome Message */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-            fontWeight: 600,
-            letterSpacing: "-0.5px",
-            color: "text.primary",
-            fontFamily: "'Inter', sans-serif",
-            lineHeight: 1.2,
-            mb: 0.5,
-          }}
-        >
-          Welcome back,{" "}
-          <Box
-            component="span"
-            sx={{
-              background: (theme) =>
-                `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-              display: "inline",
-            }}
-          >
-            {getFirstName()}
+      <Box sx={{ mb: 3, position: 'relative' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <Box>
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+                fontWeight: 600,
+                letterSpacing: "-0.5px",
+                color: "text.primary",
+                fontFamily: "'Inter', sans-serif",
+                lineHeight: 1.2,
+                mb: 0.5,
+              }}
+            >
+              Welcome back,{" "}
+              <Box
+                component="span"
+                sx={{
+                  background: (theme) =>
+                    `linear-gradient(120deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                  display: "inline",
+                }}
+              >
+                {getFirstName()}
+              </Box>
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: "text.secondary",
+                fontWeight: 400,
+                letterSpacing: "0.15px",
+              }}
+            >
+              Here's an overview of your wellness journey
+            </Typography>
           </Box>
-        </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{
-            color: "text.secondary",
-            fontWeight: 400,
-            letterSpacing: "0.15px",
-          }}
-        >
-          Here's an overview of your wellness journey
-        </Typography>
+          
+          {/* Daily Tip Button - always available */}
+          <Tooltip 
+            title="Get your daily AI wellness tip"
+            placement="left"
+          >
+            <Box>
+              <DailyTipButton 
+                onClick={handleOpenTipDialog} 
+                available={true}
+              />
+            </Box>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Rest of the dashboard content */}

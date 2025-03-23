@@ -15,12 +15,12 @@ import {
   ListItemText,
   Alert,
 } from '@mui/material';
-
+import DefaultAvatar from '../../components/shared/DefaultAvatar';
 
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import { IconMail, IconMapPin, IconCalendar, IconUsers, IconUserPlus, IconUserCheck } from '@tabler/icons-react';
+import { IconMail, IconMapPin, IconCalendar, IconUsers, IconUserPlus, IconUserCheck, IconArrowLeft } from '@tabler/icons-react';
 import { useRouter, useParams } from 'next/navigation';
 import { format } from 'date-fns';
 
@@ -193,6 +193,24 @@ const UserProfilePage = () => {
 
   return (
     <PageContainer title={userData.name} description="View user profile">
+      {/* Back Button */}
+      <Box sx={{ mb: 2 }}>
+        <Button 
+          variant="text" 
+          color="primary" 
+          onClick={() => router.back()}
+          startIcon={<IconArrowLeft size={18} />}
+          sx={{ 
+            fontWeight: 500,
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            }
+          }}
+        >
+          Back
+        </Button>
+      </Box>
+      
       <Grid container spacing={3}>
         {/* Profile Header */}
         <Grid item xs={12}>
@@ -218,17 +236,17 @@ const UserProfilePage = () => {
                   px: 3,
                   display: 'flex',
                   alignItems: 'flex-end',
-                  gap: 2,
+                  mt: 10,
                 }}
               >
-                <Avatar
-                  src="/images/profile/user-1.jpg"
-                  alt={userData.name}
+                <DefaultAvatar
+                  name={userData?.name}
                   sx={{
                     width: 120,
                     height: 120,
                     border: '4px solid white',
                     boxShadow: 1,
+                    mb: 2,
                   }}
                 />
                 <Box sx={{ flex: 1, mb: 2 }}>

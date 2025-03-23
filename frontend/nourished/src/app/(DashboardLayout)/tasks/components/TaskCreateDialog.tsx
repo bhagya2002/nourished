@@ -541,7 +541,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                     }}
                   >
                     {/* Safe string rendering with explicit trimming */}
-                    {typeof typingEffect === 'string' ? typingEffect.trim() : ''}
+                    {typingEffect}
                   </Typography>
                   
                   <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
