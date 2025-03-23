@@ -19,6 +19,8 @@ import {
   Divider,
   Grid,
   Stack,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import PageContainer from '../components/container/PageContainer';
@@ -65,6 +67,7 @@ export default function GoalsPage() {
     totalTasks: 0,
     completedTasks: 0,
   });
+  const [isChallenge, setIsChallenge] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
@@ -956,8 +959,8 @@ export default function GoalsPage() {
 
         {/* Page Header Component */}
         <PageHeader 
-          title="Goals"
-          subtitle="Set and track your personal goals"
+          title="Goals & Challenges"
+          subtitle="Set and track your personal goals and group goals (challenges)"
           onCreateGoal={handleAddGoalClick}
         />
 
@@ -1094,6 +1097,19 @@ export default function GoalsPage() {
               inputProps={{ min: today }}
               disabled={isEditing}
             />
+            <ToggleButtonGroup
+              sx={{ mt: 2, mb: 1 }}
+              color='primary'
+              value={isChallenge}
+              exclusive
+              onChange={(event, value) => setIsChallenge(value)}
+              aria-label='goal-challenge-toggle'>
+                <ToggleButton value={false}>Personal Goal</ToggleButton>
+                <ToggleButton value={true}>Group Challenge</ToggleButton>
+            </ToggleButtonGroup>
+            {isChallenge && (
+              <></>
+            )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
