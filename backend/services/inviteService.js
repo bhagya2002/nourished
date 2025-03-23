@@ -26,30 +26,28 @@ module.exports.acceptInvite = async function acceptInvite(uid, data) {
     batch.delete(db.getRef("invites", data.inviteId));
     switch (data.type) {
       case 0: {
-        //Friend invite
         batch.update(db.getRef("users", data.invitee), {
           friends: db.getAddToArray(uid),
         });
         batch.update(db.getRef("users", uid), {
           friends: db.getAddToArray(data.invitee),
         });
-        const result = await db.commitBatch(batch);
-        return result;
+        await batch.commit();
+        return { success: true };
       }
       case 1: {
-        // Challenge invite
         batch.update(db.getRef("users", data.invitee), {
           challenges: db.getAddToArray(data.targetId),
         });
         batch.update(db.getRef("challenges", data.targetId), {
           participants: db.getAddToArray(data.invitee),
         });
-        const result = await db.commitBatch(batch);
-        return result;
+        await batch.commit();
+        return { success: true };
       }
     }
   } catch (err) {
-    return { success: false, err: err };
+    return { success: false, error: err.message || "Invite not found" };
   }
 };
 
@@ -59,8 +57,12 @@ module.exports.getUserInvites = async function getUserInvites(uid) {
 
 module.exports.declineInvite = async function declineInvite(data) {
   try {
-    return await db.deleteSingleDoc("invites", data.inviteId);
+    const deleteResult = await db.deleteSingleDoc("invites", data.inviteId);
+    if (!deleteResult.success) {
+      return { success: false, error: "Invite not found" };
+    }
+    return deleteResult;
   } catch (err) {
-    return { success: false, err: err };
+    return { success: false, error: err.message || "Invite not found" };
   }
 };

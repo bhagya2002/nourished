@@ -7,6 +7,7 @@ const postService = require("../services/postService");
 const commentService = require("../services/commentService");
 const challengeService = require("../services/challengeService");
 const inviteService = require("../services/inviteService");
+const moodService = require("../services/moodService");
 
 function addHeartbeatRoute(app) {
   app.get("/heartbeat", (req, res) => {
@@ -698,6 +699,75 @@ function addSubmitHappinessRating(app) {
       }
     } catch (err) {
       console.error("Error in submitHappinessRating endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addSubmitMood(app) {
+  app.post("/submitMood", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      const { rating, note, date } = req.body;
+      const result = await moodService.submitMood(authResult.uid, rating, note, date);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: result.data,
+      });
+    } catch (err) {
+      console.error("Error in submitMood endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addGetMoodData(app) {
+  app.post("/getMoodData", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      const result = await moodService.getUserMoodEntries(authResult.uid);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: result.data,
+      });
+    } catch (err) {
+      console.error("Error in getMoodData endpoint:", err);
       return res.status(500).json({
         success: false,
         error: err.message || "Server error occurred",
@@ -1753,6 +1823,191 @@ function addGetFollowing(app) {
   });
 }
 
+// Add function to delete a mood entry
+function addDeleteMood(app) {
+  app.post("/deleteMood", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      // Validate date parameter
+      const { date } = req.body;
+      if (!date) {
+        return res.status(400).json({
+          success: false,
+          error: "Date is required",
+        });
+      }
+
+      // Call the service to delete the mood entry
+      const result = await moodService.deleteMood(authResult.uid, date);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Mood entry deleted successfully",
+      });
+    } catch (err) {
+      console.error("Error in deleteMood endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+// Add function to update a mood entry
+function addUpdateMood(app) {
+  app.post("/updateMood", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      // Validate inputs
+      const { date, note, rating } = req.body;
+      if (!date) {
+        return res.status(400).json({
+          success: false,
+          error: "Date is required",
+        });
+      }
+
+      // Call the service to update the mood entry
+      const result = await moodService.updateMood(authResult.uid, date, note, rating);
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: result.error,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Mood entry updated successfully",
+      });
+    } catch (err) {
+      console.error("Error in updateMood endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addAssociateTaskWithGoal(app) {
+  app.post("/associateTaskWithGoal", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      // Validate inputs
+      const { taskId, goalId } = req.body;
+      if (!taskId || !goalId) {
+        return res.status(400).json({
+          success: false,
+          error: "Task ID and Goal ID are required",
+        });
+      }
+
+      // Call the service function to associate the task with the goal
+      const result = await taskService.associateTaskWithGoal(
+        authResult.uid,
+        taskId,
+        goalId
+      );
+
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: result.error || "Failed to associate task with goal",
+        });
+      }
+    } catch (err) {
+      console.error("Error in associateTaskWithGoal endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
+function addUnassociateTaskFromGoal(app) {
+  app.post("/unassociateTaskFromGoal", async (req, res) => {
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+
+      // Validate inputs
+      const { taskId } = req.body;
+      if (!taskId) {
+        return res.status(400).json({
+          success: false,
+          error: "Task ID is required",
+        });
+      }
+
+      // Call the service function to unassociate the task from the goal
+      const result = await taskService.unassociateTaskFromGoal(
+        authResult.uid,
+        taskId
+      );
+
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          error: result.error || "Failed to unassociate task from goal",
+        });
+      }
+    } catch (err) {
+      console.error("Error in unassociateTaskFromGoal endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
 module.exports = function injectRoutes(app) {
   addHeartbeatRoute(app);
 
@@ -1770,6 +2025,8 @@ module.exports = function injectRoutes(app) {
   addGetUserTasks(app);
   addGetGoalTasks(app);
   addGetTaskHistory(app);
+  addAssociateTaskWithGoal(app);
+  addUnassociateTaskFromGoal(app);
 
   // Goals
   addCreateGoal(app);
@@ -1781,6 +2038,12 @@ module.exports = function injectRoutes(app) {
   addSubmitHappinessRating(app);
   addGetHappinessData(app);
 
+  // Mood
+  addSubmitMood(app);
+  addGetMoodData(app);
+  addDeleteMood(app);
+  addUpdateMood(app);
+
   // Posts
   addCreatePost(app);
   addGetUserWithFriendPosts(app);
@@ -1789,9 +2052,9 @@ module.exports = function injectRoutes(app) {
   addLikePost(app);
 
   // Comments
+  addGetCommentsOnPost(app);
   addCommentOnPost(app);
   addDeleteCommentOnPost(app);
-  addGetCommentsOnPost(app);
 
   // Challenges
   addCreateChallenge(app);

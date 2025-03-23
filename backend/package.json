@@ -2,16 +2,17 @@
   "name": "nourished-server",
   "version": "1.0.0",
   "description": "The backend for nourished, the gamified wellness app",
-  "main": "server.js",
+  "main": "server/server.js",
   "scripts": {
     "test": "mocha",
     "tested": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon server/server.js",
+    "dev": "NODE_ENV=development nodemon server/server.js",
+    "start": "NODE_ENV=production node server/server.js",
     "build": "echo 'Nothing to build for backend'",
-    "start": "node server/server.js",
     "lint": "eslint ."
   },
   "dependencies": {
+    "chai": "^4.3.4",
     "cors": "^2.8.5",
     "dotenv": "16.4.7",
     "express": "4.21.2",

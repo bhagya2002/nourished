@@ -17,6 +17,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { motion } from 'framer-motion';
+import FlagIcon from '@mui/icons-material/Flag';
 
 // Import task-related icons
 import BookIcon from '@mui/icons-material/Book';
@@ -52,7 +53,7 @@ const StyledCard = styled(motion.div)(({ theme }) => ({
   overflow: 'visible', // Allow child elements to overflow for animations
 }));
 
-const TaskStatusIcon = styled(IconButton)(({ theme }) => ({
+const TaskStatusIcon = styled(IconButton)({
   position: 'absolute',
   top: '12px',
   right: '12px',
@@ -60,7 +61,7 @@ const TaskStatusIcon = styled(IconButton)(({ theme }) => ({
   '&:hover': {
     transform: 'scale(1.1) rotate(10deg)',
   },
-}));
+});
 
 const FrequencyChip = styled(Chip)(({ theme }) => ({
   position: 'absolute',
@@ -71,6 +72,26 @@ const FrequencyChip = styled(Chip)(({ theme }) => ({
   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
     transform: 'scale(1.05)',
+  },
+}));
+
+const GoalChip = styled(Chip)(({ theme }) => ({
+  position: 'absolute',
+  top: '12px',
+  right: '48px', // Position it to the left of the complete button
+  fontSize: '0.75rem',
+  height: '24px',
+  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  color: theme.palette.primary.main,
+  fontWeight: 500,
+  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+  '& .MuiChip-icon': {
+    color: theme.palette.primary.main,
+  },
+  '&:hover': {
+    transform: 'scale(1.05)',
+    backgroundColor: alpha(theme.palette.primary.main, 0.15),
   },
 }));
 
@@ -182,11 +203,15 @@ interface TaskCardProps {
     description: string;
     completed: boolean;
     frequency?: string;
-  } | undefined;  // Make the entire task object potentially undefined
+    goalId?: string;
+    goalTitle?: string; // Add goalTitle to show in the flag
+  } | undefined;
   onComplete: (taskId: string) => Promise<void>;
   onEdit: (task: any) => void;
   onDelete: (taskId: string) => Promise<void>;
-  showCompleted?: boolean; // Add this prop
+  onAddToGoal?: (task: any) => void;
+  onRemoveFromGoal?: (taskId: string) => Promise<void>;
+  showCompleted?: boolean;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -194,6 +219,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onComplete,
   onEdit,
   onDelete,
+  onAddToGoal,
+  onRemoveFromGoal,
   showCompleted = false, // Default to false
 }) => {
   // Add safety check at the beginning of the component
@@ -207,6 +234,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
     description = '',
     completed = false,
     frequency,
+    goalId,
+    goalTitle,
   } = task;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -239,10 +268,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
       setIsCompleting(true);
       setWasJustCompleted(true);
       
-      // Reset completing state after animation
+      // Reset completing state after animation - increased for longer animation
       setTimeout(() => {
         setIsCompleting(false);
-      }, 500);
+      }, 2000); // Increased from 500ms to 2000ms for a longer animation
     }
     
     try {
@@ -260,6 +289,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const handleDelete = async () => {
     handleMenuClose();
     await onDelete(id);
+  };
+
+  const handleAddToGoal = () => {
+    handleMenuClose();
+    if (onAddToGoal) {
+      onAddToGoal(task);
+    }
+  };
+
+  const handleRemoveFromGoal = async () => {
+    handleMenuClose();
+    if (onRemoveFromGoal) {
+      await onRemoveFromGoal(id);
+    }
   };
 
   // We want to show all tasks, including completed ones if showCompleted is true
@@ -329,6 +372,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
             },
           }}
         >
+          {/* Add goal chip if task is associated with a goal */}
+          {goalId && (
+            <GoalChip
+              icon={<FlagIcon />}
+              label={goalTitle || 'Goal'}
+              size="small"
+            />
+          )}
+          
           {frequency && (
             <FrequencyChip
               label={frequency}
@@ -456,6 +508,26 @@ const TaskCard: React.FC<TaskCardProps> = ({
             >
               Delete
             </MenuItem>
+            {onAddToGoal && !goalId && (
+              <MenuItem onClick={handleAddToGoal} disabled={isLoading}>
+                Add to Goal
+              </MenuItem>
+            )}
+            {onRemoveFromGoal && goalId && (
+              <MenuItem 
+                onClick={handleRemoveFromGoal} 
+                disabled={isLoading}
+                sx={{
+                  color: 'warning.main',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: 'warning.lighter',
+                  },
+                }}
+              >
+                Remove from Goal
+              </MenuItem>
+            )}
           </Menu>
         </CardContent>
       </Card>
