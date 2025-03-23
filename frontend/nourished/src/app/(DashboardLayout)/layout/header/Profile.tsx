@@ -4,12 +4,12 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
 import {
-  Avatar,
   Box,
   Menu,
   Button,
   IconButton,
 } from '@mui/material';
+import DefaultAvatar from '../../components/shared/DefaultAvatar';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -37,33 +37,22 @@ const Profile = () => {
   return (
     <Box>
       <IconButton
-        size='large'
-        aria-label='show profile menu'
-        color='inherit'
-        aria-controls='profile-menu'
-        aria-haspopup='true'
+        size="large"
+        aria-label="show profile menu"
+        color="inherit"
+        aria-controls="profile-menu"
+        aria-haspopup="true"
+        onClick={handleClick2}
         sx={{
           ...(typeof anchorEl2 === 'object' && {
             color: 'primary.main',
           }),
         }}
-        onClick={handleClick2}
       >
-        <Avatar
-          src='/images/profile/user-1.jpg'
-          alt='User Avatar'
-          sx={{
-            width: 35,
-            height: 35,
-          }}
-        />
+        <DefaultAvatar name={user?.displayName || undefined} />
       </IconButton>
-
-      {/* ------------------------------------------- */}
-      {/* Profile Dropdown */}
-      {/* ------------------------------------------- */}
       <Menu
-        id='profile-menu'
+        id="profile-menu"
         anchorEl={anchorEl2}
         keepMounted
         open={Boolean(anchorEl2)}
@@ -73,36 +62,21 @@ const Profile = () => {
         sx={{
           '& .MuiMenu-paper': {
             width: '200px',
+            mt: 1.5,
           },
         }}
       >
-        {/* <MenuItem onClick={() => { router.push('/profile'); handleClose2(); }}>
-          <ListItemIcon>
-            <IconUser width={20} />
-          </ListItemIcon>
-          <ListItemText>My Profile</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => { router.push('/profile/account'); handleClose2(); }}>
-          <ListItemIcon>
-            <IconMail width={20} />
-          </ListItemIcon>
-          <ListItemText>My Account</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => { router.push('/tasks'); handleClose2(); }}>
-          <ListItemIcon>
-            <IconListCheck width={20} />
-          </ListItemIcon>
-          <ListItemText>My Tasks</ListItemText>
-        </MenuItem> */}
-        <Box mt={1} py={1} px={2}>
-          <Button
-            variant='outlined'
-            color='primary'
-            fullWidth
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+        <Box>
+          <Box sx={{ p: 2, pt: 0 }}>
+            <Button
+              color="primary"
+              variant="outlined"
+              fullWidth
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          </Box>
         </Box>
       </Menu>
     </Box>
