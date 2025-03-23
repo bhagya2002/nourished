@@ -49,6 +49,22 @@ const globalStyles = `
     0% { transform: translateX(-100%); }
     100% { transform: translateX(350%); }
   }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes scaleIn {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes magical {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 `;
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3010';
@@ -105,6 +121,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const [aiError, setAiError] = useState<string | null>(null);
   const [typingEffect, setTypingEffect] = useState('');
   const [typeIndex, setTypeIndex] = useState(0);
+  const [notEnoughDataWarning, setNotEnoughDataWarning] = useState<string | null>(null);
   
   // Add last fetch timestamp to prevent repeated calls
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
@@ -170,6 +187,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     // If already showing, just close it
     if (showAiSuggestion) {
       setShowAiSuggestion(false);
+      setNotEnoughDataWarning(null);
       return;
     }
     
@@ -182,6 +200,9 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       setShowAiSuggestion(true);
       return;
     }
+    
+    // Reset states
+    setNotEnoughDataWarning(null);
     
     // Fetch new suggestion
     fetchAiSuggestion();
@@ -204,31 +225,41 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     setAiSuggestion(null);
     
     try {
+      // Log the token being used (for debugging only)
+      console.log('Fetching AI recommendation with token:', token?.substring(0, 10) + '...');
+      
       const response = await fetch(`${API_BASE_URL}/getAITaskRecommendation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
       
+      // Get the raw response text
       const responseText = await response.text();
+      console.log('AI recommendation raw response:', responseText);
       
-      // Handle different error cases
+      // Handle "not enough data" error differently
       if (!response.ok) {
-        console.error('AI Recommendation error:', response.status, responseText);
+        console.warn('API returned error status:', response.status);
+        console.warn('API error text:', responseText);
         
-        // Specific handling for "no task history" case
+        // Special handling for "no task history" case - show warning instead of fallback
         if (responseText.includes('Failed to find document') || 
             responseText.includes('not found') || 
             responseText.includes('No ratings data found')) {
-          console.log('No task history found, using fallback suggestions');
-          provideFallbackSuggestion();
+          setLoadingAiSuggestion(false);
+          setNotEnoughDataWarning(
+            "Not enough task history with happiness ratings for personalized recommendations. Complete more tasks and rate your happiness to get personalized suggestions."
+          );
           return;
         }
         
-        throw new Error('Unable to get AI suggestions at this time');
+        // For other errors, use fallback
+        provideFallbackSuggestion();
+        return;
       }
       
-      // Try to parse the JSON response
+      // Parse the JSON response (keep fallback for unexpected formats)
       let data;
       try {
         data = JSON.parse(responseText);
@@ -238,23 +269,38 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         return;
       }
       
+      // Check if we have valid data (keep fallback for invalid data)
       if (!data.success || !data.message) {
         console.warn('AI API returned success:false or no message:', data);
         provideFallbackSuggestion();
         return;
       }
       
+      // Clean up the response data - ensure we don't have trailing special chars
+      if (typeof data.message.title === 'string') {
+        data.message.title = data.message.title.trim();
+      }
+      
+      if (typeof data.message.description === 'string') {
+        data.message.description = data.message.description.trim();
+      }
+      
+      // If we have data but it's missing required fields, use fallback
+      if (!data.message.title || !data.message.description) {
+        console.warn('AI returned incomplete message data:', data.message);
+        provideFallbackSuggestion();
+        return;
+      }
+      
+      // We have valid data! Set it and animate
+      console.log('Successfully received AI recommendation:', data.message);
       setAiSuggestion(data.message);
       
       // Start typing effect with the actual suggestion
-      if (data.message.title) {
-        const fullText = data.message.title + (data.message.description ? ': ' + data.message.description : '');
-        simulateTyping(fullText);
-      }
+      const fullText = data.message.title + (data.message.description ? ': ' + data.message.description : '');
+      simulateTyping(fullText);
     } catch (error) {
       console.error('Error fetching AI suggestion:', error);
-      setAiError(error instanceof Error ? error.message : 'Failed to fetch suggestion');
-      // Fall back to generic suggestions on error
       provideFallbackSuggestion();
     } finally {
       setLoadingAiSuggestion(false);
@@ -312,25 +358,15 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     simulateTyping(fullText);
   };
   
-  // Simulate typing effect for AI suggestion
+  // Replace typing animation with a safe reveal animation
   const simulateTyping = (text: string) => {
-    setTypingEffect('');
-    setTypeIndex(0);
+    if (!text) return;
     
-    const typingInterval = setInterval(() => {
-      setTypingEffect((prev) => {
-        const nextChar = text.charAt(typeIndex);
-        setTypeIndex((prevIndex) => prevIndex + 1);
-        
-        if (typeIndex >= text.length) {
-          clearInterval(typingInterval);
-        }
-        
-        return prev + nextChar;
-      });
-    }, 30); // Adjust typing speed here
+    // Make sure to remove any trailing special characters that might be causing issues
+    const cleanedText = text.replace(/[^\x20-\x7E\s]/g, '').trim();
     
-    return () => clearInterval(typingInterval);
+    // Set the clean text immediately
+    setTypingEffect(cleanedText);
   };
   
   // Apply AI suggestion to form
@@ -423,7 +459,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                   <AutoAwesomeIcon fontSize="small" sx={{ color: (theme) => theme.palette.secondary.main }} />
                   AI Suggestion
                 </Typography>
-                <IconButton size="small" onClick={() => setShowAiSuggestion(false)}>
+                <IconButton size="small" onClick={() => {setShowAiSuggestion(false); setNotEnoughDataWarning(null);}}>
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </Box>
@@ -431,7 +467,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
               {loadingAiSuggestion ? (
                 <Box sx={{ p: 2, textAlign: 'center' }}>
                   <Typography variant="body2" sx={{ mb: 1 }}>
-                    Analyzing your mood patterns...
+                    Analyzing your task patterns...
                   </Typography>
                   <Box sx={{ 
                     width: '100%', 
@@ -453,22 +489,59 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                     }
                   }} />
                 </Box>
+              ) : notEnoughDataWarning ? (
+                <Box>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    {notEnoughDataWarning}
+                  </Alert>
+                  <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setNotEnoughDataWarning(null);
+                        provideFallbackSuggestion();
+                      }}
+                      color="primary"
+                    >
+                      Show generic suggestions
+                    </Button>
+                  </Stack>
+                </Box>
               ) : aiError ? (
                 <Alert severity="error" sx={{ mb: 2 }}>
                   {aiError}
                 </Alert>
               ) : aiSuggestion ? (
                 <Box>
-                  <Typography variant="body2" sx={{ mb: 1.5, minHeight: '60px' }}>
-                    {typingEffect}
-                    <span 
-                      className="cursor" 
-                      style={{ 
-                        marginLeft: '2px',
-                        borderRight: '2px solid #7e57c2',
-                        animation: 'blink 1s step-end infinite',
-                      }}
-                    ></span>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      mb: 1.5, 
+                      minHeight: '60px', 
+                      whiteSpace: 'pre-wrap',
+                      p: 1.5,
+                      borderRadius: 1,
+                      background: (theme) => `linear-gradient(120deg, ${alpha(theme.palette.primary.light, 0.05)}, ${alpha(theme.palette.secondary.light, 0.1)})`,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      animation: 'fadeIn 0.8s ease-in-out',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '2px',
+                        background: (theme) => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                        backgroundSize: '200% 100%',
+                        animation: 'magical 3s ease infinite',
+                        opacity: 0.7,
+                      }
+                    }}
+                  >
+                    {/* Safe string rendering with explicit trimming */}
+                    {typeof typingEffect === 'string' ? typingEffect.trim() : ''}
                   </Typography>
                   
                   <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -476,6 +549,11 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                       size="small"
                       startIcon={<ContentCopyIcon />}
                       onClick={applyAiSuggestion}
+                      variant="contained"
+                      color="secondary"
+                      sx={{
+                        animation: 'scaleIn 0.5s ease-in-out 0.3s both',
+                      }}
                     >
                       Use suggestion
                     </Button>
