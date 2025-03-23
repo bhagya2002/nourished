@@ -172,6 +172,30 @@ module.exports.removeFromFieldArray = async function removeFromFieldArray(
     });
 };
 
+/**
+ * Update a document with new data
+ * @param {string} collectionName - The collection name
+ * @param {string} docId - The document ID
+ * @param {Object} updateData - The data to update
+ * @returns {Promise<Object>} - Result object
+ */
+module.exports.updateSingleDoc = async function updateSingleDoc(
+  collectionName,
+  docId,
+  updateData
+) {
+  const docRef = db.collection(collectionName).doc(docId);
+  return await docRef
+    .update(updateData)
+    .then(() => {
+      return { success: true };
+    })
+    .catch((error) => {
+      logger.error(error);
+      return { success: false, error: error };
+    });
+};
+
 // Add queryDatabase function to query where a field equals a value
 module.exports.queryDatabase = async function queryDatabase(
   fieldValue,

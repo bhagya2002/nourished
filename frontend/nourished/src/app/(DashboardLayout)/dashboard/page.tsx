@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Grid, Box, CircularProgress, Typography, Button } from "@mui/material";
+import { Grid, Box, CircularProgress, Typography, Button, Chip } from "@mui/material";
 import { useAuth } from "@/context/AuthContext"; // Import Auth Context
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 // components
@@ -15,6 +15,8 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import GoalProgress from "@/app/(DashboardLayout)/components/dashboard/GoalProgress";
 import PlantHealthVisualizer from "../components/dashboard/PlantHealthVisualizer";
+import PlantGrowthInfo from "../components/dashboard/PlantGrowthInfo";
+import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
@@ -577,110 +579,135 @@ const Dashboard = () => {
 
       {/* Rest of the dashboard content */}
       <Grid container spacing={3}>
-        {/* Third Row: Charts */}
-        <Grid item xs={12}>
-          <Grid container spacing={3}>
-            {/* Plant and Streak */}
-            <Grid item xs={12} md={6}>
-              {userProfile === null ? (
-                <CircularProgress />
-              ) : (
-                <>
-                  <PlantHealthVisualizer
-                    plantHealth={userProfile.plantHealth ?? 5}
+        {/* First Row: Plant Visualization and Wellness Overview */}
+        <Grid item xs={12} md={6}>
+          {userProfile === null ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              height: '100%',
+              "& .MuiCard-root": { 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column' 
+              }
+            }}>
+              <DashboardCard
+                title="Your Wellness Plant"
+                action={
+                  <Chip
+                    icon={<LocalFloristIcon />}
+                    label={userProfile.plantHealth >= 5 ? "Healthy" : userProfile.plantHealth >= 3 ? "Growing" : "Needs Care"}
+                    size="small"
+                    color={userProfile.plantHealth >= 5 ? "success" : userProfile.plantHealth >= 3 ? "primary" : "warning"}
+                    variant="filled"
                   />
-                </>
-              )}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <StreakCounter
-                taskHistory={completedTasks}
-                isLoading={isLoadingHistory}
-                streakData={streakData}
-              />
-            </Grid>
-          </Grid>
+                }
+              >
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  flex: 1
+                }}>
+                  <Box sx={{ position: 'relative', height: 350, width: '100%' }}>
+                    <PlantHealthVisualizer
+                      plantHealth={userProfile.plantHealth ?? 5}
+                    />
+                  </Box>
+                  <PlantGrowthInfo plantHealth={userProfile.plantHealth ?? 5} />
+                </Box>
+              </DashboardCard>
+            </Box>
+          )}
         </Grid>
 
-        {/* First Row: Key Metrics */}
-        <Grid item xs={12}>
+        <Grid item xs={12} md={6}>
           <Grid container spacing={3}>
             {/* Task Overview */}
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12}>
               <TaskOverview
                 completedCount={tasks.filter((t) => t.completed).length}
                 totalCount={tasks.length}
               />
             </Grid>
-
+            
             {/* Streak Counter */}
-            {/* <Grid item xs={12} sm={4}>
+            <Grid item xs={12}>
               <StreakCounter
                 taskHistory={completedTasks}
                 isLoading={isLoadingHistory}
                 streakData={streakData}
               />
-            </Grid> */}
-
-            {/* Recent Activity */}
-            <Grid item xs={12} sm={4}>
-              <DashboardCard title="Recent Activity">
-                <Box sx={{ p: 2 }}>
-                  {isLoadingHistory ? (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", p: 2 }}
-                    >
-                      <CircularProgress size={24} />
-                    </Box>
-                  ) : completedTasks.length > 0 ? (
-                    completedTasks.slice(0, 3).map((task, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          py: 1.5,
-                          display: "flex",
-                          alignItems: "center",
-                          borderBottom:
-                            index < completedTasks.slice(0, 3).length - 1
-                              ? "1px solid"
-                              : "none",
-                          borderColor: "divider",
-                        }}
-                      >
-                        <CheckCircleIcon
-                          color="success"
-                          sx={{ mr: 1.5, fontSize: "1rem" }}
-                        />
-                        <Box>
-                          <Typography
-                            variant="body2"
-                            noWrap
-                            sx={{ maxWidth: "140px" }}
-                          >
-                            {task.title}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(task.completedAt)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    ))
-                  ) : (
-                    <Box sx={{ py: 2, textAlign: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        No completed tasks yet
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </DashboardCard>
             </Grid>
           </Grid>
         </Grid>
 
-        {/* Second Row: Goals */}
-        <Grid item xs={12}>
+        {/* Second Row: Goals and Recent Activity */}
+        <Grid item xs={12} lg={8}>
           <GoalProgress goals={goals} isLoading={isLoadingGoals} />
+        </Grid>
+        
+        <Grid item xs={12} lg={4}>
+          <DashboardCard title="Recent Activity">
+            <Box sx={{ p: 2 }}>
+              {isLoadingHistory ? (
+                <Box
+                  sx={{ display: "flex", justifyContent: "center", p: 2 }}
+                >
+                  <CircularProgress size={24} />
+                </Box>
+              ) : completedTasks.length > 0 ? (
+                completedTasks.slice(0, 5).map((task, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      py: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                      borderBottom:
+                        index < completedTasks.slice(0, 5).length - 1
+                          ? "1px solid"
+                          : "none",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <CheckCircleIcon
+                      color="success"
+                      sx={{ mr: 1.5, fontSize: "1rem" }}
+                    />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ 
+                          fontWeight: 'medium',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {task.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(task.completedAt)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              ) : (
+                <Box sx={{ py: 2, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No completed tasks yet
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </DashboardCard>
         </Grid>
 
         {/* Third Row: Charts */}

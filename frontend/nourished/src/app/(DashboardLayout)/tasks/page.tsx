@@ -6,6 +6,7 @@ import PageContainer from '@/app/(DashboardLayout)/components/container/PageCont
 import TaskEditDialog from './components/TaskEditDialog';
 import TaskCreateDialog from './components/TaskCreateDialog';
 import HappinessDialog from './components/HappinessDialog';
+import AssociateTaskWithGoalDialog from './components/AssociateTaskWithGoalDialog';
 import PageHeader from './components/PageHeader';
 import TaskSummary from './components/TaskSummary';
 import {
@@ -98,102 +99,99 @@ const Celebration: React.FC<CelebrationProps> = ({ isVisible, onAnimationComplet
                   position: 'absolute',
                   width: 8 + Math.random() * 12,
                   height: 8 + Math.random() * 12,
-                  borderRadius: Math.random() > 0.3 ? '50%' : Math.random() > 0.5 ? '4px' : '0px',
-                  backgroundColor: [
-                    '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B',
-                    '#FFC107', '#FF9800', '#FF5722', '#F44336',
-                    '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
-                    '#2196F3', '#03A9F4', '#00BCD4', '#009688',
-                  ][Math.floor(Math.random() * 16)],
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  borderRadius: '50%',
+                  background: (theme) => 
+                    `${['#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#2196F3'][
+                      Math.floor(Math.random() * 6)
+                    ]}`,
+                  boxShadow: '0 0 10px rgba(0,0,0,0.1)',
                 }}
               />
             ))}
-            
-            {/* Success message with improved animation */}
-            <Box
-              component={motion.div}
-              initial={{ scale: 0.5, opacity: 0, y: 20 }}
+          </Box>
+
+          <Box
+            component={motion.div}
+            initial={{ scale: 0.5, opacity: 0, y: 20 }}
+            animate={{ 
+              scale: 1, 
+              opacity: 1, 
+              y: 0,
+              transition: { 
+                type: 'spring',
+                stiffness: 300,
+                damping: 20,
+                delay: 0.2 
+              }
+            }}
+            exit={{ 
+              scale: 1.2, 
+              opacity: 0, 
+              transition: { duration: 0.5 } 
+            }}
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: (theme) => theme.palette.success.main,
+              borderRadius: '16px',
+              padding: '20px 40px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
               animate={{ 
-                scale: 1, 
-                opacity: 1, 
-                y: 0,
+                scale: [1, 1.2, 1], 
+                opacity: 1,
                 transition: { 
-                  type: 'spring',
-                  stiffness: 300,
-                  damping: 20,
-                  delay: 0.2 
+                  duration: 0.8,
+                  times: [0, 0.5, 1],
+                  repeat: 1,
+                  repeatDelay: 0.5
                 }
               }}
-              exit={{ 
-                scale: 1.2, 
-                opacity: 0, 
-                transition: { duration: 0.5 } 
-              }}
-              sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '16px',
-                padding: '20px 40px',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-                border: '1px solid rgba(0, 255, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-              }}
             >
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
+              <CheckCircleIcon 
+                sx={{ 
+                  fontSize: 40,
+                  color: '#000',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                }} 
+              />
+            </motion.div>
+            <Box>
+              <Typography 
+                variant="h5" 
+                fontWeight={600}
+                component={motion.h3}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ 
-                  scale: [1, 1.2, 1], 
-                  opacity: 1,
-                  transition: { 
-                    duration: 0.8,
-                    times: [0, 0.5, 1],
-                    repeat: 1,
-                    repeatDelay: 0.5
-                  }
+                  opacity: 1, 
+                  x: 0,
+                  transition: { delay: 0.3 }
                 }}
+                sx={{ color: '#000' }}
               >
-                <CheckCircleIcon 
-                  color="success" 
-                  sx={{ 
-                    fontSize: 40,
-                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-                  }} 
-                />
-              </motion.div>
-              <Box>
-                <Typography 
-                  variant="h5" 
-                  color="success.main" 
-                  fontWeight={600}
-                  component={motion.h3}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ 
-                    opacity: 1, 
-                    x: 0,
-                    transition: { delay: 0.3 }
-                  }}
-                >
-                  Task Completed!
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary"
-                  component={motion.p}
-                  initial={{ opacity: 0 }}
-                  animate={{ 
-                    opacity: 1,
-                    transition: { delay: 0.5 }
-                  }}
-                >
-                  Great job on your progress!
-                </Typography>
-              </Box>
+                Task Completed!
+              </Typography>
+              <Typography 
+                variant="body2"
+                component={motion.p}
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: 1,
+                  transition: { delay: 0.5 }
+                }}
+                sx={{ color: '#000', fontWeight: 500 }}
+              >
+                Great job on your progress!
+              </Typography>
             </Box>
           </Box>
         </Box>
@@ -207,27 +205,45 @@ export default function TasksPage() {
   const pathname = usePathname();
   const { user, token, loading: authLoading, refreshToken } = useAuth();
   const [tasks, setTasks] = useState<any[]>([]);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editTaskData, setEditTaskData] = useState({
+    title: '',
+    description: '',
+    frequency: '',
+    isOpen: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
   const [showCompleted, setShowCompleted] = useState(false);
   const [filteredTasks, setFilteredTasks] = useState<any[]>([]);
 
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [currentEditTask, setCurrentEditTask] = useState<any | null>(null);
 
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
     severity: NotificationSeverity;
-  }>({ open: false, message: '', severity: 'success' });
+  }>({
+    open: false,
+    message: '',
+    severity: 'info',
+  });
 
-  // Add happiness dialog states
+  // State for happiness dialog
   const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
-  const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
-  const [ratingTaskTitle, setRatingTaskTitle] = useState<string>('');
-
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [ratingTaskId, setRatingTaskId] = useState('');
+  const [ratingTaskTitle, setRatingTaskTitle] = useState('');
+  
+  // State for goals
+  const [isLoadingGoals, setIsLoadingGoals] = useState(false);
+  
+  // Add state for the association dialog
+  const [associateDialogOpen, setAssociateDialogOpen] = useState(false);
+  const [taskToAssociate, setTaskToAssociate] = useState<any>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -240,15 +256,49 @@ export default function TasksPage() {
   useEffect(() => {
     if (user && token) {
       fetchTasks();
+      fetchGoals();
     }
   }, [user, token]);
 
-  // Update filtered tasks when tasks or showCompleted changes
+  // Update filtered tasks when tasks, selectedTab, or showCompleted changes
   useEffect(() => {
-    setFilteredTasks(
-      tasks.filter((task) => !task.completed || showCompleted)
-    );
-  }, [tasks, showCompleted]);
+    // Map tasks to include goal titles
+    const tasksWithGoalTitles = tasks.map(task => {
+      if (task.goalId) {
+        const goal = goals.find(g => g.id === task.goalId);
+        return {
+          ...task,
+          goalTitle: goal?.title || 'Goal'
+        };
+      }
+      return task;
+    });
+
+    // Filter tasks based on selected tab and showCompleted
+    const filtered = tasksWithGoalTitles.filter((task) => {
+      if (selectedTab === 0) {
+        // All tasks
+        return showCompleted ? true : !task.completed;
+      } else if (selectedTab === 1) {
+        // Daily tasks
+        return (
+          task.frequency === 'Daily' && (showCompleted ? true : !task.completed)
+        );
+      } else if (selectedTab === 2) {
+        // Weekly tasks
+        return (
+          task.frequency === 'Weekly' && (showCompleted ? true : !task.completed)
+        );
+      } else {
+        // Monthly tasks
+        return (
+          task.frequency === 'Monthly' && (showCompleted ? true : !task.completed)
+        );
+      }
+    });
+
+    setFilteredTasks(filtered);
+  }, [tasks, selectedTab, showCompleted, goals]);
 
   const fetchTasks = async () => {
     if (!token) {
@@ -371,15 +421,66 @@ export default function TasksPage() {
     }
   };
 
+  // Function to fetch goals
+  const fetchGoals = async () => {
+    if (!token) return;
+    
+    setIsLoadingGoals(true);
+    
+    try {
+      // Force refresh the token before fetching data
+      let currentToken = token || '';
+      if (refreshToken) {
+        console.log('Forcing token refresh before fetching goals');
+        const refreshedToken = await refreshToken();
+        if (refreshedToken) {
+          currentToken = refreshedToken;
+        } else {
+          throw new Error('Failed to refresh authentication token');
+        }
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: currentToken }),
+      });
+      
+      if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch goals');
+      }
+      
+      // Set the goals state
+      setGoals(data.data || []);
+      
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      // We don't need to show an error notification for this
+    } finally {
+      setIsLoadingGoals(false);
+    }
+  };
+
   // Create a new task
   const handleCreate = async ({
     title,
     description,
     frequency,
+    goalId,
   }: {
     title: string;
     description: string;
     frequency: string;
+    goalId?: string;
   }) => {
     try {
       console.log('Creating task:', { title, description, frequency }); // Debug log
@@ -394,23 +495,32 @@ export default function TasksPage() {
         severity: 'info',
       });
 
-      // Try creating the task with the current token
+      // Create task API call
+      const taskData = {
+        title,
+        description,
+        frequency,
+        createdAt: new Date().toISOString(),
+      };
+      
+      // Build request body
+      const requestBody: any = {
+        token,
+        task: taskData,
+      };
+      
+      // If there's a goalId, add it to the request
+      if (goalId) {
+        requestBody.task.goalId = goalId;
+        requestBody.goalId = goalId;
+      }
+
       const makeRequest = async (currentToken: string) => {
+        requestBody.token = currentToken;
         return await fetch(`${API_BASE_URL}/createTask`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            token: currentToken,
-            task: {
-              title,
-              description,
-              frequency,
-              completed: false, // Explicitly set to false
-              createdAt: new Date().toISOString(),
-            },
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
         });
       };
 
@@ -774,13 +884,7 @@ export default function TasksPage() {
 
       // Show celebration animation if task is being completed
       if (newCompletedState) {
-        setShowCelebration(true);
-        
-        // Give the user more time to enjoy the celebration animation
-        // Keep it visible for 3 seconds
-        setTimeout(() => {
-          setShowCelebration(false);
-        }, 3000);
+        // No need for any animation timeout, just continue with the happiness dialog logic
       }
 
       // For completed tasks, use a staggered approach:
@@ -799,7 +903,7 @@ export default function TasksPage() {
           setFilteredTasks(
             filteredTasks.filter((task) => task.id !== taskId)
           );
-        }, 1500); // Delay the removal to allow animation to play
+        }, 3000); // Delay the removal to allow animation to play (increased from 1500ms)
       } else {
         // For non-completed tasks or when showing completed tasks,
         // just update the state normally
@@ -873,13 +977,10 @@ export default function TasksPage() {
           if (newCompletedState) {
             setRatingTaskId(taskId);
             setRatingTaskTitle(currentTask.title);
-            // Small delay to allow notification to be seen before showing happiness dialog
             setTimeout(() => {
               setHappinessDialogOpen(true);
             }, 500);
           }
-
-          // Task was already optimistically updated, no need to refresh
           return;
         }
 
@@ -1040,34 +1141,161 @@ export default function TasksPage() {
     }
   };
 
+  // Handle associating a task with a goal
+  const handleAssociateTask = async (taskId: string, goalId: string) => {
+    try {
+      setNotification({
+        open: true,
+        message: 'Associating task with goal...',
+        severity: 'info',
+      });
+      
+      // Force refresh the token before submitting
+      let currentToken = token || '';
+      if (refreshToken) {
+        console.log('Forcing token refresh before associating task with goal');
+        const refreshedToken = await refreshToken();
+        if (refreshedToken) {
+          currentToken = refreshedToken;
+        } else {
+          throw new Error('Failed to refresh authentication token');
+        }
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/associateTaskWithGoal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          taskId,
+          goalId,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to associate task with goal');
+      }
+      
+      // Refresh tasks to show updates
+      await fetchTasks();
+      // Also refresh goals to keep them in sync
+      await fetchGoals();
+      
+      setNotification({
+        open: true,
+        message: 'Task associated with goal successfully!',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error associating task with goal:', error);
+      
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to associate task with goal',
+        severity: 'error',
+      });
+    }
+  };
+  
+  // Handle unassociating a task from a goal
+  const handleUnassociateTask = async (taskId: string) => {
+    try {
+      setNotification({
+        open: true,
+        message: 'Removing task from goal...',
+        severity: 'info',
+      });
+      
+      // Force refresh the token before submitting
+      let currentToken = token || '';
+      if (refreshToken) {
+        console.log('Forcing token refresh before unassociating task from goal');
+        const refreshedToken = await refreshToken();
+        if (refreshedToken) {
+          currentToken = refreshedToken;
+        } else {
+          throw new Error('Failed to refresh authentication token');
+        }
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/unassociateTaskFromGoal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          taskId,
+        }),
+      });
+      
+      if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to remove task from goal');
+      }
+      
+      // Refresh tasks to show updates
+      await fetchTasks();
+      // Also refresh goals to keep them in sync
+      await fetchGoals();
+      
+      setNotification({
+        open: true,
+        message: 'Task removed from goal successfully',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error removing task from goal:', error);
+      
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to remove task from goal',
+        severity: 'error',
+      });
+    }
+  };
+  
+  // Handle opening the associate dialog
+  const handleOpenAssociateDialog = (task: any) => {
+    setTaskToAssociate(task);
+    setAssociateDialogOpen(true);
+  };
+
   return (
     <PageContainer title="Tasks" description="Manage your tasks">
       <Box sx={{ position: 'relative', minHeight: '70vh' }}>
-        {/* Celebration effect */}
-        <Celebration 
-          isVisible={showCelebration} 
-          onAnimationComplete={() => setShowCelebration(false)} 
-        />
-        
         {/* Loading overlay */}
-        {isLoading && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.7)',
-              zIndex: 1,
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: isLoading ? 'flex' : 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            zIndex: 10,
+          }}
+        >
+          <CircularProgress />
+        </Box>
 
         {/* Page Header */}
         <PageHeader 
@@ -1116,6 +1344,8 @@ export default function TasksPage() {
                 onComplete={handleComplete}
                 onEdit={handleOpenEditDialog}
                 onDelete={handleDelete}
+                onAddToGoal={handleOpenAssociateDialog}
+                onRemoveFromGoal={handleUnassociateTask}
                 showCompleted={showCompleted}
               />
             </Grid>
@@ -1199,6 +1429,7 @@ export default function TasksPage() {
           open={notification.open}
           autoHideDuration={6000}
           onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
           <Alert
             onClose={() => setNotification((prev) => ({ ...prev, open: false }))}
@@ -1215,6 +1446,8 @@ export default function TasksPage() {
           onClose={() => setCreateDialogOpen(false)}
           onCreate={handleCreate}
           userTasks={tasks}
+          goals={goals}
+          token={token}
         />
 
         <TaskEditDialog
@@ -1232,14 +1465,24 @@ export default function TasksPage() {
 
         <HappinessDialog
           open={happinessDialogOpen}
+          taskId={ratingTaskId}
+          taskTitle={ratingTaskTitle}
           onClose={() => {
             setHappinessDialogOpen(false);
-            setRatingTaskId(null);
+            setRatingTaskId('');
             setRatingTaskTitle('');
           }}
           onSubmit={handleSubmitHappiness}
-          taskId={ratingTaskId || ''}
-          taskTitle={ratingTaskTitle}
+        />
+
+        {/* Associate Task With Goal Dialog */}
+        <AssociateTaskWithGoalDialog
+          open={associateDialogOpen}
+          onClose={() => setAssociateDialogOpen(false)}
+          onAssociate={handleAssociateTask}
+          task={taskToAssociate}
+          goals={goals}
+          isLoading={isLoadingGoals}
         />
       </Box>
     </PageContainer>
