@@ -318,10 +318,10 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                  completions:
-                    freshTaskHistory.data.completions?.slice(0, 5) || [],
-                  streaks: freshTaskHistory.data.streaks,
-                }
+                    completions:
+                      freshTaskHistory.data.completions?.slice(0, 5) || [],
+                    streaks: freshTaskHistory.data.streaks,
+                  }
                 : null,
             },
           });
@@ -719,7 +719,12 @@ function addSubmitMood(app) {
       }
 
       const { rating, note, date } = req.body;
-      const result = await moodService.submitMood(authResult.uid, rating, note, date);
+      const result = await moodService.submitMood(
+        authResult.uid,
+        rating,
+        note,
+        date,
+      );
 
       if (!result.success) {
         return res.status(400).json({
@@ -1616,7 +1621,7 @@ function addGetAITip(app) {
       // Use the new getWellnessTip function instead of AITips
       const result = await aiService.getWellnessTip(authResult.uid);
       console.log("Wellness tip result:", result);
-      
+
       if (result.success) {
         return res.status(200).json({
           success: true,
@@ -1656,7 +1661,7 @@ function addGetAITaskRecommendation(app) {
 
       const result = await aiService.AITaskRecommendation(authResult.uid);
       console.log("AI recommendation result:", result);
-      
+
       if (result.success) {
         console.log("Sending AI suggestion to frontend:", result.message);
         return res.status(200).json({
@@ -1695,7 +1700,10 @@ function addFollowUser(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await userService.followUser(authResult.uid, req.body.followee);
+      const result = await userService.followUser(
+        authResult.uid,
+        req.body.followee,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
@@ -1732,7 +1740,10 @@ function addUnfollowUser(app) {
         authResult.uid = req.body.token;
       }
 
-      const result = await userService.unfollowUser(authResult.uid, req.body.followee);
+      const result = await userService.unfollowUser(
+        authResult.uid,
+        req.body.followee,
+      );
       if (result.success) {
         return res.status(200).json({
           success: true,
@@ -1896,7 +1907,12 @@ function addUpdateMood(app) {
       }
 
       // Call the service to update the mood entry
-      const result = await moodService.updateMood(authResult.uid, date, note, rating);
+      const result = await moodService.updateMood(
+        authResult.uid,
+        date,
+        note,
+        rating,
+      );
 
       if (!result.success) {
         return res.status(400).json({
@@ -1943,7 +1959,7 @@ function addAssociateTaskWithGoal(app) {
       const result = await taskService.associateTaskWithGoal(
         authResult.uid,
         taskId,
-        goalId
+        goalId,
       );
 
       if (result.success) {
@@ -1990,7 +2006,7 @@ function addUnassociateTaskFromGoal(app) {
       // Call the service function to unassociate the task from the goal
       const result = await taskService.unassociateTaskFromGoal(
         authResult.uid,
-        taskId
+        taskId,
       );
 
       if (result.success) {

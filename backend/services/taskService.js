@@ -117,7 +117,7 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-          (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
         );
         // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
         if (taskResult.data.completedAt) {
@@ -425,7 +425,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -460,26 +460,43 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           // We succeeded with the main update, so return success even if timestamp update fails
           return { success: true };
         }
-        
+
         // When task is marked as incomplete, remove associated happiness ratings
         try {
           console.log(`Removing happiness ratings for task ${taskId}`);
-          
+
           // Find happiness ratings associated with this task
-          const happinessResult = await db.queryDatabase(taskId, "happiness", "taskId");
-          
-          if (happinessResult.success && happinessResult.data && happinessResult.data.length > 0) {
-            console.log(`Found ${happinessResult.data.length} happiness ratings to remove for task ${taskId}`);
-            
+          const happinessResult = await db.queryDatabase(
+            taskId,
+            "happiness",
+            "taskId",
+          );
+
+          if (
+            happinessResult.success &&
+            happinessResult.data &&
+            happinessResult.data.length > 0
+          ) {
+            console.log(
+              `Found ${happinessResult.data.length} happiness ratings to remove for task ${taskId}`,
+            );
+
             // Delete each happiness rating
             for (const happiness of happinessResult.data) {
               // First remove the happiness ID from the user's happiness array
-              await db.removeFromFieldArray("users", uid, "happiness", happiness.id);
-              
+              await db.removeFromFieldArray(
+                "users",
+                uid,
+                "happiness",
+                happiness.id,
+              );
+
               // Then delete the happiness document
               await db.deleteSingleDoc("happiness", happiness.id);
-              
-              console.log(`Removed happiness rating ${happiness.id} for task ${taskId}`);
+
+              console.log(
+                `Removed happiness rating ${happiness.id} for task ${taskId}`,
+              );
             }
           } else {
             console.log(`No happiness ratings found for task ${taskId}`);
@@ -488,7 +505,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           console.error(`Error removing happiness ratings: ${happinessError}`);
           // Continue with task update even if happiness removal fails
         }
-        
+
         if (
           task.data.frequency &&
           task.data.frequency !== "" &&
@@ -507,7 +524,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -804,7 +821,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-        (1000 * 3600 * 24),
+          (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {
@@ -1158,52 +1175,77 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
   }
 };
 
-module.exports.associateTaskWithGoal = async function associateTaskWithGoal(uid, taskId, goalId) {
+module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
+  uid,
+  taskId,
+  goalId,
+) {
   try {
     // First, verify the task exists and belongs to this user
     const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
     if (!taskResult.success) {
       return { success: false, error: "Task not found" };
     }
-    
+
     if (taskResult.data.uid !== uid) {
-      return { success: false, error: "You don't have permission to modify this task" };
+      return {
+        success: false,
+        error: "You don't have permission to modify this task",
+      };
     }
-    
+
     // Check if task is already associated with a goal
     if (taskResult.data.goalId) {
-      return { success: false, error: "Task is already associated with a goal" };
+      return {
+        success: false,
+        error: "Task is already associated with a goal",
+      };
     }
-    
+
     // Verify the goal exists and belongs to this user
     const goalResult = await db.queryDatabaseSingle(goalId, "goals");
     if (!goalResult.success) {
       return { success: false, error: "Goal not found" };
     }
-    
+
     if (goalResult.data.uid !== uid) {
-      return { success: false, error: "You don't have permission to modify this goal" };
+      return {
+        success: false,
+        error: "You don't have permission to modify this goal",
+      };
     }
-    
+
     // Update the task with the goalId
-    const updateTaskResult = await db.updateField("tasks", taskId, "goalId", goalId);
+    const updateTaskResult = await db.updateField(
+      "tasks",
+      taskId,
+      "goalId",
+      goalId,
+    );
     if (!updateTaskResult.success) {
       return { success: false, error: "Failed to update task" };
     }
-    
+
     // Add the task to the goal's taskIds array
-    const updateGoalResult = await db.updateFieldArray("goals", goalId, "taskIds", taskId);
+    const updateGoalResult = await db.updateFieldArray(
+      "goals",
+      goalId,
+      "taskIds",
+      taskId,
+    );
     if (!updateGoalResult.success) {
       // Revert the task update if the goal update fails
       await db.updateField("tasks", taskId, "goalId", null);
       return { success: false, error: "Failed to update goal" };
     }
-    
+
     // Update goal's totalTasks count based on task frequency
     const task = taskResult.data;
     const goal = goalResult.data;
-    const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
-    
+    const daysLeft = Math.ceil(
+      (new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24),
+    );
+
     let totalTasks = 0;
     // Calculate total tasks based on frequency
     switch (task.frequency) {
@@ -1220,72 +1262,96 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(uid,
         totalTasks = 0;
         break;
     }
-    
+
     // Increment the goal's totalTasks
     await db.incrementField("goals", goalId, "totalTasks", totalTasks);
-    
+
     // Clear caches for this user to ensure fresh data
     clearUserCaches(uid);
-    
+
     return { success: true, data: { taskId, goalId } };
   } catch (error) {
     console.error("Error in associateTaskWithGoal:", error);
-    return { 
-      success: false, 
-      error: typeof error === "object" ? error.message || "Unknown error" : String(error)
+    return {
+      success: false,
+      error:
+        typeof error === "object"
+          ? error.message || "Unknown error"
+          : String(error),
     };
   }
 };
 
-module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(uid, taskId) {
+module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
+  uid,
+  taskId,
+) {
   try {
     // First, verify the task exists and belongs to this user
     const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
     if (!taskResult.success) {
       return { success: false, error: "Task not found" };
     }
-    
+
     if (taskResult.data.uid !== uid) {
-      return { success: false, error: "You don't have permission to modify this task" };
+      return {
+        success: false,
+        error: "You don't have permission to modify this task",
+      };
     }
-    
+
     // Check if task is associated with a goal
     if (!taskResult.data.goalId) {
       return { success: false, error: "Task is not associated with any goal" };
     }
-    
+
     const goalId = taskResult.data.goalId;
-    
+
     // Verify the goal exists
     const goalResult = await db.queryDatabaseSingle(goalId, "goals");
     if (!goalResult.success) {
       return { success: false, error: "Goal not found" };
     }
-    
+
     // Check if the user owns the goal
     if (goalResult.data.uid !== uid) {
-      return { success: false, error: "You don't have permission to modify this goal" };
+      return {
+        success: false,
+        error: "You don't have permission to modify this goal",
+      };
     }
-    
+
     // Update the task to remove the goalId
-    const updateTaskResult = await db.updateField("tasks", taskId, "goalId", null);
+    const updateTaskResult = await db.updateField(
+      "tasks",
+      taskId,
+      "goalId",
+      null,
+    );
     if (!updateTaskResult.success) {
       return { success: false, error: "Failed to update task" };
     }
-    
+
     // Remove the task from the goal's taskIds array
-    const updateGoalResult = await db.removeFromFieldArray("goals", goalId, "taskIds", taskId);
+    const updateGoalResult = await db.removeFromFieldArray(
+      "goals",
+      goalId,
+      "taskIds",
+      taskId,
+    );
     if (!updateGoalResult.success) {
       // Revert the task update if the goal update fails
       await db.updateField("tasks", taskId, "goalId", goalId);
       return { success: false, error: "Failed to update goal" };
     }
-    
+
     // Update goal's totalTasks count based on task frequency
     const task = taskResult.data;
     const goal = goalResult.data;
-    const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
-    
+    const daysLeft = Math.ceil(
+      (new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24),
+    );
+
     let totalTasks = 0;
     // Calculate total tasks based on frequency
     switch (task.frequency) {
@@ -1302,24 +1368,27 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
         totalTasks = 0;
         break;
     }
-    
+
     // Decrement the goal's totalTasks
     await db.incrementField("goals", goalId, "totalTasks", -totalTasks);
-    
+
     // If the task was completed and counted toward completedTasks, decrement that too
     if (task.completed) {
       await db.incrementField("goals", goalId, "completedTasks", -1);
     }
-    
+
     // Clear caches for this user to ensure fresh data
     clearUserCaches(uid);
-    
+
     return { success: true, data: { taskId, goalId } };
   } catch (error) {
     console.error("Error in unassociateTaskFromGoal:", error);
-    return { 
-      success: false, 
-      error: typeof error === "object" ? error.message || "Unknown error" : String(error)
+    return {
+      success: false,
+      error:
+        typeof error === "object"
+          ? error.message || "Unknown error"
+          : String(error),
     };
   }
 };

@@ -1,10 +1,9 @@
 const openai = require("openai");
 const db = require("../firebase/firestore");
-const taskService = require("./taskService")
-
+const taskService = require("./taskService");
 
 const client = new openai.OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 const tipByUID = new Map();
@@ -59,7 +58,8 @@ const apiPrompt = `You are a professional data scientist who specializes in look
 providing personalized tips that help your users create and maintain healthy habits. 
 You will be given json objects that contain a task title and an associated rating of their happiness that scales from
 1 to 5. `;
-const promptReturn = `You will have to return a small (100 characters MAX) personalized tip for this user.When you give a tip, make it similar to the titles and descriptions of the inputted data.`;
+const promptReturn =
+  "You will have to return a small (100 characters MAX) personalized tip for this user.When you give a tip, make it similar to the titles and descriptions of the inputted data.";
 const idReturn = `You will have to return a singular taskId that will best help the user continue to be healthy. 
 Make sure you select from the JSON field labelled 'taskID'. Return just the taskid, no extra explanation or reasoning.`;
 
@@ -69,74 +69,86 @@ Make sure you select from the JSON field labelled 'taskID'. Return just the task
  * @returns {Object} Result from getWellnessTip
  */
 module.exports.AITips = async function AITips(uid) {
-    const cacheCheck = getCachedResult(uid, 0);
-    if (cacheCheck) {
-        return { success: true, message: cacheCheck }
-    }
+  const cacheCheck = getCachedResult(uid, 0);
+  if (cacheCheck) {
+    return { success: true, message: cacheCheck };
+  }
 
-    // Call the newer implementation
-    return module.exports.getWellnessTip(uid);
-}
+  // Call the newer implementation
+  return module.exports.getWellnessTip(uid);
+};
 
 /**
  * Generates a personalized task recommendation based on user happiness data
  * @param {string} uid - User ID
  * @returns {Object} Result object with the recommended task
  */
-module.exports.getTaskRecommendation = async function getTaskRecommendation(uid) {
-    try {
-        console.log("getTaskRecommendation called for uid:", uid);
-        
-        // Check cache first
-        const cacheCheck = getCachedResult(uid, 1);
-        if (cacheCheck) {
-            return { success: true, message: cacheCheck }
-        }
-        
-        const happinessData = await taskService.getHappinessData(uid);
-        
-        if (!happinessData.success || !happinessData.data || !happinessData.data.ratings) {
-            return { success: false, error: "No happiness data found" };
-        }
+module.exports.getTaskRecommendation = async function getTaskRecommendation(
+  uid,
+) {
+  try {
+    console.log("getTaskRecommendation called for uid:", uid);
 
-        const happinessScores = JSON.stringify(happinessData.data.ratings);
-        
-        const response = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: "system", content: taskRecommendationPrompt },
-                { role: "user", content: `Based on this user's happiness data, suggest a personalized task: ${happinessScores}` }
-            ],
-            max_tokens: 200,
-            temperature: 0.7
-        });
-
-        const suggestion = response.choices[0].message.content;
-        
-        try {
-            // Try to parse the response as JSON
-            const parsedSuggestion = JSON.parse(suggestion);
-            // Store in cache
-            taskRecommendationByUID.set(uid, { date: new Date(), data: parsedSuggestion });
-            return { 
-                success: true, 
-                message: parsedSuggestion
-            };
-        } catch (e) {
-            console.error("Failed to parse AI response as JSON");
-            return { 
-                success: false, 
-                error: "Invalid AI response format" 
-            };
-        }
-    } catch (error) {
-        console.error("Error in getTaskRecommendation:", error.message);
-        return { 
-            success: false, 
-            error: error.message || "Failed to generate task recommendation" 
-        };
+    // Check cache first
+    const cacheCheck = getCachedResult(uid, 1);
+    if (cacheCheck) {
+      return { success: true, message: cacheCheck };
     }
-}
+
+    const happinessData = await taskService.getHappinessData(uid);
+
+    if (
+      !happinessData.success ||
+      !happinessData.data ||
+      !happinessData.data.ratings
+    ) {
+      return { success: false, error: "No happiness data found" };
+    }
+
+    const happinessScores = JSON.stringify(happinessData.data.ratings);
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: taskRecommendationPrompt },
+        {
+          role: "user",
+          content: `Based on this user's happiness data, suggest a personalized task: ${happinessScores}`,
+        },
+      ],
+      max_tokens: 200,
+      temperature: 0.7,
+    });
+
+    const suggestion = response.choices[0].message.content;
+
+    try {
+      // Try to parse the response as JSON
+      const parsedSuggestion = JSON.parse(suggestion);
+      // Store in cache
+      taskRecommendationByUID.set(uid, {
+        date: new Date(),
+        data: parsedSuggestion,
+      });
+      return {
+        success: true,
+        message: parsedSuggestion,
+      };
+    } catch (e) {
+      console.error("Failed to parse AI response as JSON");
+      return {
+        success: false,
+        error: "Invalid AI response format",
+      };
+    }
+  } catch (error) {
+    console.error("Error in getTaskRecommendation:", error.message);
+    return {
+      success: false,
+      error: error.message || "Failed to generate task recommendation",
+    };
+  }
+};
 
 /**
  * Generates a personalized daily wellness tip based on user data
@@ -144,87 +156,97 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(uid)
  * @returns {Object} Result object with the wellness tip
  */
 module.exports.getWellnessTip = async function getWellnessTip(uid) {
-    try {
-        console.log("getWellnessTip called for uid:", uid);
-        
-        // Check cache first
-        const cacheCheck = getCachedResult(uid, 0);
-        if (cacheCheck) {
-            return { success: true, message: cacheCheck }
-        }
-        
-        // Get user's happiness data and task history for personalization
-        const happinessData = await taskService.getHappinessData(uid);
-        const taskHistory = await taskService.getTaskHistory(uid);
-        
-        let userData = {};
-        let hasSufficientData = false;
-        
-        // Check if we have enough data for personalization
-        if (happinessData.success && happinessData.data && happinessData.data.ratings && 
-            happinessData.data.ratings.length > 0) {
-            userData.happiness = happinessData.data.ratings;
-            hasSufficientData = true;
-        }
-        
-        if (taskHistory.success && taskHistory.data && taskHistory.data.completions &&
-            taskHistory.data.completions.length > 0) {
-            userData.tasks = taskHistory.data.completions;
-            hasSufficientData = true;
-        }
-        
-        // Prepare the user data for the AI
-        const userDataString = JSON.stringify(userData);
-        
-        // Get tip from AI
-        const response = await client.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: "system", content: dailyTipPrompt },
-                { role: "user", content: hasSufficientData 
-                    ? `Based on this user's data, provide a personalized daily wellness tip: ${userDataString}`
-                    : `Provide a thoughtful general wellness tip for a user with limited history.`
-                }
-            ],
-            max_tokens: 200,
-            temperature: 0.7
-        });
-        
-        const tipContent = response.choices[0].message.content;
-        
-        try {
-            // Parse the JSON response
-            const parsedTip = JSON.parse(tipContent);
-            // Store in cache
-            tipByUID.set(uid, { date: new Date(), data: parsedTip });
-            return {
-                success: true,
-                message: parsedTip
-            };
-        } catch (e) {
-            console.error("Failed to parse AI tip response as JSON");
-            
-            // If parsing fails, return a simple format with the raw content
-            const fallbackTip = {
-                title: "Daily Wellness Tip",
-                description: tipContent.replace(/```json|```/g, '').trim()
-            };
-            
-            // Store fallback in cache
-            tipByUID.set(uid, { date: new Date(), data: fallbackTip });
-            
-            return {
-                success: true,
-                message: fallbackTip
-            };
-        }
-    } catch (error) {
-        console.error("Error in getWellnessTip:", error.message);
-        return {
-            success: false,
-            error: error.message || "Failed to generate wellness tip"
-        };
+  try {
+    console.log("getWellnessTip called for uid:", uid);
+
+    // Check cache first
+    const cacheCheck = getCachedResult(uid, 0);
+    if (cacheCheck) {
+      return { success: true, message: cacheCheck };
     }
+
+    // Get user's happiness data and task history for personalization
+    const happinessData = await taskService.getHappinessData(uid);
+    const taskHistory = await taskService.getTaskHistory(uid);
+
+    let userData = {};
+    let hasSufficientData = false;
+
+    // Check if we have enough data for personalization
+    if (
+      happinessData.success &&
+      happinessData.data &&
+      happinessData.data.ratings &&
+      happinessData.data.ratings.length > 0
+    ) {
+      userData.happiness = happinessData.data.ratings;
+      hasSufficientData = true;
+    }
+
+    if (
+      taskHistory.success &&
+      taskHistory.data &&
+      taskHistory.data.completions &&
+      taskHistory.data.completions.length > 0
+    ) {
+      userData.tasks = taskHistory.data.completions;
+      hasSufficientData = true;
+    }
+
+    // Prepare the user data for the AI
+    const userDataString = JSON.stringify(userData);
+
+    // Get tip from AI
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: dailyTipPrompt },
+        {
+          role: "user",
+          content: hasSufficientData
+            ? `Based on this user's data, provide a personalized daily wellness tip: ${userDataString}`
+            : "Provide a thoughtful general wellness tip for a user with limited history.",
+        },
+      ],
+      max_tokens: 200,
+      temperature: 0.7,
+    });
+
+    const tipContent = response.choices[0].message.content;
+
+    try {
+      // Parse the JSON response
+      const parsedTip = JSON.parse(tipContent);
+      // Store in cache
+      tipByUID.set(uid, { date: new Date(), data: parsedTip });
+      return {
+        success: true,
+        message: parsedTip,
+      };
+    } catch (e) {
+      console.error("Failed to parse AI tip response as JSON");
+
+      // If parsing fails, return a simple format with the raw content
+      const fallbackTip = {
+        title: "Daily Wellness Tip",
+        description: tipContent.replace(/```json|```/g, "").trim(),
+      };
+
+      // Store fallback in cache
+      tipByUID.set(uid, { date: new Date(), data: fallbackTip });
+
+      return {
+        success: true,
+        message: fallbackTip,
+      };
+    }
+  } catch (error) {
+    console.error("Error in getWellnessTip:", error.message);
+    return {
+      success: false,
+      error: error.message || "Failed to generate wellness tip",
+    };
+  }
 };
 
 /**
@@ -233,24 +255,27 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
  * @returns {Object} Result from getTaskRecommendation
  */
 module.exports.AITaskRecommendation = async function AITaskRecommendation(uid) {
-    const cacheCheck = getCachedResult(uid, 1);
-    if (cacheCheck) {
-        return { success: true, message: cacheCheck }
-    }
-    
-    // Call the newer implementation
-    return module.exports.getTaskRecommendation(uid);
-}
+  const cacheCheck = getCachedResult(uid, 1);
+  if (cacheCheck) {
+    return { success: true, message: cacheCheck };
+  }
+
+  // Call the newer implementation
+  return module.exports.getTaskRecommendation(uid);
+};
 
 function getCachedResult(uid, type) {
-    const cache = type === 0 ? tipByUID : taskRecommendationByUID;
-    const cacheLookup = cache.get(uid);
-    if (cacheLookup && getDayDifference(new Date(cacheLookup.date), new Date()) < 1) {
-        return cacheLookup.data;
-    }
-    return null;
+  const cache = type === 0 ? tipByUID : taskRecommendationByUID;
+  const cacheLookup = cache.get(uid);
+  if (
+    cacheLookup &&
+    getDayDifference(new Date(cacheLookup.date), new Date()) < 1
+  ) {
+    return cacheLookup.data;
+  }
+  return null;
 }
 
 function getDayDifference(first, second) {
-    return Math.round((second - first) / (1000 * 60 * 60 * 24));
+  return Math.round((second - first) / (1000 * 60 * 60 * 24));
 }

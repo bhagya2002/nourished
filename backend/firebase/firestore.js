@@ -182,7 +182,7 @@ module.exports.removeFromFieldArray = async function removeFromFieldArray(
 module.exports.updateSingleDoc = async function updateSingleDoc(
   collectionName,
   docId,
-  updateData
+  updateData,
 ) {
   const docRef = db.collection(collectionName).doc(docId);
   return await docRef

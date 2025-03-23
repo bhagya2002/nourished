@@ -11,10 +11,15 @@ const db = require("../firebase/firestore");
 async function submitMood(uid, rating, note, date) {
   try {
     // Validate inputs
-    if (!rating && rating !== 0 || rating < 0 || rating > 5 || !Number.isInteger(rating)) {
+    if (
+      (!rating && rating !== 0) ||
+      rating < 0 ||
+      rating > 5 ||
+      !Number.isInteger(rating)
+    ) {
       return {
         success: false,
-        error: "Valid mood rating (0-5) is required"
+        error: "Valid mood rating (0-5) is required",
       };
     }
 
@@ -22,7 +27,7 @@ async function submitMood(uid, rating, note, date) {
     if (isNaN(parsedDate.getTime())) {
       return {
         success: false,
-        error: "Invalid date format"
+        error: "Invalid date format",
       };
     }
 
@@ -31,7 +36,7 @@ async function submitMood(uid, rating, note, date) {
     if (!userResult.success) {
       return {
         success: false,
-        error: "User not found"
+        error: "User not found",
       };
     }
 
@@ -42,19 +47,26 @@ async function submitMood(uid, rating, note, date) {
       const moodsResult = await db.queryMultiple(moodIds, "moods");
       if (moodsResult.success && moodsResult.data.length > 0) {
         // Get the date part of the current date (YYYY-MM-DD)
-        const currentDateStr = parsedDate.toISOString().split('T')[0];
-        
+        const currentDateStr = parsedDate.toISOString().split("T")[0];
+
         // Look for any entries on the same day - using a more robust comparison
-        const existingMoodOnSameDay = moodsResult.data.find(mood => {
+        const existingMoodOnSameDay = moodsResult.data.find((mood) => {
           const moodDate = new Date(mood.date);
-          const moodDateStr = moodDate.toISOString().split('T')[0];
+          const moodDateStr = moodDate.toISOString().split("T")[0];
           return moodDateStr === currentDateStr;
         });
 
         // If an entry exists for today, update it instead of creating a new one
         if (existingMoodOnSameDay) {
-          console.log(`Found existing mood for date ${currentDateStr}, updating instead of creating new one`);
-          return await updateMood(uid, existingMoodOnSameDay.date, note, rating);
+          console.log(
+            `Found existing mood for date ${currentDateStr}, updating instead of creating new one`,
+          );
+          return await updateMood(
+            uid,
+            existingMoodOnSameDay.date,
+            note,
+            rating,
+          );
         }
       }
     }
@@ -74,7 +86,7 @@ async function submitMood(uid, rating, note, date) {
     if (!addResult.success) {
       return {
         success: false,
-        error: "Failed to save mood entry"
+        error: "Failed to save mood entry",
       };
     }
 
@@ -83,7 +95,7 @@ async function submitMood(uid, rating, note, date) {
       "users",
       uid,
       "moods",
-      addResult.id
+      addResult.id,
     );
 
     if (!updateResult.success) {
@@ -91,19 +103,19 @@ async function submitMood(uid, rating, note, date) {
       await db.deleteSingleDoc("moods", addResult.id);
       return {
         success: false,
-        error: "Failed to update user with mood entry"
+        error: "Failed to update user with mood entry",
       };
     }
 
     return {
       success: true,
-      data: { id: addResult.id }
+      data: { id: addResult.id },
     };
   } catch (error) {
     console.error("Error in submitMood service:", error);
     return {
       success: false,
-      error: error.message || "Server error occurred"
+      error: error.message || "Server error occurred",
     };
   }
 }
@@ -120,7 +132,7 @@ async function getUserMoodEntries(uid) {
     if (!userResult.success) {
       return {
         success: false,
-        error: "User not found"
+        error: "User not found",
       };
     }
 
@@ -128,7 +140,7 @@ async function getUserMoodEntries(uid) {
     if (moodIds.length === 0) {
       return {
         success: true,
-        data: { ratings: [] }
+        data: { ratings: [] },
       };
     }
 
@@ -137,24 +149,24 @@ async function getUserMoodEntries(uid) {
     if (!moodsResult.success) {
       return {
         success: false,
-        error: "Failed to fetch mood entries"
+        error: "Failed to fetch mood entries",
       };
     }
 
     // Sort by date (newest first)
     const sortedMoods = moodsResult.data.sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
+      (a, b) => new Date(b.date) - new Date(a.date),
     );
 
     return {
       success: true,
-      data: { ratings: sortedMoods }
+      data: { ratings: sortedMoods },
     };
   } catch (error) {
     console.error("Error in getUserMoodEntries service:", error);
     return {
       success: false,
-      error: error.message || "Server error occurred"
+      error: error.message || "Server error occurred",
     };
   }
 }
@@ -172,7 +184,7 @@ async function deleteMood(uid, date) {
     if (!userResult.success) {
       return {
         success: false,
-        error: "User not found"
+        error: "User not found",
       };
     }
 
@@ -181,7 +193,7 @@ async function deleteMood(uid, date) {
     if (moodIds.length === 0) {
       return {
         success: false,
-        error: "No mood entries found for this user"
+        error: "No mood entries found for this user",
       };
     }
 
@@ -190,22 +202,22 @@ async function deleteMood(uid, date) {
     if (!moodsResult.success) {
       return {
         success: false,
-        error: "Failed to fetch mood entries"
+        error: "Failed to fetch mood entries",
       };
     }
 
     // Find the mood entry that matches the date (might need to normalize date formats)
-    const targetMood = moodsResult.data.find(mood => {
+    const targetMood = moodsResult.data.find((mood) => {
       // Compare dates (ignoring time if needed)
-      const moodDate = new Date(mood.date).toISOString().split('T')[0];
-      const targetDate = new Date(date).toISOString().split('T')[0];
+      const moodDate = new Date(mood.date).toISOString().split("T")[0];
+      const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
     });
 
     if (!targetMood) {
       return {
         success: false,
-        error: "Mood entry not found for the specified date"
+        error: "Mood entry not found for the specified date",
       };
     }
 
@@ -214,7 +226,7 @@ async function deleteMood(uid, date) {
     if (!deleteResult.success) {
       return {
         success: false,
-        error: "Failed to delete mood entry"
+        error: "Failed to delete mood entry",
       };
     }
 
@@ -223,24 +235,24 @@ async function deleteMood(uid, date) {
       "users",
       uid,
       "moods",
-      targetMood.id
+      targetMood.id,
     );
 
     if (!updateResult.success) {
       return {
         success: false,
-        error: "Failed to update user after deleting mood entry"
+        error: "Failed to update user after deleting mood entry",
       };
     }
 
     return {
-      success: true
+      success: true,
     };
   } catch (error) {
     console.error("Error in deleteMood service:", error);
     return {
       success: false,
-      error: error.message || "Server error occurred"
+      error: error.message || "Server error occurred",
     };
   }
 }
@@ -260,7 +272,7 @@ async function updateMood(uid, date, note, rating) {
     if (!userResult.success) {
       return {
         success: false,
-        error: "User not found"
+        error: "User not found",
       };
     }
 
@@ -269,7 +281,7 @@ async function updateMood(uid, date, note, rating) {
     if (moodIds.length === 0) {
       return {
         success: false,
-        error: "No mood entries found for this user"
+        error: "No mood entries found for this user",
       };
     }
 
@@ -278,28 +290,28 @@ async function updateMood(uid, date, note, rating) {
     if (!moodsResult.success) {
       return {
         success: false,
-        error: "Failed to fetch mood entries"
+        error: "Failed to fetch mood entries",
       };
     }
 
     // Find the mood entry that matches the date (might need to normalize date formats)
-    const targetMood = moodsResult.data.find(mood => {
+    const targetMood = moodsResult.data.find((mood) => {
       // Compare dates (ignoring time if needed)
-      const moodDate = new Date(mood.date).toISOString().split('T')[0];
-      const targetDate = new Date(date).toISOString().split('T')[0];
+      const moodDate = new Date(mood.date).toISOString().split("T")[0];
+      const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
     });
 
     if (!targetMood) {
       return {
         success: false,
-        error: "Mood entry not found for the specified date"
+        error: "Mood entry not found for the specified date",
       };
     }
 
     // Prepare update data
     const updateData = {
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
 
     // Only update note if provided
@@ -309,35 +321,44 @@ async function updateMood(uid, date, note, rating) {
 
     // Only update rating if provided and valid
     if (rating !== undefined) {
-      if ((rating === 0 || rating) && rating >= 0 && rating <= 5 && Number.isInteger(rating)) {
+      if (
+        (rating === 0 || rating) &&
+        rating >= 0 &&
+        rating <= 5 &&
+        Number.isInteger(rating)
+      ) {
         updateData.rating = rating;
       } else if (rating !== undefined) {
         return {
           success: false,
-          error: "Invalid rating provided. Must be an integer between 0 and 5."
+          error: "Invalid rating provided. Must be an integer between 0 and 5.",
         };
       }
     }
 
     // Update the mood document with the new data
-    const updateResult = await db.updateSingleDoc("moods", targetMood.id, updateData);
+    const updateResult = await db.updateSingleDoc(
+      "moods",
+      targetMood.id,
+      updateData,
+    );
 
     if (!updateResult.success) {
       return {
         success: false,
-        error: "Failed to update mood entry"
+        error: "Failed to update mood entry",
       };
     }
 
     return {
       success: true,
-      data: { id: targetMood.id }
+      data: { id: targetMood.id },
     };
   } catch (error) {
     console.error("Error in updateMood service:", error);
     return {
       success: false,
-      error: error.message || "Server error occurred"
+      error: error.message || "Server error occurred",
     };
   }
 }
@@ -346,5 +367,5 @@ module.exports = {
   submitMood,
   getUserMoodEntries,
   deleteMood,
-  updateMood
-}; 
+  updateMood,
+};
