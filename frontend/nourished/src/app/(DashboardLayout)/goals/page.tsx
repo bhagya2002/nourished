@@ -1114,6 +1114,7 @@ export default function GoalsPage() {
                 ? goals[expandingGoalIndex].tasks
                 : []
             }
+            token={token}
           />
           {expandingGoalIndex >= 0 &&
             taskEditingIndex >= 0 &&

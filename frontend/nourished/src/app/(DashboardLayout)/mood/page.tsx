@@ -113,45 +113,32 @@ export default function MoodPage() {
   
   // Fetch mood data from the backend
   const fetchMoodData = async () => {
-    if (!token) return;
+    if (!user) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-      
-      const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/getHappinessData`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: currentToken }),
-          signal: controller.signal,
-        });
-      };
-      
-      let response;
-      try {
-        response = await makeRequest(token);
-      } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
-          const freshToken = await refreshToken();
-          
-          if (freshToken) {
-            response = await makeRequest(freshToken);
-          } else {
-            throw new Error('Failed to refresh authentication token');
-          }
-        } else {
-          throw error;
+      // Force refresh the token before fetching data
+      let currentToken = token;
+      if (refreshToken) {
+        console.log('Forcing token refresh before fetching mood data');
+        currentToken = await refreshToken();
+        if (!currentToken) {
+          throw new Error('Failed to refresh authentication token');
         }
-      } finally {
-        clearTimeout(timeoutId);
       }
       
+      const response = await fetch(`${API_BASE_URL}/getMoodData`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: currentToken }),
+      });
+      
       if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
         throw new Error(`Server error: ${response.status}`);
       }
       
@@ -185,7 +172,7 @@ export default function MoodPage() {
   
   // Submit new mood entry
   const handleSubmitMood = async (rating: number, note: string) => {
-    if (!token || !user) {
+    if (!user) {
       setNotification({
         open: true,
         message: 'You must be logged in to submit a mood entry',
@@ -195,44 +182,53 @@ export default function MoodPage() {
     }
     
     try {
+      // Force refresh the token before submitting
+      let currentToken = token;
+      if (refreshToken) {
+        console.log('Forcing token refresh before submitting mood');
+        currentToken = await refreshToken();
+        if (!currentToken) {
+          throw new Error('Failed to refresh authentication token');
+        }
+      }
+      
+      // Check if there's already a mood entry for today using a more robust approach
+      const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      
+      const existingTodayMood = moodEntries.find(entry => {
+        const entryDate = new Date(entry.date);
+        const entryDateStr = entryDate.toISOString().split('T')[0];
+        return entryDateStr === today;
+      });
+      
+      // If a mood exists for today, update it instead of creating a new one
+      if (existingTodayMood) {
+        console.log('Found existing mood for today, updating instead of creating new one');
+        return await handleUpdateMood(existingTodayMood.date, note, rating);
+      }
+      
+      // Otherwise create a new mood entry
       setNotification({
         open: true,
         message: 'Saving your mood...',
         severity: 'info',
       });
       
-      const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/submitHappinessRating`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: currentToken,
-            rating,
-            note,
-            date: new Date().toISOString(),
-          }),
-        });
-      };
-      
-      let response;
-      try {
-        response = await makeRequest(token);
-      } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
-          const freshToken = await refreshToken();
-          
-          if (freshToken) {
-            response = await makeRequest(freshToken);
-          } else {
-            throw new Error('Failed to refresh authentication token');
-          }
-        } else {
-          throw error;
-        }
-      }
+      const response = await fetch(`${API_BASE_URL}/submitMood`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          rating,
+          note,
+          date: new Date().toISOString(),
+        }),
+      });
       
       if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
         throw new Error(`Server error: ${response.status}`);
       }
       
@@ -242,14 +238,8 @@ export default function MoodPage() {
         throw new Error(data.error || 'Failed to submit mood');
       }
       
-      // Update local state with the new entry
-      const newEntry: MoodEntry = {
-        date: new Date().toISOString(),
-        rating,
-        note,
-      };
-      
-      setMoodEntries([...moodEntries, newEntry]);
+      // Refresh the mood data from server instead of just adding locally
+      await fetchMoodData();
       
       setNotification({
         open: true,
@@ -269,7 +259,7 @@ export default function MoodPage() {
   
   // Delete mood entry
   const handleDeleteMood = async (date: string) => {
-    if (!token || !user) {
+    if (!user) {
       setNotification({
         open: true,
         message: 'You must be logged in to delete a mood entry',
@@ -285,36 +275,29 @@ export default function MoodPage() {
         severity: 'info',
       });
       
-      const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/deleteHappinessRating`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: currentToken,
-            date,
-          }),
-        });
-      };
-      
-      let response;
-      try {
-        response = await makeRequest(token);
-      } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
-          const freshToken = await refreshToken();
-          
-          if (freshToken) {
-            response = await makeRequest(freshToken);
-          } else {
-            throw new Error('Failed to refresh authentication token');
-          }
-        } else {
-          throw error;
+      // Force refresh the token before submitting
+      let currentToken = token;
+      if (refreshToken) {
+        console.log('Forcing token refresh before deleting mood');
+        currentToken = await refreshToken();
+        if (!currentToken) {
+          throw new Error('Failed to refresh authentication token');
         }
       }
       
+      const response = await fetch(`${API_BASE_URL}/deleteMood`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          date,
+        }),
+      });
+      
       if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
         throw new Error(`Server error: ${response.status}`);
       }
       
@@ -346,8 +329,8 @@ export default function MoodPage() {
   };
   
   // Update mood entry (note)
-  const handleUpdateMood = async (date: string, note: string) => {
-    if (!token || !user) {
+  const handleUpdateMood = async (date: string, note: string, rating?: number) => {
+    if (!user) {
       setNotification({
         open: true,
         message: 'You must be logged in to update a mood entry',
@@ -363,37 +346,31 @@ export default function MoodPage() {
         severity: 'info',
       });
       
-      const makeRequest = async (currentToken: string) => {
-        return await fetch(`${API_BASE_URL}/updateHappinessRating`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: currentToken,
-            date,
-            note,
-          }),
-        });
-      };
-      
-      let response;
-      try {
-        response = await makeRequest(token);
-      } catch (error: any) {
-        if (error.message === 'token_expired' && refreshToken) {
-          console.log('Token expired, attempting to refresh...');
-          const freshToken = await refreshToken();
-          
-          if (freshToken) {
-            response = await makeRequest(freshToken);
-          } else {
-            throw new Error('Failed to refresh authentication token');
-          }
-        } else {
-          throw error;
+      // Force refresh the token before submitting
+      let currentToken = token;
+      if (refreshToken) {
+        console.log('Forcing token refresh before updating mood');
+        currentToken = await refreshToken();
+        if (!currentToken) {
+          throw new Error('Failed to refresh authentication token');
         }
       }
       
+      const response = await fetch(`${API_BASE_URL}/updateMood`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: currentToken,
+          date,
+          note,
+          rating
+        }),
+      });
+      
       if (!response.ok) {
+        console.error('Server response:', response.status, response.statusText);
+        const errorBody = await response.text();
+        console.error('Error body:', errorBody);
         throw new Error(`Server error: ${response.status}`);
       }
       
@@ -403,17 +380,8 @@ export default function MoodPage() {
         throw new Error(data.error || 'Failed to update mood entry');
       }
       
-      // Update local state
-      setMoodEntries(
-        moodEntries.map(entry => 
-          entry.date === date ? { ...entry, note } : entry
-        )
-      );
-      
-      // Update selected entry if it's the one being edited
-      if (selectedEntry && selectedEntry.date === date) {
-        setSelectedEntry({ ...selectedEntry, note });
-      }
+      // Refresh data from server instead of updating local state
+      await fetchMoodData();
       
       setNotification({
         open: true,

@@ -90,6 +90,12 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
   const handleSubmit = async () => {
     if (selectedMood === null) return;
     
+    // Validate rating
+    if (selectedMood < 0 || selectedMood > 5 || !Number.isInteger(selectedMood)) {
+      console.error('Invalid mood rating. Must be an integer between 0 and 5.');
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       await onSubmit(selectedMood, note);

@@ -36,30 +36,67 @@ interface MoodStatsProps {
 const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' }) => {
   const theme = useTheme();
 
+  // Filter entries based on timeframe
+  const filteredMoodEntries = useMemo(() => {
+    if (moodEntries.length === 0) return [];
+    
+    // Determine date range based on timeframe
+    const today = new Date();
+    const startDate = new Date();
+    
+    if (timeframe === 'week') {
+      startDate.setDate(today.getDate() - 7);
+    } else if (timeframe === 'month') {
+      startDate.setMonth(today.getMonth() - 1);
+    } else {
+      startDate.setFullYear(today.getFullYear() - 1);
+    }
+    
+    // Filter entries within the timeframe
+    const timeframeEntries = moodEntries.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= startDate && entryDate <= today;
+    });
+    
+    // Deduplicate entries by date (keeping only the latest for each day)
+    const uniqueDayMap = new Map();
+    
+    timeframeEntries.forEach(entry => {
+      const dateKey = new Date(entry.date).toISOString().split('T')[0];
+      
+      if (!uniqueDayMap.has(dateKey) || 
+          new Date(entry.date) > new Date(uniqueDayMap.get(dateKey).date)) {
+        uniqueDayMap.set(dateKey, entry);
+      }
+    });
+    
+    return Array.from(uniqueDayMap.values());
+  }, [moodEntries, timeframe]);
+
   // Get mood distribution
   const moodDistribution = useMemo(() => {
     const distribution = [0, 0, 0, 0, 0, 0]; // For ratings 0-5
     
-    if (moodEntries.length === 0) return distribution;
+    if (filteredMoodEntries.length === 0) return distribution;
     
-    moodEntries.forEach(entry => {
+    filteredMoodEntries.forEach(entry => {
       distribution[entry.rating]++;
     });
     
     return distribution;
-  }, [moodEntries]);
+  }, [filteredMoodEntries]);
   
   // Get average mood rating
   const averageMood = useMemo(() => {
-    if (moodEntries.length === 0) return 0;
+    if (filteredMoodEntries.length === 0) return 0;
     
-    const sum = moodEntries.reduce((total, entry) => total + entry.rating, 0);
-    return parseFloat((sum / moodEntries.length).toFixed(1));
-  }, [moodEntries]);
+    const sum = filteredMoodEntries.reduce((total, entry) => total + entry.rating, 0);
+    return parseFloat((sum / filteredMoodEntries.length).toFixed(1));
+  }, [filteredMoodEntries]);
   
   // Get most common mood
   const mostCommonMood = useMemo(() => {
-    if (moodEntries.length === 0) return null;
+    if (filteredMoodEntries.length === 0) return null;
     
     const distribution = moodDistribution;
     let maxIndex = 0;
@@ -71,7 +108,7 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
     }
     
     return maxIndex;
-  }, [moodDistribution, moodEntries]);
+  }, [moodDistribution, filteredMoodEntries]);
   
   // Get mood icons and colors
   const getMoodInfo = (rating: number) => {
@@ -95,33 +132,15 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
   
   // Prepare chart data
   const chartData = useMemo(() => {
-    if (moodEntries.length === 0) {
+    if (filteredMoodEntries.length === 0) {
       return {
         dates: [],
         ratings: []
       };
     }
     
-    // Determine date range based on timeframe
-    const today = new Date();
-    const startDate = new Date();
-    
-    if (timeframe === 'week') {
-      startDate.setDate(today.getDate() - 7);
-    } else if (timeframe === 'month') {
-      startDate.setDate(today.getDate() - 30);
-    } else {
-      startDate.setFullYear(today.getFullYear() - 1);
-    }
-    
-    // Filter data within the timeframe
-    const filteredData = moodEntries.filter(item => {
-      const itemDate = new Date(item.date);
-      return itemDate >= startDate && itemDate <= today;
-    });
-    
     // Sort data by date
-    const sortedData = [...filteredData].sort((a, b) => 
+    const sortedData = [...filteredMoodEntries].sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
     
@@ -154,7 +173,7 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
     });
     
     return { dates, ratings };
-  }, [moodEntries, timeframe]);
+  }, [filteredMoodEntries]);
   
   // Chart options
   const chartOptions: any = {
@@ -371,7 +390,7 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
                 mb: 1
               }}
             >
-              {moodEntries.length}
+              {filteredMoodEntries.length}
             </Typography>
             <Typography 
               variant="body2" 
@@ -423,8 +442,8 @@ const MoodStats: React.FC<MoodStatsProps> = ({ moodEntries, timeframe = 'month' 
               const moodInfo = getMoodInfo(rating);
               const Icon = moodInfo.icon;
               const count = moodDistribution[rating];
-              const percentage = moodEntries.length > 0 
-                ? Math.round((count / moodEntries.length) * 100) 
+              const percentage = filteredMoodEntries.length > 0 
+                ? Math.round((count / filteredMoodEntries.length) * 100) 
                 : 0;
               
               return (
