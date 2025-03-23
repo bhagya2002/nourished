@@ -260,12 +260,45 @@ export default function TasksPage() {
     }
   }, [user, token]);
 
-  // Update filtered tasks when tasks or showCompleted changes
+  // Update filtered tasks when tasks, selectedTab, or showCompleted changes
   useEffect(() => {
-    setFilteredTasks(
-      tasks.filter((task) => !task.completed || showCompleted)
-    );
-  }, [tasks, showCompleted]);
+    // Map tasks to include goal titles
+    const tasksWithGoalTitles = tasks.map(task => {
+      if (task.goalId) {
+        const goal = goals.find(g => g.id === task.goalId);
+        return {
+          ...task,
+          goalTitle: goal?.title || 'Goal'
+        };
+      }
+      return task;
+    });
+
+    // Filter tasks based on selected tab and showCompleted
+    const filtered = tasksWithGoalTitles.filter((task) => {
+      if (selectedTab === 0) {
+        // All tasks
+        return showCompleted ? true : !task.completed;
+      } else if (selectedTab === 1) {
+        // Daily tasks
+        return (
+          task.frequency === 'Daily' && (showCompleted ? true : !task.completed)
+        );
+      } else if (selectedTab === 2) {
+        // Weekly tasks
+        return (
+          task.frequency === 'Weekly' && (showCompleted ? true : !task.completed)
+        );
+      } else {
+        // Monthly tasks
+        return (
+          task.frequency === 'Monthly' && (showCompleted ? true : !task.completed)
+        );
+      }
+    });
+
+    setFilteredTasks(filtered);
+  }, [tasks, selectedTab, showCompleted, goals]);
 
   const fetchTasks = async () => {
     if (!token) {
@@ -946,7 +979,7 @@ export default function TasksPage() {
             setRatingTaskTitle(currentTask.title);
             setTimeout(() => {
               setHappinessDialogOpen(true);
-            }, 2000);
+            }, 500);
           }
           return;
         }
