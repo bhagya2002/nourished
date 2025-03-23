@@ -1414,6 +1414,7 @@ export default function TasksPage() {
           onCreate={handleCreate}
           userTasks={tasks}
           goals={goals}
+          token={token}
         />
 
         <TaskEditDialog
