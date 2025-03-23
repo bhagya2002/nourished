@@ -11,6 +11,10 @@ import {
   Stack,
   Alert,
   Fade,
+  FormControl,
+  InputLabel,
+  Select,
+  Typography,
 } from '@mui/material';
 
 interface TaskCreateDialogProps {
@@ -20,8 +24,10 @@ interface TaskCreateDialogProps {
     title: string;
     description: string;
     frequency: string;
+    goalId?: string;
   }) => Promise<void>;
   userTasks: any[]; // to check for duplicates if needed
+  goals?: any[]; // available goals to assign task to
 }
 
 const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
@@ -29,10 +35,12 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   onClose,
   onCreate,
   userTasks,
+  goals = [],
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState('');
+  const [goalId, setGoalId] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -68,11 +76,12 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
 
     setSaving(true);
     try {
-      await onCreate({ title, description, frequency });
+      await onCreate({ title, description, frequency, goalId });
       // Clear form after success
       setTitle('');
       setDescription('');
       setFrequency('');
+      setGoalId('');
       onClose();
     } catch (error: any) {
       setErrorMsg(error.message || 'Failed to create task.');
@@ -87,6 +96,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     setTitle('');
     setDescription('');
     setFrequency('');
+    setGoalId('');
     onClose();
   };
 
@@ -131,6 +141,27 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             <MenuItem value='Weekly'>Weekly</MenuItem>
             <MenuItem value='Monthly'>Monthly</MenuItem>
           </TextField>
+
+          {goals && goals.length > 0 && (
+            <FormControl fullWidth size="small">
+              <InputLabel id="goal-select-label">Assign to Goal (Optional)</InputLabel>
+              <Select
+                labelId="goal-select-label"
+                value={goalId}
+                label="Assign to Goal (Optional)"
+                onChange={(e) => setGoalId(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {goals.map((goal) => (
+                  <MenuItem key={goal.id} value={goal.id}>
+                    {goal.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions>

@@ -182,10 +182,13 @@ interface TaskCardProps {
     description: string;
     completed: boolean;
     frequency?: string;
+    goalId?: string; // Add goalId to know if task is already associated
   } | undefined;  // Make the entire task object potentially undefined
   onComplete: (taskId: string) => Promise<void>;
   onEdit: (task: any) => void;
   onDelete: (taskId: string) => Promise<void>;
+  onAddToGoal?: (task: any) => void; // Add this prop
+  onRemoveFromGoal?: (taskId: string) => Promise<void>; // Add prop for unassigning
   showCompleted?: boolean; // Add this prop
 }
 
@@ -194,6 +197,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onComplete,
   onEdit,
   onDelete,
+  onAddToGoal,
+  onRemoveFromGoal,
   showCompleted = false, // Default to false
 }) => {
   // Add safety check at the beginning of the component
@@ -207,6 +212,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     description = '',
     completed = false,
     frequency,
+    goalId,
   } = task;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -239,10 +245,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
       setIsCompleting(true);
       setWasJustCompleted(true);
       
-      // Reset completing state after animation
+      // Reset completing state after animation - increased for longer animation
       setTimeout(() => {
         setIsCompleting(false);
-      }, 500);
+      }, 2000); // Increased from 500ms to 2000ms for a longer animation
     }
     
     try {
@@ -260,6 +266,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const handleDelete = async () => {
     handleMenuClose();
     await onDelete(id);
+  };
+
+  const handleAddToGoal = () => {
+    handleMenuClose();
+    if (onAddToGoal) {
+      onAddToGoal(task);
+    }
+  };
+
+  const handleRemoveFromGoal = async () => {
+    handleMenuClose();
+    if (onRemoveFromGoal) {
+      await onRemoveFromGoal(id);
+    }
   };
 
   // We want to show all tasks, including completed ones if showCompleted is true
@@ -456,6 +476,26 @@ const TaskCard: React.FC<TaskCardProps> = ({
             >
               Delete
             </MenuItem>
+            {onAddToGoal && !goalId && (
+              <MenuItem onClick={handleAddToGoal} disabled={isLoading}>
+                Add to Goal
+              </MenuItem>
+            )}
+            {onRemoveFromGoal && goalId && (
+              <MenuItem 
+                onClick={handleRemoveFromGoal} 
+                disabled={isLoading}
+                sx={{
+                  color: 'warning.main',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    backgroundColor: 'warning.lighter',
+                  },
+                }}
+              >
+                Remove from Goal
+              </MenuItem>
+            )}
           </Menu>
         </CardContent>
       </Card>

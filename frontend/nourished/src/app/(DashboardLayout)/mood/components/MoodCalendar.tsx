@@ -95,17 +95,34 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({ moodEntries, onDayClick }) 
       calendarDays.push({ day: null, entry: null });
     }
 
+    // Create a map to store the latest mood entry for each day (to handle duplicate entries)
+    const dayMoodMap = new Map();
+    
+    // Process all mood entries to find the latest for each calendar day
+    moodEntries.forEach((entry) => {
+      const entryDate = new Date(entry.date);
+      const entryYear = entryDate.getFullYear();
+      const entryMonth = entryDate.getMonth();
+      const entryDay = entryDate.getDate();
+      
+      // Only process entries for the current month/year
+      if (entryYear === year && entryMonth === month) {
+        const dayKey = entryDay.toString();
+        
+        // If no entry exists for this day, or if this entry is newer, use it
+        if (!dayMoodMap.has(dayKey) || 
+            new Date(entry.date) > new Date(dayMoodMap.get(dayKey).date)) {
+          dayMoodMap.set(dayKey, entry);
+        }
+      }
+    });
+
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateString = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
       
-      // Find mood entry for this day if exists
-      const entry = moodEntries.find((e) => {
-        const entryDate = new Date(e.date);
-        return entryDate.getFullYear() === year && 
-               entryDate.getMonth() === month && 
-               entryDate.getDate() === day;
-      });
+      // Get the mood entry for this day from our map (if any)
+      const entry = dayMoodMap.get(day.toString());
       
       calendarDays.push({ day, entry, dateString });
     }
@@ -236,7 +253,7 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({ moodEntries, onDayClick }) 
                   background: isToday
                     ? alpha(theme.palette.primary.main, 0.05)
                     : cell.entry
-                    ? alpha(moodStyle!.color, 0.1)
+                    ? alpha(moodStyle!.color, 0.25)
                     : 'transparent',
                   cursor: cell.day ? 'pointer' : 'default',
                   transition: 'all 0.2s',
@@ -265,6 +282,7 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({ moodEntries, onDayClick }) 
                           : cell.entry
                           ? moodStyle!.color
                           : theme.palette.text.primary,
+                        fontSize: cell.entry ? '0.95rem' : 'inherit',
                       }}
                     >
                       {cell.day}
@@ -283,7 +301,7 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({ moodEntries, onDayClick }) 
                             color: moodStyle!.color,
                           }}
                         >
-                          <Icon size={16} />
+                          <Icon size={20} />
                         </Box>
                       </Tooltip>
                     )}
