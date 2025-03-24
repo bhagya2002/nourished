@@ -6,7 +6,7 @@ const taskService = require("../services/taskService.js");
 const app = express();
 const port = process.env.PORT || 3010;
 
-// Suppress punycode deprecation warning by using userland punycode instead
+// Suppress punycode deprecation warning
 process.emitWarning = (function (originalEmitWarning) {
   return function (warning, ...args) {
     if (typeof warning === "string" && warning.includes("punycode")) {
@@ -19,7 +19,7 @@ process.emitWarning = (function (originalEmitWarning) {
 // Middleware
 app.use(express.json());
 
-// Set up CORS with more specific configuration
+// Set up CORS
 app.use(
   cors({
     origin: "*",
@@ -40,11 +40,12 @@ app.get("/", (req, res) => {
   res.send("Server is running on Vercel!");
 });
 
-// Load routes
+// Load routes - this needs to be outside any conditional blocks
 routes(app);
 
-// Set up automated task reset scheduler
+// Task scheduler function - only run in local development
 function setupTaskResetScheduler() {
+  // Your existing scheduler code
   const runResetJob = async () => {
     console.log("Running scheduled task reset job...");
     try {
@@ -78,17 +79,16 @@ function setupTaskResetScheduler() {
   runResetJob(); // Run immediately on startup
 }
 
-// ✅ Only start the server locally
+// Only start the server and scheduler for local development
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Local backend listening on port ${port}`);
     setupTaskResetScheduler();
   });
 } else {
-  console.log(
-    "Running in Vercel serverless mode. Task scheduling is disabled.",
-  );
+  // For serverless environments, just log that we're ready
+  console.log("Serverless environment: Express routes registered");
 }
 
-// ✅ Export app for Vercel deployment
+// Export app for Vercel deployment
 module.exports = app;

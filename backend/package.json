@@ -8,7 +8,7 @@
     "tested": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development nodemon server/server.js",
     "start": "NODE_ENV=production node server/server.js",
-    "build": "echo 'Nothing to build for backend'",
+    "build": "echo 'Setting up for Vercel deployment'",
     "lint": "eslint ."
   },
   "dependencies": {
