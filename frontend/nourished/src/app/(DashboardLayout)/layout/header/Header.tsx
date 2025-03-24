@@ -12,6 +12,7 @@ import {
 import PropTypes from 'prop-types';
 // components
 import Profile from './Profile';
+import Notifications from './Notifications';
 import { IconMenuOrder } from '@tabler/icons-react';
 import MenuOpenOutlinedIcon from '@mui/icons-material/MenuOpenOutlined';
 
@@ -78,17 +79,9 @@ const Header = ({
             <IconMenuOrder width='20' height='20' />
           </IconButton>
         )}
-        {/* <IconButton
-          size='large'
-          aria-label='show notifications'
-          color='inherit'
-          aria-controls='msgs-menu'
-          aria-haspopup='true'
-        >
-          <Badge variant='dot' color='primary'>
-            <IconBellRinging size='21' stroke='1.5' />
-          </Badge>
-        </IconButton> */}
+        <Stack spacing={1} direction='row' alignItems='center'>
+          <Notifications />
+        </Stack>
         <Box flexGrow={1} />
         <Stack spacing={1} direction='row' alignItems='center'>
           {/* <Button
