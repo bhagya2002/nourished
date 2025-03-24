@@ -27,7 +27,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Goals',
+    title: 'Goals (Challenges)',
     icon: IconTarget,
     href: '/goals',
   },

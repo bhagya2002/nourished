@@ -1,5 +1,7 @@
 const db = require("../firebase/firestore");
-module.exports.createGoal = async function createGoal(uid, goal) {
+const challengeService = require("./challengeService");
+
+module.exports.createGoal = async function createGoal(uid, goal, participants) {
   try {
     // Set the uid on the goal
     goal.uid = uid;
@@ -18,7 +20,21 @@ module.exports.createGoal = async function createGoal(uid, goal) {
     if (!updateResult.success) {
       return { success: false, error: updateResult.error };
     }
-    return { success: true, data: { id: result.id } };
+    // Update the challenge's related
+    if (goal.isChallenge && goal.isChallenge === true) {
+      const newChallengeResult = await challengeService.createChallenge(
+        uid, 
+        {
+          goalId: result.id,
+          participants: participants,
+        }
+      );
+      if (!newChallengeResult.success) {
+        return { success: false, error: newChallengeResult.error };
+      }
+      return { success: true, data: { id: result.id, challengeId: newChallengeResult.data.id } };
+    }
+    return { success: true, data: { id: result.id, challengeId: null } };
   } catch (err) {
     return { success: false, error: err };
   }

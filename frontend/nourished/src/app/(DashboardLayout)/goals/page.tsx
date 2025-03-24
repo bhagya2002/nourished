@@ -21,6 +21,14 @@ import {
   Stack,
   ToggleButtonGroup,
   ToggleButton,
+  InputLabel,
+  Select,
+  OutlinedInput,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+  FormControl,
+  Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import PageContainer from '../components/container/PageContainer';
@@ -49,11 +57,23 @@ export type Goal = {
   tasks: any[];
   totalTasks: number;
   completedTasks: number;
+  isChallenge: boolean;
+};
+
+export type Challenge = {
+  id: string;
+  goalId: string;
+  participants: string[];
 };
 
 export default function GoalsPage() {
   const router = useRouter();
   const { user, token, loading, refreshToken } = useAuth();
+
+  const [friends, setFriends] = useState<any[]>([]);
+  const [inviteeIds, setInviteeIds] = useState<string[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [newChallengeParticipants, setNewChallengeParticipants] = useState<string[]>([]);
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -66,8 +86,8 @@ export default function GoalsPage() {
     tasks: [],
     totalTasks: 0,
     completedTasks: 0,
+    isChallenge: false,
   });
-  const [isChallenge, setIsChallenge] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
   const [validationError, setValidationError] = useState('');
@@ -87,14 +107,14 @@ export default function GoalsPage() {
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
 
   // Add happiness dialog states
-    const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
-    const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
-    const [ratingTaskTitle, setRatingTaskTitle] = useState<string>('');
+  const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
+  const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
+  const [ratingTaskTitle, setRatingTaskTitle] = useState<string>('');
 
   const [isLoading, setIsLoading] = useState(false);
 
   // Add a state to track expanded goals (multiple can be expanded at once)
-  const [expandedGoals, setExpandedGoals] = useState<{[key: string]: boolean}>({});
+  const [expandedGoals, setExpandedGoals] = useState<{ [key: string]: boolean }>({});
 
   // Reset the form to initial state
   const resetNewGoal = () => {
@@ -107,6 +127,7 @@ export default function GoalsPage() {
       tasks: [],
       totalTasks: 0,
       completedTasks: 0,
+      isChallenge: false,
     });
   };
 
@@ -114,6 +135,63 @@ export default function GoalsPage() {
   const handleToastClose = () => {
     setToast({ ...toast, open: false });
   };
+
+  // fetch user's friends list
+  const fetchFriends = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getFriends`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (!response.ok) throw new Error('Failed to fetch friends');
+      const friendsData = await response.json();
+
+      if (friendsData && friendsData.data && Array.isArray(friendsData.data)) {
+        setFriends(friendsData.data);
+      } else {
+        setFriends([]);
+      }
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch friends',
+        severity: 'error',
+      });
+      setFriends([]); // Ensure friends is always an array even on error
+    }
+  }
+
+  const fetchChallenges = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/getChallenges`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      if (!response.ok) throw new Error('Failed to fetch challenges');
+      const challengesData = await response.json();
+
+      if (challengesData && challengesData.data && Array.isArray(challengesData.data)) {
+        setChallenges(challengesData.data);
+      } else {
+        setChallenges([]);
+      }
+    } catch (error) {
+      console.error('Error fetching challenges:', error);
+      setToast({
+        open: true,
+        message: 'Failed to fetch challenges',
+        severity: 'error',
+      });
+      setChallenges([]); // Ensure challenges is always an array even on error
+    }
+  }
 
   // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
@@ -130,18 +208,18 @@ export default function GoalsPage() {
 
       // Ensure we're setting an array even if the API returns something else
       if (goalsData && goalsData.data && Array.isArray(goalsData.data)) {
-        const goals = goalsData.data.map((goal: any) => ({
+        const goalsDetail = goalsData.data.map((goal: any) => ({
           ...goal,
           tasks: goal.taskIds || [],
         }));
-        
+
         // Set goals first
-        setGoals(goals);
-        
+        setGoals(goalsDetail);
+
         // Then fetch tasks for each goal
-        for (let index = 0; index < goals.length; index++) {
-          if (goals[index] && goals[index].id) {
-            await fetchGoalTasks(index, goals);
+        for (let index = 0; index < goalsDetail.length; index++) {
+          if (goalsDetail[index] && goalsDetail[index].id) {
+            await fetchGoalTasks(index, goalsDetail);
           }
         }
       } else {
@@ -186,7 +264,7 @@ export default function GoalsPage() {
         : tasksData && Array.isArray(tasksData.data)
           ? tasksData.data
           : [];
-      
+
       setGoals((prevGoals) => {
         // Additional safety check
         if (!prevGoals[index]) return prevGoals;
@@ -250,6 +328,8 @@ export default function GoalsPage() {
   const handleClose = () => {
     setGoalModalOpen(false);
     setValidationError('');
+    resetNewGoal();
+    setNewChallengeParticipants([]);
   };
 
   // Updates form inputs
@@ -260,6 +340,12 @@ export default function GoalsPage() {
 
   // Submits the form, adding or updating a goal
   const handleSubmit = async () => {
+    if (!user || !token) {
+      console.error('User or token not found');
+      router.push('/authentication/login');
+      return;
+    }
+
     if (!newGoal.title.trim()) {
       setValidationError('Title must be filled out.');
       return;
@@ -276,8 +362,6 @@ export default function GoalsPage() {
       setValidationError("Deadline must be on or after today's date.");
       return;
     }
-
-    console.log(token);
 
     // If we are editing, update the goal locally
     if (isEditing) {
@@ -321,6 +405,7 @@ export default function GoalsPage() {
       }
       setGoalModalOpen(false);
       resetNewGoal();
+      setNewChallengeParticipants([]);
     } else {
       // Otherwise, create a new goal in the database
       const goalCreatedAt = new Date().toISOString();
@@ -340,7 +425,9 @@ export default function GoalsPage() {
               taskIds: [],
               totalTasks: 0,
               completedTasks: 0,
+              isChallenge: newGoal.isChallenge,
             },
+            participants: newChallengeParticipants,
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
@@ -349,6 +436,17 @@ export default function GoalsPage() {
           throw new Error('Failed to create goal');
         }
         const goalId = goalData.data.id;
+        const challengeId = goalData.data.challengeId;
+
+        // Create the challenge if it is
+        if (newGoal.isChallenge && challengeId) {
+          // Add the challenge to the challenges array
+          setChallenges((prevChallenges) => [
+            ...prevChallenges,
+            { id: challengeId, goalId: goalId, participants: newChallengeParticipants },
+          ]);
+        }
+
         // Update the goals array with the new goal (avoiding redundant fetches)
         setGoals((prevGoals) => [
           ...prevGoals,
@@ -369,15 +467,16 @@ export default function GoalsPage() {
       }
       setGoalModalOpen(false);
       resetNewGoal();
+      setNewChallengeParticipants([]);
     }
   };
 
   // Function to toggle goal expansion
   const handleToggleGoalExpand = (goalId: string) => {
     setExpandedGoals(prev => {
-      const newState = {...prev};
+      const newState = { ...prev };
       newState[goalId] = !prev[goalId];
-      
+
       // If we're expanding, make sure we fetch the tasks
       if (!prev[goalId]) {
         const goalIndex = goals.findIndex(g => g.id === goalId);
@@ -387,12 +486,12 @@ export default function GoalsPage() {
           }
         }
       }
-      
+
       return newState;
     });
     setExpandingGoalIndex(goals.findIndex(g => g.id === goalId));
   };
-  
+
   // Function to handle adding a task to a goal
   const handleAddTaskToGoal = (goalId: string) => {
     const goalIndex = goals.findIndex(g => g.id === goalId);
@@ -725,14 +824,14 @@ export default function GoalsPage() {
         console.error('Task not found:', taskId);
         return;
       }
-      
+
       // New completed state (toggle current state)
       const newCompletedState = !currentTask.completed;
 
-      setToast({ 
-        open: true, 
-        message: newCompletedState ? 'Task completed ✓' : 'Task marked incomplete', 
-        severity: newCompletedState ? 'success' : 'info' 
+      setToast({
+        open: true,
+        message: newCompletedState ? 'Task completed ✓' : 'Task marked incomplete',
+        severity: newCompletedState ? 'success' : 'info'
       });
 
       // Optimistically update UI first
@@ -740,19 +839,19 @@ export default function GoalsPage() {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         const updatedTasks = [...updatedGoal.tasks];
         const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-        
+
         if (taskIndex === -1) return prevGoals;
-        
+
         // Update task completion status
         updatedTasks[taskIndex] = {
           ...updatedTasks[taskIndex],
           completed: newCompletedState
         };
-        
+
         // Update goal's tasks and completion count
         updatedGoal.tasks = updatedTasks;
         updatedGoal.completedTasks = newCompletedState ? updatedGoal.completedTasks + 1 : updatedGoal.completedTasks - 1;
-        
+
         // Debug log
         console.log('Task completion update:', {
           goalId: updatedGoal.id,
@@ -762,7 +861,7 @@ export default function GoalsPage() {
           completedTasks: updatedGoal.completedTasks,
           totalTasks: updatedGoal.totalTasks,
         });
-        
+
         return prevGoals.map((goal, idx) =>
           idx === expandingGoalIndex ? updatedGoal : goal
         );
@@ -834,19 +933,19 @@ export default function GoalsPage() {
           const updatedGoal = { ...prevGoals[expandingGoalIndex] };
           const updatedTasks = [...updatedGoal.tasks];
           const taskIndex = updatedTasks.findIndex((task) => task.id === taskId);
-          
+
           if (taskIndex === -1) return prevGoals;
-          
+
           // Revert task completion status
           updatedTasks[taskIndex] = {
             ...updatedTasks[taskIndex],
             completed: !newCompletedState
           };
-          
+
           // Update goal's tasks and completion count
           updatedGoal.tasks = updatedTasks;
           updatedGoal.completedTasks = updatedTasks.filter(t => t.completed).length;
-          
+
           return prevGoals.map((goal, idx) =>
             idx === expandingGoalIndex ? updatedGoal : goal
           );
@@ -909,16 +1008,17 @@ export default function GoalsPage() {
       setToast({
         open: true,
         message: 'Happiness rating submitted. Thank you!',
-        severity:'success',
+        severity: 'success',
       });
     } catch (error) {
       console.error('Error submitting happiness rating:', error);
-      setToast({ open: true, 
+      setToast({
+        open: true,
         message:
           error instanceof Error
             ? error.message
             : 'Failed to submit happiness rating',
-        severity: 'error' 
+        severity: 'error'
       });
     }
   }
@@ -933,6 +1033,7 @@ export default function GoalsPage() {
   // Fetches goals while initializing the goals page
   useEffect(() => {
     if (user && token) {
+      fetchFriends();
       fetchGoals();
     }
   }, [user, token]);
@@ -958,7 +1059,7 @@ export default function GoalsPage() {
         </Snackbar>
 
         {/* Page Header Component */}
-        <PageHeader 
+        <PageHeader
           title="Goals & Challenges"
           subtitle="Set and track your personal goals and group goals (challenges)"
           onCreateGoal={handleAddGoalClick}
@@ -973,7 +1074,7 @@ export default function GoalsPage() {
             <EmptyState onCreateGoal={handleAddGoalClick} />
           ) : (
             <Stack spacing={3} sx={{ p: 1 }}>
-          {goals.map((goal, index) => (
+              {goals.map((goal, index) => (
                 <GoalCard
                   key={goal.id}
                   goal={goal}
@@ -1055,69 +1156,110 @@ export default function GoalsPage() {
         ))}
 
         {/* add/edit goal form dialog */}
-        <Dialog open={goalModalOpen} onClose={handleClose}>
-          <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
-          <DialogContent dividers>
-            {validationError && (
-              <Alert severity='error' style={{ margin: '0px' }}>
-                {validationError}
-              </Alert>
-            )}
-            <TextField
-              autoFocus
-              margin='normal'
-              label='Title'
-              type='text'
-              fullWidth
-              name='title'
-              value={newGoal.title}
-              onChange={handleInputChange}
-              size='small'
-            />
-            <TextField
-              margin='normal'
-              label='Description'
-              type='text'
-              fullWidth
-              name='description'
-              value={newGoal.description}
-              onChange={handleInputChange}
-              size='small'
-            />
-            <TextField
-              margin='normal'
-              label='Deadline'
-              type='date'
-              fullWidth
-              name='deadline'
-              value={newGoal.deadline}
-              onChange={handleInputChange}
-              InputLabelProps={{ shrink: true }}
-              size='small'
-              inputProps={{ min: today }}
-              disabled={isEditing}
-            />
-            <ToggleButtonGroup
-              sx={{ mt: 2, mb: 1 }}
-              color='primary'
-              value={isChallenge}
-              exclusive
-              onChange={(event, value) => setIsChallenge(value)}
-              aria-label='goal-challenge-toggle'>
+        {user && (
+          <Dialog open={goalModalOpen} onClose={handleClose}>
+            <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
+            <DialogContent dividers>
+              {validationError && (
+                <Alert severity='error' style={{ margin: '0px' }}>
+                  {validationError}
+                </Alert>
+              )}
+              <TextField
+                autoFocus
+                margin='normal'
+                label='Title'
+                type='text'
+                fullWidth
+                name='title'
+                value={newGoal.title}
+                onChange={handleInputChange}
+                size='small'
+              />
+              <TextField
+                margin='normal'
+                label='Description'
+                type='text'
+                fullWidth
+                name='description'
+                value={newGoal.description}
+                onChange={handleInputChange}
+                size='small'
+              />
+              <TextField
+                margin='normal'
+                label='Deadline'
+                type='date'
+                fullWidth
+                name='deadline'
+                value={newGoal.deadline}
+                onChange={handleInputChange}
+                InputLabelProps={{ shrink: true }}
+                size='small'
+                inputProps={{ min: today }}
+                disabled={isEditing}
+              />
+
+              {/* Goal type toggle (goal or challenge) */}
+              <ToggleButtonGroup
+                sx={{ mt: 2, mb: 1 }}
+                color='primary'
+                value={newGoal.isChallenge}
+                exclusive
+                onChange={(event, value) => setNewGoal({ ...newGoal, isChallenge: value })}
+                aria-label='goal-challenge-toggle'>
                 <ToggleButton value={false}>Personal Goal</ToggleButton>
                 <ToggleButton value={true}>Group Challenge</ToggleButton>
-            </ToggleButtonGroup>
-            {isChallenge && (
-              <></>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button variant='contained' onClick={handleSubmit}>
-              {isEditing ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              </ToggleButtonGroup>
+
+              {/* Friend selection for group challenges */}
+              {newGoal.isChallenge && (
+                <FormControl margin='dense' fullWidth sx={{ display: "flex" }}>
+                  <InputLabel id='challenge-invite-label'>Invite Friends</InputLabel>
+                  <Select
+                    sx={{ minHeight: 104 }}
+                    labelId='challenge-invite-label'
+                    id='challenge-invite-select'
+                    multiple
+                    value={inviteeIds}
+                    onChange={(event) => {
+                      const { target: { value } } = event;
+                      setInviteeIds(typeof value === 'string' ? value.split(',') : value);
+                      setNewChallengeParticipants(typeof value === 'string' ? [user.uid, ...value.split(',')] : [user.uid, ...value]);
+                    }}
+                    input={<OutlinedInput label='Invite Friends' />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {friends.filter((friend) => selected.includes(friend.id)).map((friend) => (
+                          <Chip key={friend.id} label={friend.name} />
+                        ))}
+                      </Box>
+                    )}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 48 * 4.5 + 8,
+                        }
+                      }
+                    }}>
+                    {friends.map((friend) => (
+                      <MenuItem key={friend.id} value={friend.id}>
+                        <Checkbox checked={inviteeIds.includes(friend.id)} />
+                        <ListItemText primary={friend.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button variant='contained' onClick={handleSubmit}>
+                {isEditing ? 'Update' : 'Create'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )}
 
         {/* add/edit task form dialog */}
         <Box>

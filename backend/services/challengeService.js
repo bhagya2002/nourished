@@ -1,10 +1,27 @@
 const db = require("../firebase/firestore");
 
+module.exports.getChallenges = async function getChallenges(userId) {
+  try {
+    const userResult = await db.queryDatabaseSingle(userId, "users");
+    if (!userResult.success) {
+      return { success: false, error: userResult.error };
+    }
+    const user = userResult.data;
+    const challenges = user.challenges;
+    const challengeResults = await db.queryMultiple(challenges, "challenges");
+    if (!challengeResults.success) {
+      return { success: false, error: challengeResults.error };
+    }
+    const challengeData = challengeResults.data;
+    return { success: true, data: challengeData };
+  } catch (err) {
+    return { success: false, error: err };
+  }
+};
+
 module.exports.createChallenge = async function createChallenge(userId, data) {
   try {
     data.uid = userId;
-    data.participants = [userId];
-    data.progress = 0;
 
     const result = await db.addSingleDoc("challenges", data);
     if (result.success) {
@@ -15,7 +32,7 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
         result.id,
       );
       if (updateResult.success) {
-        return { success: true, data: result.id };
+        return { success: true, data: { id: result.id } };
       } else {
         return { success: false, error: updateResult.error };
       }

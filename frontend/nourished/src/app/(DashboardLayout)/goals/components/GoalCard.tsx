@@ -25,22 +25,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Groups2Icon from '@mui/icons-material/Groups2';
 import AddTaskIcon from '@mui/icons-material/AddTask';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import TaskCard from '../../tasks/components/TaskCard';
-
-// Define the goal interface
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  deadline: string;
-  createdAt: string;
-  tasks: any[];
-  totalTasks: number;
-  completedTasks: number;
-}
+import { Goal } from '../page'
 
 interface GoalCardProps {
   goal: Goal;
@@ -208,7 +198,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
           </Box>
 
           {/* Goal metadata */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <Chip
               icon={<CalendarTodayIcon />}
               label={`Due ${formatDeadline(goal.deadline)}`}
@@ -223,6 +213,15 @@ const GoalCard: React.FC<GoalCardProps> = ({
               size="small"
               variant="outlined"
             />
+            {goal.isChallenge && (
+              <Chip
+                icon={<Groups2Icon />}
+                label={"Challenge"}
+                color='error'
+                size='small'
+                variant='outlined'
+              />
+            )}
           </Box>
 
           {/* Expand/Collapse button */}
