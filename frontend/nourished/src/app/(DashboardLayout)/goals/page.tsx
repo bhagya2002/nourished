@@ -98,9 +98,6 @@ export default function GoalsPage() {
   });
   const today = new Date().toISOString().split('T')[0];
   const [expandingGoalIndex, setExpandingGoalIndex] = useState(-1);
-  // More actions menu for edition and deletion
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const goalMoreActionsOpen = Boolean(anchorEl);
 
   const [taskCreateModalOpen, setTaskCreateModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
