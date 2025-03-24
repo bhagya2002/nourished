@@ -73,19 +73,28 @@ module.exports.deleteChallenge = async function deleteChallenge(
   challengeId,
 ) {
   try {
-    const userIds = (await db.queryDatabaseSingle(challengeId, "challenges"))
-      .data.participants;
+    const challengeRes = await db.queryDatabaseSingle(challengeId, "challenges");
+    if (!challengeRes.success) {
+      return challengeRes;
+    }
+    const userIds = challengeRes.data.participants;
+    const goalId = challengeRes.data.goalId;
     const updateBatch = db.batch();
     userIds.forEach((userId) => {
       const ref = db.getRef("users", userId);
       updateBatch.update(ref, {
         challenges: db.getDeleteFromArray(challengeId),
+        goals: db.getDeleteFromArray(goalId),
       });
     });
     const result = await db.commitBatch(updateBatch);
     if (result.success) {
       const updateResult = await db.deleteSingleDoc("challenges", challengeId);
       if (updateResult.success) {
+        const updateInviteResult = await inviteService.deleteInvites(userId, challengeId);
+        if (!updateInviteResult.success) {
+          return updateInviteResult;
+        }
         return { success: true };
       } else {
         return { success: false, error: updateResult.error };

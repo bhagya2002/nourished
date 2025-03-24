@@ -1180,6 +1180,7 @@ export default function GoalsPage() {
                 value={newGoal.title}
                 onChange={handleInputChange}
                 size='small'
+                disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
               />
               <TextField
                 margin='normal'
@@ -1190,6 +1191,7 @@ export default function GoalsPage() {
                 value={newGoal.description}
                 onChange={handleInputChange}
                 size='small'
+                disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
               />
               <TextField
                 margin='normal'
@@ -1221,9 +1223,9 @@ export default function GoalsPage() {
               {/* Friend selection for group challenges */}
               {newGoal.isChallenge && (
                 <FormControl margin='dense' fullWidth sx={{ display: "flex" }}>
-                  <InputLabel id='challenge-invite-label'>Invite Friends</InputLabel>
+                  <InputLabel id='challenge-invite-label'>{isEditing ? 'Friends in Challenge' : 'Select Friends'}</InputLabel>
                   <Select
-                    disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
+                    disabled={isEditing}
                     sx={{ minHeight: 104 }}
                     labelId='challenge-invite-label'
                     id='challenge-invite-select'
@@ -1233,7 +1235,7 @@ export default function GoalsPage() {
                       const { target: { value } } = event;
                       setInviteeIds(typeof value === 'string' ? value.split(',') : value);
                     }}
-                    input={<OutlinedInput label='Invite Friends' />}
+                    input={<OutlinedInput label={isEditing ? 'Friends in Challenge' : 'Select Friends'} />}
                     renderValue={(selected) => (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                         {friends.filter((friend) => selected.includes(friend.id)).map((friend) => (

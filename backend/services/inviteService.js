@@ -44,7 +44,7 @@ module.exports.acceptInvite = async function acceptInvite(uid, data) {
         });
         await batch.commit();
 
-        const challengeRes = await db.queryDatabaseSingle(targetId, "challenges");
+        const challengeRes = await db.queryDatabaseSingle(data.targetId, "challenges");
         if (!challengeRes.success) {
           return challengeRes;
         }
@@ -73,6 +73,23 @@ module.exports.declineInvite = async function declineInvite(data) {
       return { success: false, error: "Invite not found" };
     }
     return deleteResult;
+  } catch (err) {
+    return { success: false, error: err.message || "Invite not found" };
+  }
+};
+
+module.exports.deleteInvites = async function deleteInvites(uid, challengeId) {
+  try {
+    const batch = db.batch();
+    const invites = await db.queryDatabase(challengeId, "invites", "targetId");
+    if (!invites.success) {
+      return { success: false, error: "Challenge not found" };
+    }
+    for (const invite of invites.data) {
+      batch.delete(db.getRef("invites", invite.id));
+    }
+    await batch.commit();
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message || "Invite not found" };
   }

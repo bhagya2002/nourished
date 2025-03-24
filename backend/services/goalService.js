@@ -62,21 +62,52 @@ module.exports.getUserGoals = async function getUserGoals(uid) {
 module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
   const result = await db.removeFromFieldArray("users", uid, "goals", goalId);
   if (result.success) {
-    const deleteGoalRes = await db.deleteSingleDoc("goals", goalId);
-    if (!deleteGoalRes.success) {
-      return deleteGoalRes;
+    const goalRes = await db.queryDatabaseSingle(goalId, "goals");
+    if (!goalRes.success) {
+      return goalRes;
     }
     const challengeRes = await db.queryDatabase(goalId, "challenges", "goalId");
     if (!challengeRes.success) {
       return challengeRes;
     }
+    
+    // If user is deleting the challenge that is not belong to him
+    if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
+      const deleteUserFromChallPromises = [];
+      for (const challenge of challengeRes.data) {
+        const deleteUserChallRes = await db.removeFromFieldArray("users", uid, "challenges", challenge.id);
+        deleteUserFromChallPromises.push(deleteUserChallRes);
+        const deleteChallPartiRes = await db.removeFromFieldArray("challenges", challenge.id, "participants", uid);
+        deleteUserFromChallPromises.push(deleteChallPartiRes);
+      }
+      const allDeleteUserFromChallRes = await Promise.all(deleteUserFromChallPromises);
+      if (!allDeleteUserFromChallRes.every((res) => res.success)) {
+        return { success: false, error: "Failed to remove you from all challenges" };
+      }
+      return { success: true, message: "Removed you from the challenge" };
+    }
+
+    const deleteGoalRes = await db.deleteSingleDoc("goals", goalId);
+    if (!deleteGoalRes.success) {
+      return deleteGoalRes;
+    }
+
+    // Delete relavant challenge if it exists
+    const challengeDeletePromises = [];
     if (challengeRes.data.length > 0) {
-      const deleteChallengeRes = await challengeService.deleteChallenge(
-        uid,
-        challengeRes.data[0].id,
-      );
-      if (!deleteChallengeRes.success) {
-        return deleteChallengeRes;
+      for (const challenge of challengeRes.data) {
+        const deleteChallengeRes = await challengeService.deleteChallenge(
+          uid,
+          challenge.id,
+        );
+        if (!deleteChallengeRes.success) {
+          return deleteChallengeRes;
+        }
+        challengeDeletePromises.push(deleteChallengeRes);
+      }
+      const allChallengeDeleteRes = await Promise.all(challengeDeletePromises);
+      if (!allChallengeDeleteRes.every((res) => res.success)) {
+        return { success: false, error: "Failed to delete all challenges" };
       }
     }
     return { success: true };
