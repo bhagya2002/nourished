@@ -59,10 +59,10 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
           return { success: false, error: "Failed to create invites" };
         }
       } else {
-        return { success: false, error: updateResult.error };
+        return { success: false, error: "Failed to update user challenges array" };
       }
     }
-    return { success: false, error: result.error };
+    return { success: false, error: "Failed to create challenge" };
   } catch (err) {
     return { success: false, error: err };
   }

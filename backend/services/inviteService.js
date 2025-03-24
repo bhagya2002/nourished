@@ -43,6 +43,17 @@ module.exports.acceptInvite = async function acceptInvite(uid, data) {
           participants: db.getAddToArray(data.invitee),
         });
         await batch.commit();
+
+        const challengeRes = await db.queryDatabaseSingle(targetId, "challenges");
+        if (!challengeRes.success) {
+          return challengeRes;
+        }
+        const challenge = challengeRes.data;
+        const goalId = challenge.goalId;
+        const updateGoalsResult = await db.updateFieldArray("users", uid, "goals", goalId);
+        if (!updateGoalsResult.success) {
+          return updateGoalsResult;
+        }
         return { success: true };
       }
     }
