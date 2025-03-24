@@ -178,7 +178,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                {goal.title}
+                {goal.isChallenge ? "Challenge: " : ""}{goal.title}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 {goal.description}
