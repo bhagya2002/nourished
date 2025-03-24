@@ -64,6 +64,7 @@ export type Challenge = {
   id: string;
   goalId: string;
   participants: string[];
+  uid: string;
 };
 
 export default function GoalsPage() {
@@ -73,7 +74,6 @@ export default function GoalsPage() {
   const [friends, setFriends] = useState<any[]>([]);
   const [inviteeIds, setInviteeIds] = useState<string[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [newChallengeParticipants, setNewChallengeParticipants] = useState<string[]>([]);
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -287,10 +287,12 @@ export default function GoalsPage() {
   };
 
   // Populates form with goal data for editing
-  const handleEditGoalClick = (index: number) => {
+  const handleEditGoalClick = (index: number, userId: string) => {
+    const goalId = goals[index].id;
     setIsEditing(true);
     setEditingIndex(index);
     setNewGoal(goals[index]);
+    setInviteeIds(challenges.find(c => c.goalId === goalId)?.participants.filter(uid => uid !== userId) || []);
     console.log(goals[index]);
     setGoalModalOpen(true);
   };
@@ -329,7 +331,7 @@ export default function GoalsPage() {
     setGoalModalOpen(false);
     setValidationError('');
     resetNewGoal();
-    setNewChallengeParticipants([]);
+    setInviteeIds([]);
   };
 
   // Updates form inputs
@@ -405,7 +407,7 @@ export default function GoalsPage() {
       }
       setGoalModalOpen(false);
       resetNewGoal();
-      setNewChallengeParticipants([]);
+      setInviteeIds([]);
     } else {
       // Otherwise, create a new goal in the database
       const goalCreatedAt = new Date().toISOString();
@@ -427,7 +429,7 @@ export default function GoalsPage() {
               completedTasks: 0,
               isChallenge: newGoal.isChallenge,
             },
-            participants: newChallengeParticipants,
+            invitees: inviteeIds,
           }),
         });
         if (!response.ok) throw new Error('Failed to create goal');
@@ -443,14 +445,14 @@ export default function GoalsPage() {
           // Add the challenge to the challenges array
           setChallenges((prevChallenges) => [
             ...prevChallenges,
-            { id: challengeId, goalId: goalId, participants: newChallengeParticipants },
+            { id: challengeId, goalId: goalId, participants: [user.uid], uid: user.uid },
           ]);
         }
 
         // Update the goals array with the new goal (avoiding redundant fetches)
         setGoals((prevGoals) => [
           ...prevGoals,
-          { ...newGoal, id: goalId, createdAt: goalCreatedAt },
+          { ...newGoal, id: goalId, createdAt: goalCreatedAt, uid: user.uid },
         ]);
         setToast({
           open: true,
@@ -467,7 +469,7 @@ export default function GoalsPage() {
       }
       setGoalModalOpen(false);
       resetNewGoal();
-      setNewChallengeParticipants([]);
+      setInviteeIds([]);
     }
   };
 
@@ -1035,6 +1037,7 @@ export default function GoalsPage() {
     if (user && token) {
       fetchFriends();
       fetchGoals();
+      fetchChallenges();
     }
   }, [user, token]);
 
@@ -1069,26 +1072,28 @@ export default function GoalsPage() {
         <GoalSummary goals={goals} />
 
         {/* Goals List with Modern Cards */}
-        <AnimatePresence>
-          {goals.length === 0 ? (
-            <EmptyState onCreateGoal={handleAddGoalClick} />
-          ) : (
-            <Stack spacing={3} sx={{ p: 1 }}>
-              {goals.map((goal, index) => (
-                <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  isExpanded={Boolean(expandedGoals[goal.id])}
-                  onEdit={() => handleEditGoalClick(index)}
-                  onDelete={() => handleDeleteGoalClick(index)}
-                  onToggleExpand={() => handleToggleGoalExpand(goal.id)}
-                  onAddTask={() => handleAddTaskToGoal(goal.id)}
-                  index={index}
-                />
-              ))}
-            </Stack>
-          )}
-        </AnimatePresence>
+        {user && (
+          <AnimatePresence>
+            {goals.length === 0 ? (
+              <EmptyState onCreateGoal={handleAddGoalClick} />
+            ) : (
+              <Stack spacing={3} sx={{ p: 1 }}>
+                {goals.map((goal, index) => (
+                  <GoalCard
+                    key={goal.id}
+                    goal={goal}
+                    isExpanded={Boolean(expandedGoals[goal.id])}
+                    onEdit={() => handleEditGoalClick(index, user.uid)}
+                    onDelete={() => handleDeleteGoalClick(index)}
+                    onToggleExpand={() => handleToggleGoalExpand(goal.id)}
+                    onAddTask={() => handleAddTaskToGoal(goal.id)}
+                    index={index}
+                  />
+                ))}
+              </Stack>
+            )}
+          </AnimatePresence>
+        )}
 
         {/* Tasks list under expanded goals */}
         {goals.map((goal, goalIndex) => (
@@ -1202,6 +1207,7 @@ export default function GoalsPage() {
 
               {/* Goal type toggle (goal or challenge) */}
               <ToggleButtonGroup
+                disabled={isEditing}
                 sx={{ mt: 2, mb: 1 }}
                 color='primary'
                 value={newGoal.isChallenge}
@@ -1217,6 +1223,7 @@ export default function GoalsPage() {
                 <FormControl margin='dense' fullWidth sx={{ display: "flex" }}>
                   <InputLabel id='challenge-invite-label'>Invite Friends</InputLabel>
                   <Select
+                    disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
                     sx={{ minHeight: 104 }}
                     labelId='challenge-invite-label'
                     id='challenge-invite-select'
@@ -1225,7 +1232,6 @@ export default function GoalsPage() {
                     onChange={(event) => {
                       const { target: { value } } = event;
                       setInviteeIds(typeof value === 'string' ? value.split(',') : value);
-                      setNewChallengeParticipants(typeof value === 'string' ? [user.uid, ...value.split(',')] : [user.uid, ...value]);
                     }}
                     input={<OutlinedInput label='Invite Friends' />}
                     renderValue={(selected) => (

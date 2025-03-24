@@ -1,7 +1,7 @@
 const db = require("../firebase/firestore");
 const challengeService = require("./challengeService");
 
-module.exports.createGoal = async function createGoal(uid, goal, participants) {
+module.exports.createGoal = async function createGoal(uid, goal, invitees) {
   try {
     // Set the uid on the goal
     goal.uid = uid;
@@ -26,7 +26,7 @@ module.exports.createGoal = async function createGoal(uid, goal, participants) {
         uid, 
         {
           goalId: result.id,
-          participants: participants,
+          invitees: invitees,
         }
       );
       if (!newChallengeResult.success) {
@@ -62,6 +62,23 @@ module.exports.getUserGoals = async function getUserGoals(uid) {
 module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
   const result = await db.removeFromFieldArray("users", uid, "goals", goalId);
   if (result.success) {
-    return await db.deleteSingleDoc("goals", goalId);
-  }
+    const deleteGoalRes = await db.deleteSingleDoc("goals", goalId);
+    if (!deleteGoalRes.success) {
+      return deleteGoalRes;
+    }
+    const challengeRes = await db.queryDatabase(goalId, "challenges", "goalId");
+    if (!challengeRes.success) {
+      return challengeRes;
+    }
+    if (challengeRes.data.length > 0) {
+      const deleteChallengeRes = await challengeService.deleteChallenge(
+        uid,
+        challengeRes.data[0].id,
+      );
+      if (!deleteChallengeRes.success) {
+        return deleteChallengeRes;
+      }
+    }
+    return { success: true };
+  } else return result;
 };

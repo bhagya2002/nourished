@@ -1,4 +1,5 @@
 const db = require("../firebase/firestore");
+const inviteService = require("./inviteService")
 
 module.exports.getChallenges = async function getChallenges(userId) {
   try {
@@ -22,6 +23,9 @@ module.exports.getChallenges = async function getChallenges(userId) {
 module.exports.createChallenge = async function createChallenge(userId, data) {
   try {
     data.uid = userId;
+    data.participants = [userId];
+    const invitees = data.invitees;
+    delete data.invitees;
 
     const result = await db.addSingleDoc("challenges", data);
     if (result.success) {
@@ -32,7 +36,28 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
         result.id,
       );
       if (updateResult.success) {
-        return { success: true, data: { id: result.id } };
+        // create invites for invitees
+        const challengeInvitePromises = [];
+        for (const invitee of invitees) {
+          const inviteRes = await inviteService.createInvite(
+            userId,
+            {
+              invitee: invitee,
+              type: 1,
+              targetId: result.id,
+            }
+          )
+          if (!inviteRes.success) {
+            return inviteRes;
+          }
+          challengeInvitePromises.push(inviteRes);
+        }
+        const inviteResults = await Promise.all(challengeInvitePromises);
+        if (inviteResults.every((res) => res.success)) {
+          return { success: true, data: { id: result.id } };
+        } else {
+          return { success: false, error: "Failed to create invites" };
+        }
       } else {
         return { success: false, error: updateResult.error };
       }

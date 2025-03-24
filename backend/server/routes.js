@@ -490,7 +490,7 @@ function addCreateGoal(app) {
       const result = await goalService.createGoal(
         authResult.uid,
         req.body.goal,
-        req.body.participants,
+        req.body.invitees,
       );
       if (result.success) {
         return res.status(200).json({
