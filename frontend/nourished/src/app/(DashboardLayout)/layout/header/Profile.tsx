@@ -9,12 +9,19 @@ import {
   Menu,
   Button,
   IconButton,
+  MenuItem,
+  ListItemIcon,
+  Divider,
 } from '@mui/material';
+import { AccountCircle, Logout, PersonSearch } from '@mui/icons-material';
+import UserSearchDialog from '../components/UserSearchDialog';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token, loading, refreshToken } = useAuth();
+
+  const [friendSearchOpen, setFriendSearchOpen] = useState(false);
 
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
@@ -72,7 +79,7 @@ const Profile = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         sx={{
           '& .MuiMenu-paper': {
-            width: '200px',
+            width: 'auto',
           },
         }}
       >
@@ -94,17 +101,32 @@ const Profile = () => {
           </ListItemIcon>
           <ListItemText>My Tasks</ListItemText>
         </MenuItem> */}
-        <Box mt={1} py={1} px={2}>
-          <Button
-            variant='outlined'
-            color='primary'
-            fullWidth
-            onClick={handleLogout}
-          >
+        <Box>
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); router.push('/profile'); }}>
+            <ListItemIcon>
+              <AccountCircle fontSize="small" />
+            </ListItemIcon>
+            My Profile
+          </MenuItem>
+          <Divider />
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); setFriendSearchOpen(true); }}>
+            <ListItemIcon>
+              <PersonSearch fontSize="small" />
+            </ListItemIcon>
+            Search Friends
+          </MenuItem>
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); handleLogout(); }}>
+            <ListItemIcon>
+              <Logout fontSize="small" />
+            </ListItemIcon>
             Logout
-          </Button>
+          </MenuItem>
         </Box>
       </Menu>
+      <UserSearchDialog
+        open={friendSearchOpen}
+        onClose={() => setFriendSearchOpen(false)}
+      />
     </Box>
   );
 };

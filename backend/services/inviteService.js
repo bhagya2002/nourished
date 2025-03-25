@@ -29,10 +29,12 @@ module.exports.acceptInvite = async function acceptInvite(uid, data) {
     switch (data.type) {
       case 0: {
         batch.update(db.getRef("users", data.invitee), {
-          friends: db.getAddToArray(uid),
+          friends: db.getAddToArray(data.inviter),
+          following: db.getAddToArray(data.inviter),
         });
-        batch.update(db.getRef("users", uid), {
+        batch.update(db.getRef("users", data.inviter), {
           friends: db.getAddToArray(data.invitee),
+          followers: db.getAddToArray(data.invitee),
         });
         await batch.commit();
         return { success: true };
@@ -80,7 +82,7 @@ module.exports.declineInvite = async function declineInvite(data) {
   }
 };
 
-module.exports.deleteInvites = async function deleteInvites(uid, challengeId) {
+module.exports.deleteInvitesOnChallenge = async function deleteInvitesOnChallenge(uid, challengeId) {
   try {
     const batch = db.batch();
     const invites = await db.queryDatabase(challengeId, "invites", "targetId");
@@ -89,6 +91,23 @@ module.exports.deleteInvites = async function deleteInvites(uid, challengeId) {
     }
     for (const invite of invites.data) {
       batch.delete(db.getRef("invites", invite.id));
+    }
+    await batch.commit();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message || "Invite not found" };
+  }
+};
+
+module.exports.deleteFriendInvite = async function deleteFriendInvite(uid, invitee) {
+  try {
+    const batch = db.batch();
+    const invitesRes = await db.queryDatabase(invitee, "invites", "invitee");
+    if (!invitesRes.success) return invitesRes;
+    for (const invite of invitesRes.data) {
+      if (invite.type === 0 && invite.inviter === uid) {
+        batch.delete(db.getRef("invites", invite.id));
+      }
     }
     await batch.commit();
     return { success: true };

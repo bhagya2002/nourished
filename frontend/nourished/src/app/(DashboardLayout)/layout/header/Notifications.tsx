@@ -89,6 +89,8 @@ const Notifications = () => {
       setNotifications(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
       if (invitation.type === 1 && pathname === '/goals') {
         location.reload();
+      } else if (invitation.type === 0 && pathname === '/profile') {
+        location.reload();
       }
     } catch (error) {
       console.error(error);
@@ -117,6 +119,13 @@ const Notifications = () => {
       console.error(error);
     }
   }
+
+  // Redirects to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/authentication/login');
+    }
+  }, [loading, user, router]);
 
   // Fetches notifications while initializing the page
   useEffect(() => {
@@ -190,7 +199,7 @@ const Notifications = () => {
               },
             }}
           >
-            <Box sx={{ mr: 2 }}>
+            <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
               <HandShakeIcon />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
@@ -240,7 +249,7 @@ const Notifications = () => {
               },
             }}
           >
-            <Box sx={{ mr: 2 }}>
+            <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
               <Groups2Icon />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
