@@ -70,6 +70,17 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
     if (!challengeRes.success) {
       return challengeRes;
     }
+
+    // Set the goalId of the goal's tasks to null after deleting the goal
+    const resetTasksGoalIdPromises = [];
+    for (const taskId of goalRes.data.taskIds) {
+      const resetTaskGoalIdRes = await db.updateField("tasks", taskId, "goalId", null);
+      resetTasksGoalIdPromises.push(resetTaskGoalIdRes);
+    }
+    const allResetTasksGoalIdRes = await Promise.all(resetTasksGoalIdPromises);
+    if (!allResetTasksGoalIdRes.every((res) => res.success)) {
+      return { success: false, error: "Failed to reset task goalId" };
+    }
     
     // If user is deleting the challenge that is not belong to him
     if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
