@@ -1211,7 +1211,8 @@ export default function GoalsPage() {
                 value={newGoal.description}
                 onChange={handleInputChange}
                 size='small'
-                disabled={isEditing && newGoal.isChallenge && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}              />
+                disabled={isEditing && newGoal.isChallenge && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
+              />
               <TextField
                 margin='normal'
                 label='Deadline'
@@ -1281,9 +1282,11 @@ export default function GoalsPage() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose}>Cancel</Button>
-              <Button variant='contained' onClick={handleSubmit}>
-                {isEditing ? 'Update' : 'Create'}
-              </Button>
+              {!(isEditing && newGoal.isChallenge && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid) && (
+                <Button variant='contained' onClick={handleSubmit}>
+                  {isEditing ? 'Update' : 'Create'}
+                </Button>
+              )}
             </DialogActions>
           </Dialog>
         )}
