@@ -121,6 +121,44 @@ function addGetUserProfile(app) {
   });
 }
 
+function addGetFriends(app) {
+  app.post("/getFriends", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.getFriends(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.message || "Failed to fetch friends",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getFriends endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
 function addCreateTask(app) {
   app.post("/createTask", async (req, res) => {
     try {
@@ -452,6 +490,7 @@ function addCreateGoal(app) {
       const result = await goalService.createGoal(
         authResult.uid,
         req.body.goal,
+        req.body.invitees,
       );
       if (result.success) {
         return res.status(200).json({
@@ -1397,6 +1436,44 @@ function addGetChallengeInfo(app) {
   });
 }
 
+function addGetChallenges(app) {
+  app.post("/getChallenges", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await challengeService.getChallenges(authResult.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || "Failed to get challenges",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getChallenges endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
 function addCreateInvite(app) {
   app.post("/createInvite", async (req, res) => {
     try {
@@ -1537,7 +1614,7 @@ function addGetUserInvites(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data,
+          data: result.data,
         });
       } else {
         return res.status(500).json({
@@ -2038,6 +2115,7 @@ module.exports = function injectRoutes(app) {
   addFriendConnection(app);
   addGetFriendRecommendation(app);
   addGetUserProfile(app);
+  addGetFriends(app);
 
   // Tasks
   addCreateTask(app);
@@ -2085,6 +2163,7 @@ module.exports = function injectRoutes(app) {
   addRemoveUserFromChallenge(app);
   addIncrementChallenge(app);
   addGetChallengeInfo(app);
+  addGetChallenges(app);
 
   // Invites
   addCreateInvite(app);

@@ -21,44 +21,43 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import EditIcon from '@mui/icons-material/Edit';
+import InfoIcon from '@mui/icons-material/Info';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Groups2Icon from '@mui/icons-material/Groups2';
 import AddTaskIcon from '@mui/icons-material/AddTask';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import TaskCard from '../../tasks/components/TaskCard';
-
-// Define the goal interface
-interface Goal {
-  id: string;
-  title: string;
-  description: string;
-  deadline: string;
-  createdAt: string;
-  tasks: any[];
-  totalTasks: number;
-  completedTasks: number;
-}
+import { Goal } from '../page'
 
 interface GoalCardProps {
+  isOwner?: boolean;
   goal: Goal;
   isExpanded: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onToggleExpand: () => void;
   onAddTask: () => void;
+  onCompleteTask: (taskId: string) => Promise<void>;
+  onEditTask: (task: any, taskIndex: number) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
   index: number;
 }
 
 const GoalCard: React.FC<GoalCardProps> = ({
+  isOwner = true,
   goal,
   isExpanded,
   onEdit,
   onDelete,
   onToggleExpand,
   onAddTask,
+  onCompleteTask,
+  onEditTask,
+  onDeleteTask,
   index,
 }) => {
   const theme = useTheme();
@@ -188,7 +187,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                {goal.title}
+                {goal.isChallenge ? "Challenge: " : ""}{goal.title}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 {goal.description}
@@ -208,7 +207,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
           </Box>
 
           {/* Goal metadata */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <Chip
               icon={<CalendarTodayIcon />}
               label={`Due ${formatDeadline(goal.deadline)}`}
@@ -223,6 +222,15 @@ const GoalCard: React.FC<GoalCardProps> = ({
               size="small"
               variant="outlined"
             />
+            {goal.isChallenge && (
+              <Chip
+                icon={<Groups2Icon />}
+                label={"Challenge"}
+                color='error'
+                size='small'
+                variant='outlined'
+              />
+            )}
           </Box>
 
           {/* Expand/Collapse button */}
@@ -235,6 +243,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
               {isExpanded ? 'Hide Tasks' : 'Show Tasks'}
             </Button>
             <Button
+              disabled={!isOwner}
               startIcon={<AddTaskIcon />}
               onClick={onAddTask}
               variant="contained"
@@ -261,10 +270,11 @@ const GoalCard: React.FC<GoalCardProps> = ({
                   goal.tasks.map((task: any, taskIndex: number) => (
                     <Grid item xs={12} sm={6} key={task.id || taskIndex}>
                       <TaskCard
+                        disabled={!isOwner}
                         task={task}
-                        onComplete={() => Promise.resolve()}
-                        onEdit={() => Promise.resolve()}
-                        onDelete={() => Promise.resolve()}
+                        onComplete={async () => { onCompleteTask(task.id); }}
+                        onEdit={() => { onEditTask(task, taskIndex); }}
+                        onDelete={async () => { onDeleteTask(task.id); }}
                       />
                     </Grid>
                   ))
@@ -290,9 +300,11 @@ const GoalCard: React.FC<GoalCardProps> = ({
         >
           <MenuItem onClick={() => { onEdit(); setAnchorEl(null); }}>
             <ListItemIcon>
-              <EditIcon fontSize="small" />
+              {isOwner ? <EditIcon fontSize="small" /> : <InfoIcon fontSize="small" />}
             </ListItemIcon>
-            <ListItemText>Edit Goal</ListItemText>
+            <ListItemText>
+              {isOwner ? 'Edit' : 'Info'}
+            </ListItemText>
           </MenuItem>
           <MenuItem 
             onClick={() => { onDelete(); setAnchorEl(null); }}
@@ -301,7 +313,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
             <ListItemIcon>
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
-            <ListItemText>Delete Goal</ListItemText>
+            <ListItemText>Delete</ListItemText>
           </MenuItem>
         </Menu>
       </Card>

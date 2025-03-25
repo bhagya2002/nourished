@@ -1,10 +1,31 @@
 const db = require("../firebase/firestore");
+const inviteService = require("./inviteService")
+
+module.exports.getChallenges = async function getChallenges(userId) {
+  try {
+    const userResult = await db.queryDatabaseSingle(userId, "users");
+    if (!userResult.success) {
+      return { success: false, error: userResult.error };
+    }
+    const user = userResult.data;
+    const challenges = user.challenges;
+    const challengeResults = await db.queryMultiple(challenges, "challenges");
+    if (!challengeResults.success) {
+      return { success: false, error: challengeResults.error };
+    }
+    const challengeData = challengeResults.data;
+    return { success: true, data: challengeData };
+  } catch (err) {
+    return { success: false, error: err };
+  }
+};
 
 module.exports.createChallenge = async function createChallenge(userId, data) {
   try {
     data.uid = userId;
     data.participants = [userId];
-    data.progress = 0;
+    const invitees = data.invitees;
+    delete data.invitees;
 
     const result = await db.addSingleDoc("challenges", data);
     if (result.success) {
@@ -15,12 +36,45 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
         result.id,
       );
       if (updateResult.success) {
-        return { success: true, data: result.id };
+        const inviterResult = await db.queryDatabaseSingle(userId, "users");
+        if (!inviterResult.success) {
+          return inviterResult;
+        }
+        const inviterName = inviterResult.data.name;
+        const targetResult = await db.queryDatabaseSingle(data.goalId, "goals");
+        if (!targetResult.success) {
+          return targetResult;
+        }
+        const targetTitle = targetResult.data.title;
+        // create invites for invitees
+        const challengeInvitePromises = [];
+        for (const invitee of invitees) {
+          const inviteRes = await inviteService.createInvite(
+            userId,
+            {
+              inviterName: inviterName,
+              invitee: invitee,
+              type: 1,
+              targetId: result.id,
+              targetTitle: targetTitle,
+            }
+          )
+          if (!inviteRes.success) {
+            return inviteRes;
+          }
+          challengeInvitePromises.push(inviteRes);
+        }
+        const inviteResults = await Promise.all(challengeInvitePromises);
+        if (inviteResults.every((res) => res.success)) {
+          return { success: true, data: { id: result.id } };
+        } else {
+          return { success: false, error: "Failed to create invites" };
+        }
       } else {
-        return { success: false, error: updateResult.error };
+        return { success: false, error: "Failed to update user challenges array" };
       }
     }
-    return { success: false, error: result.error };
+    return { success: false, error: "Failed to create challenge" };
   } catch (err) {
     return { success: false, error: err };
   }
@@ -31,19 +85,28 @@ module.exports.deleteChallenge = async function deleteChallenge(
   challengeId,
 ) {
   try {
-    const userIds = (await db.queryDatabaseSingle(challengeId, "challenges"))
-      .data.participants;
+    const challengeRes = await db.queryDatabaseSingle(challengeId, "challenges");
+    if (!challengeRes.success) {
+      return challengeRes;
+    }
+    const userIds = challengeRes.data.participants;
+    const goalId = challengeRes.data.goalId;
     const updateBatch = db.batch();
     userIds.forEach((userId) => {
       const ref = db.getRef("users", userId);
       updateBatch.update(ref, {
         challenges: db.getDeleteFromArray(challengeId),
+        goals: db.getDeleteFromArray(goalId),
       });
     });
     const result = await db.commitBatch(updateBatch);
     if (result.success) {
       const updateResult = await db.deleteSingleDoc("challenges", challengeId);
       if (updateResult.success) {
+        const updateInviteResult = await inviteService.deleteInvites(userId, challengeId);
+        if (!updateInviteResult.success) {
+          return updateInviteResult;
+        }
         return { success: true };
       } else {
         return { success: false, error: updateResult.error };
