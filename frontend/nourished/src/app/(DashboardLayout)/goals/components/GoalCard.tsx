@@ -33,6 +33,7 @@ import TaskCard from '../../tasks/components/TaskCard';
 import { Goal } from '../page'
 
 interface GoalCardProps {
+  isOwner?: boolean;
   goal: Goal;
   isExpanded: boolean;
   onEdit: () => void;
@@ -43,6 +44,7 @@ interface GoalCardProps {
 }
 
 const GoalCard: React.FC<GoalCardProps> = ({
+  isOwner = true,
   goal,
   isExpanded,
   onEdit,
@@ -234,6 +236,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
               {isExpanded ? 'Hide Tasks' : 'Show Tasks'}
             </Button>
             <Button
+              disabled={!isOwner}
               startIcon={<AddTaskIcon />}
               onClick={onAddTask}
               variant="contained"
@@ -260,6 +263,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
                   goal.tasks.map((task: any, taskIndex: number) => (
                     <Grid item xs={12} sm={6} key={task.id || taskIndex}>
                       <TaskCard
+                        disabled={!isOwner}
                         task={task}
                         onComplete={() => Promise.resolve()}
                         onEdit={() => Promise.resolve()}

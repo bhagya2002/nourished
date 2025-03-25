@@ -1077,6 +1077,7 @@ export default function GoalsPage() {
               <Stack spacing={3} sx={{ p: 1 }}>
                 {goals.map((goal, index) => (
                   <GoalCard
+                    isOwner={goal.isChallenge ? user.uid === challenges.find((challenge) => challenge.goalId === goal.id)?.uid : true}
                     key={goal.id}
                     goal={goal}
                     isExpanded={Boolean(expandedGoals[goal.id])}
@@ -1093,7 +1094,7 @@ export default function GoalsPage() {
         )}
 
         {/* Tasks list under expanded goals */}
-        {goals.map((goal, goalIndex) => (
+        {user && goals.map((goal, goalIndex) => (
           <Collapse
             key={`tasks-${goal.id}`}
             in={expandedGoals[goal.id]}
@@ -1109,6 +1110,7 @@ export default function GoalsPage() {
               {goal.tasks && goal.tasks.length > 0 && goal.tasks.map((task: any, taskIndex: number) => (
                 <Grid item xs={12} sm={6} md={4} key={task.id || taskIndex}>
                   <TaskCard
+                    disabled={!(goal.isChallenge ? user.uid === challenges.find((challenge) => challenge.goalId === goal.id)?.uid : true)}
                     task={task}
                     onComplete={async (taskId) => {
                       setExpandingGoalIndex(goalIndex);
@@ -1131,6 +1133,7 @@ export default function GoalsPage() {
                   transition={{ duration: 0.3 }}
                 >
                   <Button
+                    disabled={!(goal.isChallenge ? user.uid === challenges.find((challenge) => challenge.goalId === goal.id)?.uid : true)}
                     variant="outlined"
                     color="primary"
                     fullWidth

@@ -197,6 +197,7 @@ const getTaskIcon = (title: string | undefined) => {
 };
 
 interface TaskCardProps {
+  disabled?: boolean;
   task: {
     id: string;
     title: string;
@@ -215,6 +216,7 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
+  disabled = false,
   task,
   onComplete,
   onEdit,
@@ -393,7 +395,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <TaskStatusIcon
             onClick={handleComplete}
             color={(completed || isCompleting) ? 'success' : 'default'}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             sx={{
               animation: isLoading ? 'spin 1s linear infinite' : 'none',
               '@keyframes spin': {
@@ -455,6 +457,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
           <Box sx={{ position: 'absolute', right: 8, bottom: 8 }}>
             <IconButton
+              disabled={disabled}
               size="small"
               onClick={handleMenuOpen}
               sx={{
