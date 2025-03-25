@@ -1609,7 +1609,7 @@ function addGetUserInvites(app) {
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: result.data,
+          data: result.data,
         });
       } else {
         return res.status(500).json({

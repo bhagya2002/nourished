@@ -5,9 +5,11 @@ module.exports.createInvite = async function createInvite(uid, input) {
     const data = {
       createdAt: Date.now(),
       inviter: uid,
+      inviterName: input.inviterName?? "",
       type: input.type,
       invitee: input.invitee,
       targetId: input.targetId ?? "",
+      targetTitle: input.targetTitle ?? "",
     };
     const result = await db.addSingleDoc("invites", data);
     if (result.success) {
@@ -23,7 +25,7 @@ module.exports.createInvite = async function createInvite(uid, input) {
 module.exports.acceptInvite = async function acceptInvite(uid, data) {
   try {
     const batch = db.batch();
-    batch.delete(db.getRef("invites", data.inviteId));
+    batch.delete(db.getRef("invites", data.id));
     switch (data.type) {
       case 0: {
         batch.update(db.getRef("users", data.invitee), {
@@ -68,7 +70,7 @@ module.exports.getUserInvites = async function getUserInvites(uid) {
 
 module.exports.declineInvite = async function declineInvite(data) {
   try {
-    const deleteResult = await db.deleteSingleDoc("invites", data.inviteId);
+    const deleteResult = await db.deleteSingleDoc("invites", data.id);
     if (!deleteResult.success) {
       return { success: false, error: "Invite not found" };
     }

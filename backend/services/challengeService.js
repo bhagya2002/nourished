@@ -36,15 +36,27 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
         result.id,
       );
       if (updateResult.success) {
+        const inviterResult = await db.queryDatabaseSingle(userId, "users");
+        if (!inviterResult.success) {
+          return inviterResult;
+        }
+        const inviterName = inviterResult.data.name;
+        const targetResult = await db.queryDatabaseSingle(data.goalId, "goals");
+        if (!targetResult.success) {
+          return targetResult;
+        }
+        const targetTitle = targetResult.data.title;
         // create invites for invitees
         const challengeInvitePromises = [];
         for (const invitee of invitees) {
           const inviteRes = await inviteService.createInvite(
             userId,
             {
+              inviterName: inviterName,
               invitee: invitee,
               type: 1,
               targetId: result.id,
+              targetTitle: targetTitle,
             }
           )
           if (!inviteRes.success) {
