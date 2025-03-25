@@ -1175,7 +1175,15 @@ export default function GoalsPage() {
         {/* add/edit goal form dialog */}
         {user && (
           <Dialog open={goalModalOpen} onClose={handleClose}>
-            <DialogTitle>{isEditing ? 'Edit Goal' : 'Create New Goal'}</DialogTitle>
+            <DialogTitle>
+              {
+                isEditing 
+                ? 
+                newGoal.isChallenge ? challenges.find((challenge) => challenge.goalId === newGoal.id)?.goalId === newGoal.id ? 'Challenge Info' : 'Edit Challenge' : 'Edit goal'
+                : 
+                'Create New Goal'
+              }
+            </DialogTitle>
             <DialogContent dividers>
               {validationError && (
                 <Alert severity='error' style={{ margin: '0px' }}>
@@ -1192,7 +1200,7 @@ export default function GoalsPage() {
                 value={newGoal.title}
                 onChange={handleInputChange}
                 size='small'
-                disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
+                disabled={isEditing && newGoal.isChallenge && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
               />
               <TextField
                 margin='normal'
@@ -1203,8 +1211,7 @@ export default function GoalsPage() {
                 value={newGoal.description}
                 onChange={handleInputChange}
                 size='small'
-                disabled={isEditing && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}
-              />
+                disabled={isEditing && newGoal.isChallenge && user.uid !== challenges.find((challenge) => challenge.goalId === newGoal.id)?.uid}              />
               <TextField
                 margin='normal'
                 label='Deadline'
