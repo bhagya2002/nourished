@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import EditIcon from '@mui/icons-material/Edit';
+import InfoIcon from '@mui/icons-material/Info';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -299,9 +300,11 @@ const GoalCard: React.FC<GoalCardProps> = ({
         >
           <MenuItem onClick={() => { onEdit(); setAnchorEl(null); }}>
             <ListItemIcon>
-              <EditIcon fontSize="small" />
+              {isOwner ? <EditIcon fontSize="small" /> : <InfoIcon fontSize="small" />}
             </ListItemIcon>
-            <ListItemText>Edit</ListItemText>
+            <ListItemText>
+              {isOwner ? 'Edit' : 'Info'}
+            </ListItemText>
           </MenuItem>
           <MenuItem 
             onClick={() => { onDelete(); setAnchorEl(null); }}
