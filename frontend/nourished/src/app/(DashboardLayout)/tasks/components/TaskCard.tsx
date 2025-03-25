@@ -320,7 +320,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           opacity: completed && !wasJustCompleted ? 0.85 : 1, 
           y: 0,
           scale: isCompleting ? 1.02 : 1,
-          x: completed && !wasJustCompleted && !showCompleted ? 20 : 0,
+          x: completed && !wasJustCompleted && !showCompleted ? 0 : 0,
         }}
         exit={{ 
           opacity: 0, 
