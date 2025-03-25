@@ -40,6 +40,9 @@ interface GoalCardProps {
   onDelete: () => void;
   onToggleExpand: () => void;
   onAddTask: () => void;
+  onCompleteTask: (taskId: string) => Promise<void>;
+  onEditTask: (task: any, taskIndex: number) => void;
+  onDeleteTask: (taskId: string) => Promise<void>;
   index: number;
 }
 
@@ -51,6 +54,9 @@ const GoalCard: React.FC<GoalCardProps> = ({
   onDelete,
   onToggleExpand,
   onAddTask,
+  onCompleteTask,
+  onEditTask,
+  onDeleteTask,
   index,
 }) => {
   const theme = useTheme();
@@ -265,9 +271,9 @@ const GoalCard: React.FC<GoalCardProps> = ({
                       <TaskCard
                         disabled={!isOwner}
                         task={task}
-                        onComplete={() => Promise.resolve()}
-                        onEdit={() => Promise.resolve()}
-                        onDelete={() => Promise.resolve()}
+                        onComplete={async () => { onCompleteTask(task.id); }}
+                        onEdit={() => { onEditTask(task, taskIndex); }}
+                        onDelete={async () => { onDeleteTask(task.id); }}
                       />
                     </Grid>
                   ))

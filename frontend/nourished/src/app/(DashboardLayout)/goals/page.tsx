@@ -1085,6 +1085,18 @@ export default function GoalsPage() {
                     onDelete={() => handleDeleteGoalClick(index)}
                     onToggleExpand={() => handleToggleGoalExpand(goal.id)}
                     onAddTask={() => handleAddTaskToGoal(goal.id)}
+                    onCompleteTask={async (taskId: string) => {
+                      setExpandingGoalIndex(index);
+                      await handleComplete(taskId);
+                    }}
+                    onEditTask={(task: any, taskIndex: number) => {
+                      setExpandingGoalIndex(index);
+                      setTaskEditingIndex(taskIndex);
+                      setTaskEditModalOpen(true);
+                    }}
+                    onDeleteTask={async (taskId: string) => {
+                      await handleGoalTaskDelete(taskId);
+                    }}
                     index={index}
                   />
                 ))}
@@ -1094,7 +1106,7 @@ export default function GoalsPage() {
         )}
 
         {/* Tasks list under expanded goals */}
-        {user && goals.map((goal, goalIndex) => (
+        {/* {user && goals.map((goal, goalIndex) => (
           <Collapse
             key={`tasks-${goal.id}`}
             in={expandedGoals[goal.id]}
@@ -1158,7 +1170,7 @@ export default function GoalsPage() {
               </Grid>
             </Grid>
           </Collapse>
-        ))}
+        ))} */}
 
         {/* add/edit goal form dialog */}
         {user && (
