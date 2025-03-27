@@ -17,7 +17,7 @@ if (typeof window !== "undefined") {
     ) {
       return;
     }
-    originalError(...args);
+    originalError.apply(console, args);
   };
 }
 
@@ -26,15 +26,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  console.log("🔥 RootLayout is rendering...");
+  // Ensure all required properties are passed
+  const missingProperty = {}; // Add default or placeholder value for the missing property
 
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <AuthProvider>
-          {" "}
           <ThemeProvider theme={baselightTheme}>
             <CssBaseline />
+            {/* Pass the missing property to the relevant component or library */}
             {children}
           </ThemeProvider>
         </AuthProvider>

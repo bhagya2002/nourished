@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { token, userId } = body;
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/getUserProfile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/getUserProfile`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
