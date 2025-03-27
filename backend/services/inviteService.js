@@ -5,7 +5,7 @@ module.exports.createInvite = async function createInvite(uid, input) {
     const data = {
       createdAt: Date.now(),
       inviter: uid,
-      inviterName: input.inviterName?? "",
+      inviterName: input.inviterName ?? "",
       type: input.type,
       invitee: input.invitee,
       targetId: input.targetId ?? "",
@@ -48,13 +48,21 @@ module.exports.acceptInvite = async function acceptInvite(uid, data) {
         });
         await batch.commit();
 
-        const challengeRes = await db.queryDatabaseSingle(data.targetId, "challenges");
+        const challengeRes = await db.queryDatabaseSingle(
+          data.targetId,
+          "challenges",
+        );
         if (!challengeRes.success) {
           return challengeRes;
         }
         const challenge = challengeRes.data;
         const goalId = challenge.goalId;
-        const updateGoalsResult = await db.updateFieldArray("users", uid, "goals", goalId);
+        const updateGoalsResult = await db.updateFieldArray(
+          "users",
+          uid,
+          "goals",
+          goalId,
+        );
         if (!updateGoalsResult.success) {
           return updateGoalsResult;
         }

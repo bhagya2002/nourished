@@ -7,13 +7,15 @@ module.exports.getUserInfo = async function getUserInfo(uid) {
 
 module.exports.getFriends = async function getFriends(uid) {
   const userResult = await db.queryDatabaseSingle(uid, "users");
-  if (!userResult.success) return { success: false, message: userResult.message };
+  if (!userResult.success)
+    return { success: false, message: userResult.message };
   const user = userResult.data;
   const friends = user.friends;
 
   // replace friend ids with friend data
   const friendData = await db.queryMultiple(friends, "users");
-  if (!friendData.success) return { success: false, message: friendData.message };
+  if (!friendData.success)
+    return { success: false, message: friendData.message };
   const friendDocs = friendData.data;
   return { success: true, data: friendDocs };
 };

@@ -1,4 +1,4 @@
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from "@/context/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -7,7 +7,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      {' '}
+      {" "}
       <section>{children}</section>
     </AuthProvider>
   );

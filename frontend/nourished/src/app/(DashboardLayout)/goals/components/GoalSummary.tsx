@@ -1,5 +1,5 @@
-'use client';
-import React, { useMemo } from 'react';
+"use client";
+import React, { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -10,14 +10,14 @@ import {
   Tooltip,
   Card,
   Chip,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import FlagIcon from '@mui/icons-material/Flag';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable';
-import { Goal } from '../page';
+} from "@mui/material";
+import { motion } from "framer-motion";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import FlagIcon from "@mui/icons-material/Flag";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import { Goal } from "../page";
 
 interface GoalSummaryProps {
   goals: Goal[];
@@ -25,69 +25,72 @@ interface GoalSummaryProps {
 
 const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
   const theme = useTheme();
-  
+
   // Calculate goal statistics
   const stats = useMemo(() => {
     const total = goals.length;
-    
+
     // Calculate goals with completed tasks
-    const completedGoals = goals.filter(goal => 
-      goal.totalTasks > 0 && goal.completedTasks === goal.totalTasks
+    const completedGoals = goals.filter(
+      (goal) => goal.totalTasks > 0 && goal.completedTasks === goal.totalTasks
     ).length;
-    
+
     // Goals in progress (have tasks but not all completed)
-    const inProgressGoals = goals.filter(goal => 
-      goal.totalTasks > 0 && goal.completedTasks > 0 && goal.completedTasks < goal.totalTasks
+    const inProgressGoals = goals.filter(
+      (goal) =>
+        goal.totalTasks > 0 &&
+        goal.completedTasks > 0 &&
+        goal.completedTasks < goal.totalTasks
     ).length;
-    
+
     // Goals not started (have tasks but none completed)
-    const notStartedGoals = goals.filter(goal => 
-      goal.totalTasks > 0 && goal.completedTasks === 0
+    const notStartedGoals = goals.filter(
+      (goal) => goal.totalTasks > 0 && goal.completedTasks === 0
     ).length;
 
     // Goals with no tasks
-    const plannedGoals = goals.filter(goal => goal.totalTasks === 0).length;
-    
+    const plannedGoals = goals.filter((goal) => goal.totalTasks === 0).length;
+
     // Overall completion rate - fixed calculation
     const totalTasks = goals.reduce((sum, goal) => {
       return sum + (goal.totalTasks || 0);
     }, 0);
-    
+
     const completedTasks = goals.reduce((sum, goal) => {
       return sum + (goal.completedTasks || 0);
     }, 0);
-    
+
     // Calculate completion rate, ensure we don't divide by zero
     let completionRate = 0;
     if (totalTasks > 0) {
       completionRate = Math.round((completedTasks / totalTasks) * 100);
     }
-    
+
     // Enhanced debug logs to help identify issues
-    console.log('Goal progress calculation:', {
-      goals: goals.map(g => ({
+    console.log("Goal progress calculation:", {
+      goals: goals.map((g) => ({
         id: g.id,
         title: g.title,
         totalTasks: g.totalTasks,
         completedTasks: g.completedTasks,
         tasksLength: g.tasks?.length || 0,
-        completedTasksCount: g.tasks?.filter(t => t.completed).length || 0
+        completedTasksCount: g.tasks?.filter((t) => t.completed).length || 0,
       })),
       totalTasks,
       completedTasks,
-      completionRate
+      completionRate,
     });
-    
+
     // Upcoming deadlines (within next 7 days)
     const now = new Date();
     const nextWeek = new Date(now);
     nextWeek.setDate(now.getDate() + 7);
-    
-    const upcomingDeadlines = goals.filter(goal => {
+
+    const upcomingDeadlines = goals.filter((goal) => {
       const deadline = new Date(goal.deadline);
       return deadline >= now && deadline <= nextWeek;
     }).length;
-    
+
     return {
       total,
       completedGoals,
@@ -97,18 +100,18 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
       completionRate,
       totalTasks,
       completedTasks,
-      upcomingDeadlines
+      upcomingDeadlines,
     };
   }, [goals]);
-  
+
   // Skip rendering if no goals
   if (stats.total === 0) return null;
-  
+
   return (
     <motion.div
-      whileHover={{ 
+      whileHover={{
         translateY: -4,
-        transition: { duration: 0.3 }
+        transition: { duration: 0.3 },
       }}
     >
       <Card
@@ -116,95 +119,117 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
         sx={{
           p: 3,
           mb: 4,
-          borderRadius: '16px',
+          borderRadius: "16px",
           background: theme.palette.background.default,
-          border: '1px solid',
+          border: "1px solid",
           borderColor: theme.palette.divider,
-          position: 'relative',
-          overflow: 'hidden',
-          transition: 'all 0.3s ease-in-out',
-          '&::before': {
+          position: "relative",
+          overflow: "hidden",
+          transition: "all 0.3s ease-in-out",
+          "&::before": {
             content: '""',
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            boxShadow: `0 4px 20px 0 ${theme.palette.mode === 'dark' 
-              ? 'rgba(0,0,0,0.12)' 
-              : 'rgba(0,0,0,0.05)'}`,
-            borderRadius: 'inherit',
-            transition: 'opacity 0.3s ease-in-out',
+            boxShadow: `0 4px 20px 0 ${
+              theme.palette.mode === "dark"
+                ? "rgba(0,0,0,0.12)"
+                : "rgba(0,0,0,0.05)"
+            }`,
+            borderRadius: "inherit",
+            transition: "opacity 0.3s ease-in-out",
             opacity: 0,
             zIndex: -1,
           },
-          '&:hover': {
+          "&:hover": {
             borderColor: theme.palette.primary.light,
-            '&::before': {
+            "&::before": {
               opacity: 1,
-            }
-          }
+            },
+          },
         }}
       >
         {/* Decorative elements */}
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             bottom: -20,
             right: -20,
             width: 120,
             height: 120,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 70%)`,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${alpha(
+              theme.palette.primary.main,
+              0.1
+            )} 0%, transparent 70%)`,
             zIndex: 0,
           }}
         />
-        
+
         <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: -10,
             left: -10,
             width: 80,
             height: 80,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, ${alpha(theme.palette.secondary.main, 0.1)} 0%, transparent 70%)`,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, ${alpha(
+              theme.palette.secondary.main,
+              0.1
+            )} 0%, transparent 70%)`,
             zIndex: 0,
           }}
         />
-        
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
+
+        <Box sx={{ position: "relative", zIndex: 1 }}>
           <Typography
             variant="h5"
             sx={{
               mb: 3,
               fontWeight: 600,
               color: theme.palette.text.primary,
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 1,
             }}
           >
             <FlagIcon color="primary" />
             Goal Overview
           </Typography>
-          
+
           <Grid container spacing={3}>
             {/* Progress Section */}
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body1" color="text.secondary" fontWeight={500}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    fontWeight={500}
+                  >
                     Overall Progress
                   </Typography>
-                  <Typography variant="body1" fontWeight={600} color="primary.main">
+                  <Typography
+                    variant="body1"
+                    fontWeight={600}
+                    color="primary.main"
+                  >
                     {stats.completionRate}%
                   </Typography>
                 </Box>
-                
+
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
+                  animate={{ width: "100%" }}
                   transition={{ duration: 0.5 }}
                 >
                   <LinearProgress
@@ -214,7 +239,7 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                       height: 10,
                       borderRadius: 5,
                       backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      '& .MuiLinearProgress-bar': {
+                      "& .MuiLinearProgress-bar": {
                         borderRadius: 5,
                         background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                       },
@@ -222,8 +247,8 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                   />
                 </motion.div>
               </Box>
-              
-              <Box sx={{ display: 'flex', gap: 1, mt: 3, flexWrap: 'wrap' }}>
+
+              <Box sx={{ display: "flex", gap: 1, mt: 3, flexWrap: "wrap" }}>
                 <Tooltip title="Completed Goals">
                   <Chip
                     icon={<AssignmentTurnedInIcon />}
@@ -233,7 +258,7 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                     sx={{ fontWeight: 500 }}
                   />
                 </Tooltip>
-                
+
                 <Tooltip title="In Progress Goals">
                   <Chip
                     icon={<AssignmentIcon />}
@@ -243,7 +268,7 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                     sx={{ fontWeight: 500 }}
                   />
                 </Tooltip>
-                
+
                 <Tooltip title="Not Started Goals">
                   <Chip
                     icon={<CalendarTodayIcon />}
@@ -255,12 +280,14 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                 </Tooltip>
               </Box>
             </Grid>
-            
+
             {/* Stats Section */}
             <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <FlagIcon sx={{ color: theme.palette.info.main, fontSize: 24 }} />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <FlagIcon
+                    sx={{ color: theme.palette.info.main, fontSize: 24 }}
+                  />
                   <Typography variant="body1" fontWeight={500} sx={{ flex: 1 }}>
                     Total Goals
                   </Typography>
@@ -268,9 +295,11 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                     {stats.total}
                   </Typography>
                 </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AssignmentIcon sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <AssignmentIcon
+                    sx={{ color: theme.palette.primary.main, fontSize: 24 }}
+                  />
                   <Typography variant="body1" fontWeight={500} sx={{ flex: 1 }}>
                     Associated Tasks
                   </Typography>
@@ -278,9 +307,11 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
                     {stats.totalTasks}
                   </Typography>
                 </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <EventAvailableIcon sx={{ color: theme.palette.secondary.main, fontSize: 24 }} />
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <EventAvailableIcon
+                    sx={{ color: theme.palette.secondary.main, fontSize: 24 }}
+                  />
                   <Typography variant="body1" fontWeight={500} sx={{ flex: 1 }}>
                     Upcoming Deadlines
                   </Typography>
@@ -297,4 +328,4 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
   );
 };
 
-export default GoalSummary; 
+export default GoalSummary;

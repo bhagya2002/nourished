@@ -5,7 +5,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { token, uid1, uid2 } = body;
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/addFriendConnection`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/addFriendConnection`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

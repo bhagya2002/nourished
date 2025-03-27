@@ -34,10 +34,10 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      localStorage.removeItem('authToken');
-      router.push('/authentication/login');
+      localStorage.removeItem("authToken");
+      router.push("/authentication/login");
     } catch (error) {
-      console.error('Logout Error:', error);
+      console.error("Logout Error:", error);
     }
   };
 
@@ -51,8 +51,8 @@ const Profile = () => {
         aria-haspopup="true"
         onClick={handleClick2}
         sx={{
-          ...(typeof anchorEl2 === 'object' && {
-            color: 'primary.main',
+          ...(typeof anchorEl2 === "object" && {
+            color: "primary.main",
           }),
         }}
       >
@@ -64,8 +64,8 @@ const Profile = () => {
         keepMounted
         open={Boolean(anchorEl2)}
         onClose={handleClose2}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
           '& .MuiMenu-paper': {
             width: 'auto',

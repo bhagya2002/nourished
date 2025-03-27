@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import PageContainer from '../components/container/PageContainer';
-import { Goal } from '../goals/page';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import PageContainer from "../components/container/PageContainer";
+import { Goal } from "../goals/page";
 import {
   Box,
   Grid,
@@ -22,24 +22,25 @@ import {
   IconButton,
   Tooltip,
   Chip,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { motion, AnimatePresence } from 'framer-motion';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
-import EventNoteIcon from '@mui/icons-material/EventNote';
-import AddCommentIcon from '@mui/icons-material/AddComment';
-import { TrendingUp } from '@mui/icons-material';
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import { motion, AnimatePresence } from "framer-motion";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import { TrendingUp } from "@mui/icons-material";
 
 // Import our new components
-import PageHeader from './components/PageHeader';
-import PostCard from './components/PostCard';
-import CommentDialog from './components/CommentDialog';
-import PostDialog from './components/PostDialog';
-import EmptyState from './components/EmptyState';
+import PageHeader from "./components/PageHeader";
+import PostCard from "./components/PostCard";
+import CommentDialog from "./components/CommentDialog";
+import PostDialog from "./components/PostDialog";
+import EmptyState from "./components/EmptyState";
 
 // Update API base URL to match environment variable name exactly
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3010';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
 export type Comment = {
   id: string;
@@ -66,21 +67,21 @@ const ContentContainer = styled(Box)(({ theme }) => ({
 }));
 
 const FeedContainer = styled(Box)(({ theme }) => ({
-  maxWidth: '700px',
-  margin: '0 auto',
+  maxWidth: "700px",
+  margin: "0 auto",
 }));
 
 const PostsContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
+  display: "flex",
+  flexDirection: "column",
   gap: theme.spacing(3),
 }));
 
 const SidePanel = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
-  height: 'fit-content',
-  borderRadius: '12px',
-  position: 'sticky',
+  height: "fit-content",
+  borderRadius: "12px",
+  position: "sticky",
   top: theme.spacing(3),
 }));
 
@@ -91,23 +92,23 @@ export default function FriendCirclePage() {
 
   const [toast, setToast] = useState({
     open: false,
-    message: '',
-    severity: 'info' as AlertColor,
+    message: "",
+    severity: "info" as AlertColor,
   });
 
   // Post dialog state
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingPostId, setEditingPostId] = useState('');
-  const [postContent, setPostContent] = useState('');
-  const [postGoalLinkId, setPostGoalLinkId] = useState('');
-  const [validationError, setValidationError] = useState('');
+  const [editingPostId, setEditingPostId] = useState("");
+  const [postContent, setPostContent] = useState("");
+  const [postGoalLinkId, setPostGoalLinkId] = useState("");
+  const [validationError, setValidationError] = useState("");
 
   // Comment dialog state
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
-  const [commentContent, setCommentContent] = useState('');
-  const [commentDialogPostId, setCommentDialogPostId] = useState('');
-  const [commentValidationError, setCommentValidationError] = useState('');
+  const [commentContent, setCommentContent] = useState("");
+  const [commentDialogPostId, setCommentDialogPostId] = useState("");
+  const [commentValidationError, setCommentValidationError] = useState("");
 
   // Data state
   const [posts, setPosts] = useState<Post[]>([]);
@@ -118,14 +119,14 @@ export default function FriendCirclePage() {
   // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
   // Fetches posts while initializing the posts page
   useEffect(() => {
     if (!user && !loading) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
     } else if (user && token) {
       fetchPosts();
       fetchGoals();
@@ -138,28 +139,28 @@ export default function FriendCirclePage() {
       await fetchPosts();
       setLastRefreshed(new Date());
     } catch (error) {
-      console.error('Error refreshing feed:', error);
+      console.error("Error refreshing feed:", error);
     } finally {
       setIsRefreshing(false);
     }
   };
 
   const formatRefreshTime = () => {
-    if (!lastRefreshed) return 'Not yet refreshed';
+    if (!lastRefreshed) return "Not yet refreshed";
 
     const now = new Date();
     const diffMs = now.getTime() - lastRefreshed.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 1) return "Just now";
+    if (diffMins === 1) return "1 minute ago";
     return `${diffMins} minutes ago`;
   };
 
   const fetchPosts = async () => {
     try {
       if (!token) {
-        console.error('No token available');
+        console.error("No token available");
         return;
       }
 
@@ -169,16 +170,16 @@ export default function FriendCirclePage() {
       }
 
       const response = await fetch(`${API_BASE_URL}/getUserWithFriendPosts`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ token }),
       });
 
       // Check for HTTP errors
       if (!response.ok) {
-        let errorMessage = 'Failed to fetch posts';
+        let errorMessage = "Failed to fetch posts";
         try {
           const errorText = await response.text();
           errorMessage = `${errorMessage}: ${errorText}`;
@@ -193,7 +194,7 @@ export default function FriendCirclePage() {
 
       // Check if the response has the expected structure
       if (!responseData.success) {
-        throw new Error(responseData.error || 'Invalid response format');
+        throw new Error(responseData.error || "Invalid response format");
       }
 
       // Ensure postsData is an array
@@ -214,17 +215,17 @@ export default function FriendCirclePage() {
         setToast({
           open: true,
           message: `${postsArray.length} posts fetched successfully`,
-          severity: 'success',
+          severity: "success",
         });
       }
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error("Error fetching posts:", error);
       setToast({
         open: true,
         message: `Failed to fetch posts: ${
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         }`,
-        severity: 'error',
+        severity: "error",
       });
     }
   };
@@ -233,21 +234,21 @@ export default function FriendCirclePage() {
   const fetchGoals = async () => {
     try {
       if (!token) {
-        console.error('No token available');
+        console.error("No token available");
         return;
       }
 
       const response = await fetch(`${API_BASE_URL}/getUserGoals`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ token }),
       });
 
       // Check for HTTP errors
       if (!response.ok) {
-        let errorMessage = 'Failed to fetch goals';
+        let errorMessage = "Failed to fetch goals";
         try {
           const errorText = await response.text();
           errorMessage = `${errorMessage}: ${errorText}`;
@@ -262,7 +263,7 @@ export default function FriendCirclePage() {
 
       // Check if the response has the expected structure
       if (!responseData.success) {
-        throw new Error(responseData.error || 'Invalid response format');
+        throw new Error(responseData.error || "Invalid response format");
       }
 
       // Ensure goalsData is an array
@@ -272,37 +273,37 @@ export default function FriendCirclePage() {
 
       setGoals(goalsArray);
     } catch (error) {
-      console.error('Error fetching goals:', error);
+      console.error("Error fetching goals:", error);
       setToast({
         open: true,
         message: `Failed to fetch goals: ${
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error"
         }`,
-        severity: 'error',
+        severity: "error",
       });
     }
   };
 
   const handleAddPostClick = () => {
     setIsEditing(false);
-    setPostContent('');
-    setPostGoalLinkId('');
-    setEditingPostId('');
+    setPostContent("");
+    setPostGoalLinkId("");
+    setEditingPostId("");
     setPostDialogOpen(true);
   };
 
   const handlePostDialogClose = () => {
     setPostDialogOpen(false);
-    setValidationError('');
+    setValidationError("");
   };
 
   const handlePost = async () => {
     if (!postContent.trim()) {
-      setValidationError('Post content must be filled out');
+      setValidationError("Post content must be filled out");
       return;
     }
     if (!(user && token)) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
       return;
     }
 
@@ -311,15 +312,15 @@ export default function FriendCirclePage() {
       const postCreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createPost`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             token,
             post: {
-              name: user.displayName || '',
-              email: user.email || '',
+              name: user.displayName || "",
+              email: user.email || "",
               content: postContent,
               goalId: postGoalLinkId,
               createdAt: postCreatedAt,
@@ -328,37 +329,37 @@ export default function FriendCirclePage() {
             },
           }),
         });
-        if (!response.ok) throw new Error('Failed to create post');
+        if (!response.ok) throw new Error("Failed to create post");
         const postData = await response.json();
         if (!(postData && postData.data)) {
-          throw new Error('Failed to create post');
+          throw new Error("Failed to create post");
         }
         console.log(postData.data.post);
         setPosts((prevPosts) => [postData.data.post, ...prevPosts]);
         setToast({
           open: true,
-          message: 'Post created successfully',
-          severity: 'success',
+          message: "Post created successfully",
+          severity: "success",
         });
       } catch (error) {
-        console.error('Error creating post:', error);
+        console.error("Error creating post:", error);
         setToast({
           open: true,
-          message: 'Failed to create post',
-          severity: 'error',
+          message: "Failed to create post",
+          severity: "error",
         });
       }
       setPostDialogOpen(false);
-      setPostContent('');
-      setPostGoalLinkId('');
+      setPostContent("");
+      setPostGoalLinkId("");
     } else {
       // update an existing post in the database
       try {
         const updateField = async (field: string, value: string) => {
           const response = await fetch(`${API_BASE_URL}/editPost`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               token,
@@ -370,8 +371,8 @@ export default function FriendCirclePage() {
         };
 
         await Promise.all([
-          updateField('content', postContent),
-          updateField('goalId', postGoalLinkId),
+          updateField("content", postContent),
+          updateField("goalId", postGoalLinkId),
         ]);
         // Update the post Array
         const updatedPosts = posts.map((post) => {
@@ -387,21 +388,21 @@ export default function FriendCirclePage() {
         setPosts(updatedPosts);
         setToast({
           open: true,
-          message: 'Post updated successfully',
-          severity: 'success',
+          message: "Post updated successfully",
+          severity: "success",
         });
       } catch (error) {
-        console.error('Error updating post:', error);
+        console.error("Error updating post:", error);
         setToast({
           open: true,
-          message: 'Failed to update post',
-          severity: 'error',
+          message: "Failed to update post",
+          severity: "error",
         });
       }
       setPostDialogOpen(false);
-      setPostContent('');
-      setPostGoalLinkId('');
-      setEditingPostId('');
+      setPostContent("");
+      setPostGoalLinkId("");
+      setEditingPostId("");
     }
   };
 
@@ -413,55 +414,55 @@ export default function FriendCirclePage() {
   const handleEditPost = (post: Post) => {
     setIsEditing(true);
     setPostContent(post.content);
-    setPostGoalLinkId(post.goal?.id || '');
+    setPostGoalLinkId(post.goal?.id || "");
     setEditingPostId(post.id);
     setPostDialogOpen(true);
   };
 
   const handleDeletePost = async (postId: string) => {
     if (!user || !token) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/deletePost`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ token, postId }),
       });
-      if (!response.ok) throw new Error('Failed to delete post');
+      if (!response.ok) throw new Error("Failed to delete post");
       setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
       setToast({
         open: true,
-        message: 'Post deleted successfully',
-        severity: 'success',
+        message: "Post deleted successfully",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error("Error deleting post:", error);
       setToast({
         open: true,
-        message: 'Failed to delete post',
-        severity: 'error',
+        message: "Failed to delete post",
+        severity: "error",
       });
     }
   };
 
   const handlePostLike = async (postId: string) => {
     if (!user || !token) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/likePost`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ token, postId }),
       });
-      if (!response.ok) throw new Error('Failed to like/unlike post');
+      if (!response.ok) throw new Error("Failed to like/unlike post");
       const updatedPosts = posts.map((post) => {
         if (post.id === postId) {
           if (post.likes.includes(user.uid)) {
@@ -480,30 +481,30 @@ export default function FriendCirclePage() {
       });
       setPosts(updatedPosts);
     } catch (error) {
-      console.error('Error liking/unliking post:', error);
+      console.error("Error liking/unliking post:", error);
       setToast({
         open: true,
-        message: 'Failed to like/unlike post',
-        severity: 'error',
+        message: "Failed to like/unlike post",
+        severity: "error",
       });
     }
   };
 
   const handleAddComment = async () => {
     if (!commentContent.trim()) {
-      setCommentValidationError('Required');
+      setCommentValidationError("Required");
       return;
     }
     const createdAt = new Date().toISOString();
     if (!user || !token) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/commentOnPost`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token,
@@ -516,10 +517,10 @@ export default function FriendCirclePage() {
           },
         }),
       });
-      if (!response.ok) throw new Error('Failed to add comment');
+      if (!response.ok) throw new Error("Failed to add comment");
       const commentData = await response.json();
       if (!(commentData && commentData.data)) {
-        throw new Error('Failed to create post');
+        throw new Error("Failed to create post");
       }
       const commentId = commentData.data.id;
       const updatedPosts = posts.map((post) => {
@@ -530,8 +531,8 @@ export default function FriendCirclePage() {
               ...post.comments,
               {
                 id: commentId,
-                name: user.displayName || '',
-                email: user.email || '',
+                name: user.displayName || "",
+                email: user.email || "",
                 comment: commentContent,
                 createdAt,
               },
@@ -543,34 +544,34 @@ export default function FriendCirclePage() {
       setPosts(updatedPosts);
       setToast({
         open: true,
-        message: 'Comment added successfully',
-        severity: 'success',
+        message: "Comment added successfully",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error("Error adding comment:", error);
       setToast({
         open: true,
-        message: 'Failed to add comment',
-        severity: 'error',
+        message: "Failed to add comment",
+        severity: "error",
       });
     }
-    setCommentContent('');
-    setCommentValidationError('');
+    setCommentContent("");
+    setCommentValidationError("");
   };
 
   const fetchPostComments = async (postId: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/getCommentsOnPost`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ token, postId }),
       });
-      if (!response.ok) throw new Error('Failed to fetch comments');
+      if (!response.ok) throw new Error("Failed to fetch comments");
       const commentsData = await response.json();
       if (!(commentsData && commentsData.data)) {
-        throw new Error('Failed to fetch comments');
+        throw new Error("Failed to fetch comments");
       }
       const commentsArray = Array.isArray(commentsData.data)
         ? commentsData.data
@@ -591,22 +592,22 @@ export default function FriendCirclePage() {
         return prevPosts;
       });
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("Error fetching comments:", error);
       setToast({
         open: true,
-        message: 'Failed to fetch comments',
-        severity: 'error',
+        message: "Failed to fetch comments",
+        severity: "error",
       });
     }
   };
 
   const handleCommentClick = (postId: string, commentCount: number) => {
-    setCommentContent('');
-    setCommentValidationError('');
+    setCommentContent("");
+    setCommentValidationError("");
     setCommentDialogPostId(postId);
     if (
       commentCount > 0 &&
-      typeof posts.find((post) => post.id === postId)?.comments[0] === 'string'
+      typeof posts.find((post) => post.id === postId)?.comments[0] === "string"
     )
       fetchPostComments(postId);
     setCommentDialogOpen(true);
@@ -614,28 +615,28 @@ export default function FriendCirclePage() {
 
   const handleCommentDialogClose = () => {
     setCommentDialogOpen(false);
-    setCommentContent('');
-    setCommentValidationError('');
-    setCommentDialogPostId('');
+    setCommentContent("");
+    setCommentValidationError("");
+    setCommentDialogPostId("");
   };
 
   const handleCommentDelete = async (commentId: string) => {
     if (!user || !token) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/deleteCommentOnPost`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token,
           data: { commentId, postId: commentDialogPostId },
         }),
       });
-      if (!response.ok) throw new Error('Failed to delete comment');
+      if (!response.ok) throw new Error("Failed to delete comment");
       setPosts((prevPosts) => {
         const updatedPost = prevPosts.find(
           (post) => post.id === commentDialogPostId
@@ -657,15 +658,15 @@ export default function FriendCirclePage() {
       });
       setToast({
         open: true,
-        message: 'Comment deleted successfully',
-        severity: 'success',
+        message: "Comment deleted successfully",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      console.error("Error deleting comment:", error);
       setToast({
         open: true,
-        message: 'Failed to delete comment',
-        severity: 'error',
+        message: "Failed to delete comment",
+        severity: "error",
       });
     }
   };
@@ -675,20 +676,20 @@ export default function FriendCirclePage() {
 
   return (
     <PageContainer
-      title='Friend Circle'
-      description='Connect with your friends and share your journey'
+      title="Friend Circle"
+      description="Connect with your friends and share your journey"
     >
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: '100%',
-          position: 'relative',
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100%",
+          position: "relative",
         }}
       >
         <PageHeader
-          title='Friend Circle'
-          subtitle='Share your journey and connect with friends'
+          title="Friend Circle"
+          subtitle="Share your journey and connect with friends"
           onAddPost={handleAddPostClick}
         />
 
@@ -700,54 +701,54 @@ export default function FriendCirclePage() {
                 {/* Feed controls */}
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                     mb: 3,
-                    borderRadius: '12px',
+                    borderRadius: "12px",
                     padding: 2,
                     background: alpha(theme.palette.background.default, 0.6),
-                    backdropFilter: 'blur(8px)',
+                    backdropFilter: "blur(8px)",
                     border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
                     <Chip
-                      icon={<TrendingUp fontSize='small' />}
-                      label='Latest Posts'
-                      color='primary'
-                      variant='outlined'
+                      icon={<TrendingUp fontSize="small" />}
+                      label="Latest Posts"
+                      color="primary"
+                      variant="outlined"
                       sx={{ mr: 1 }}
                     />
                     {lastRefreshed && (
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography variant="caption" color="text.secondary">
                         Updated {formatRefreshTime()}
                       </Typography>
                     )}
                   </Box>
-                  <Tooltip title='Refresh feed'>
+                  <Tooltip title="Refresh feed">
                     <IconButton
                       onClick={refreshFeed}
-                      color='primary'
+                      color="primary"
                       disabled={isRefreshing}
                     >
-                      <AnimatePresence mode='wait'>
+                      <AnimatePresence mode="wait">
                         {isRefreshing ? (
                           <motion.div
-                            key='refreshing'
+                            key="refreshing"
                             initial={{ rotate: 0 }}
                             animate={{ rotate: 360 }}
                             transition={{
                               duration: 1,
                               repeat: Infinity,
-                              ease: 'linear',
+                              ease: "linear",
                             }}
                           >
                             <AutorenewIcon />
                           </motion.div>
                         ) : (
                           <motion.div
-                            key='refresh'
+                            key="refresh"
                             whileHover={{ rotate: 180 }}
                             transition={{ duration: 0.3 }}
                           >
@@ -764,17 +765,17 @@ export default function FriendCirclePage() {
                   {isRefreshing && posts.length > 0 ? (
                     <Box
                       sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
                         my: 2,
-                        height: '60px',
+                        height: "60px",
                       }}
                     >
-                      <CircularProgress size={36} color='primary' />
+                      <CircularProgress size={36} color="primary" />
                       <Typography
-                        variant='body2'
-                        sx={{ ml: 2, color: 'text.secondary' }}
+                        variant="body2"
+                        sx={{ ml: 2, color: "text.secondary" }}
                       >
                         Refreshing feed...
                       </Typography>
@@ -797,7 +798,7 @@ export default function FriendCirclePage() {
                           <Box sx={{ mb: 3 }}>
                             <PostCard
                               post={post}
-                              currentUserId={user?.uid || ''}
+                              currentUserId={user?.uid || ""}
                               onLike={handlePostLike}
                               onComment={handleCommentClick}
                               onEdit={handleEditPost}
@@ -817,9 +818,9 @@ export default function FriendCirclePage() {
               item
               xs={12}
               md={4}
-              sx={{ display: { xs: 'none', md: 'block' } }}
+              sx={{ display: { xs: "none", md: "block" } }}
             >
-              <Box sx={{ position: 'sticky', top: theme.spacing(3) }}>
+              <Box sx={{ position: "sticky", top: theme.spacing(3) }}>
                 {/* Friends suggestions panel */}
                 {/* <SidePanel sx={{ mb: 3 }}>
                   <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center' }}>
@@ -845,12 +846,12 @@ export default function FriendCirclePage() {
                 {/* Recent goals panel */}
                 <SidePanel>
                   <Typography
-                    variant='h6'
+                    variant="h6"
                     sx={{
                       mb: 2,
                       fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
+                      display: "flex",
+                      alignItems: "center",
                     }}
                   >
                     <EventNoteIcon
@@ -860,8 +861,8 @@ export default function FriendCirclePage() {
                   </Typography>
                   {goals.length === 0 ? (
                     <Typography
-                      variant='body2'
-                      color='text.secondary'
+                      variant="body2"
+                      color="text.secondary"
                       sx={{ mb: 2 }}
                     >
                       You haven't created any goals yet.
@@ -872,19 +873,19 @@ export default function FriendCirclePage() {
                         <Box key={goal.id} sx={{ mb: 2 }}>
                           {index > 0 && <Divider sx={{ my: 1.5 }} />}
                           <Typography
-                            variant='subtitle2'
+                            variant="subtitle2"
                             sx={{ fontWeight: 600 }}
                           >
                             {goal.title}
                           </Typography>
                           <Typography
-                            variant='body2'
-                            color='text.secondary'
+                            variant="body2"
+                            color="text.secondary"
                             sx={{
                               mt: 0.5,
-                              display: '-webkit-box',
-                              overflow: 'hidden',
-                              WebkitBoxOrient: 'vertical',
+                              display: "-webkit-box",
+                              overflow: "hidden",
+                              WebkitBoxOrient: "vertical",
                               WebkitLineClamp: 2,
                             }}
                           >
@@ -893,13 +894,13 @@ export default function FriendCirclePage() {
                         </Box>
                       ))}
                       <Button
-                        variant='text'
+                        variant="text"
                         fullWidth
-                        href='/goals'
+                        href="/goals"
                         sx={{
                           mt: 1,
-                          borderRadius: '10px',
-                          textTransform: 'none',
+                          borderRadius: "10px",
+                          textTransform: "none",
                         }}
                       >
                         View All Goals
@@ -915,19 +916,19 @@ export default function FriendCirclePage() {
         {/* Floating action button for adding post on mobile */}
         <Box
           sx={{
-            position: 'fixed',
-            bottom: '2rem',
-            right: '2rem',
-            display: { xs: 'block', sm: 'none' },
+            position: "fixed",
+            bottom: "2rem",
+            right: "2rem",
+            display: { xs: "block", sm: "none" },
             zIndex: 5,
           }}
         >
           <Fab
-            color='primary'
-            aria-label='add post'
+            color="primary"
+            aria-label="add post"
             onClick={handleAddPostClick}
             sx={{
-              boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+              boxShadow: "0 4px 14px rgba(0,0,0,0.25)",
             }}
           >
             <AddCommentIcon />
@@ -955,9 +956,9 @@ export default function FriendCirclePage() {
             posts.find((p) => p.id === commentDialogPostId)?.comments || []
           }
           postOwnerEmail={
-            posts.find((p) => p.id === commentDialogPostId)?.email || ''
+            posts.find((p) => p.id === commentDialogPostId)?.email || ""
           }
-          currentUserEmail={user?.email || ''}
+          currentUserEmail={user?.email || ""}
           onAddComment={handleAddComment}
           onDeleteComment={handleCommentDelete}
           commentContent={commentContent}
@@ -970,7 +971,7 @@ export default function FriendCirclePage() {
           open={toast.open}
           autoHideDuration={6000}
           onClose={handleToastClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         >
           <Alert
             onClose={handleToastClose}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Box,
   AppBar,
@@ -8,13 +8,13 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
-} from '@mui/material';
-import PropTypes from 'prop-types';
+} from "@mui/material";
+import PropTypes from "prop-types";
 // components
-import Profile from './Profile';
-import Notifications from './Notifications';
-import { IconMenuOrder } from '@tabler/icons-react';
-import MenuOpenOutlinedIcon from '@mui/icons-material/MenuOpenOutlined';
+import Profile from "./Profile";
+import Notifications from "./Notifications";
+import { IconMenuOrder } from "@tabler/icons-react";
+import MenuOpenOutlinedIcon from "@mui/icons-material/MenuOpenOutlined";
 
 interface ItemType {
   toggleMobileSidebar: (event: React.MouseEvent<HTMLElement>) => void;
@@ -28,33 +28,33 @@ const Header = ({
   isSidebarOpen,
 }: ItemType) => {
   const theme = useTheme();
-  const lgUp = useMediaQuery(theme.breakpoints.up('lg'));
+  const lgUp = useMediaQuery(theme.breakpoints.up("lg"));
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
-    boxShadow: 'none',
+    boxShadow: "none",
     background: theme.palette.background.paper,
-    justifyContent: 'center',
-    backdropFilter: 'blur(4px)',
-    [theme.breakpoints.up('lg')]: {
-      minHeight: '70px',
+    justifyContent: "center",
+    backdropFilter: "blur(4px)",
+    [theme.breakpoints.up("lg")]: {
+      minHeight: "70px",
     },
   }));
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
-    width: '100%',
+    width: "100%",
     color: theme.palette.text.secondary,
   }));
 
   return (
-    <AppBarStyled position='sticky' color='default'>
+    <AppBarStyled position="sticky" color="default">
       <ToolbarStyled>
         <IconButton
-          color='inherit'
-          aria-label='menu'
+          color="inherit"
+          aria-label="menu"
           onClick={toggleMobileSidebar}
           sx={{
             display: {
-              lg: 'none',
-              xs: 'inline',
+              lg: "none",
+              xs: "inline",
             },
           }}
         >
@@ -62,28 +62,28 @@ const Header = ({
         </IconButton>
         {lgUp && toggleSidebar && (
           <IconButton
-            color='primary'
-            aria-label='toggle sidebar'
+            color="primary"
+            aria-label="toggle sidebar"
             onClick={toggleSidebar}
             sx={{
-              transition: 'all 0.3s ease',
-              transform: isSidebarOpen ? 'rotate(0deg)' : 'rotate(180deg)',
-              position: 'relative',
+              transition: "all 0.3s ease",
+              transform: isSidebarOpen ? "rotate(0deg)" : "rotate(180deg)",
+              position: "relative",
               zIndex: 1200,
-              '&:hover': {
+              "&:hover": {
                 backgroundColor:
-                  theme.palette.primary.light || 'rgba(0, 0, 0, 0.04)',
+                  theme.palette.primary.light || "rgba(0, 0, 0, 0.04)",
               },
             }}
           >
-            <IconMenuOrder width='20' height='20' />
+            <IconMenuOrder width="20" height="20" />
           </IconButton>
         )}
-        <Stack spacing={1} direction='row' alignItems='center'>
+        <Stack spacing={1} direction="row" alignItems="center">
           <Notifications />
         </Stack>
         <Box flexGrow={1} />
-        <Stack spacing={1} direction='row' alignItems='center'>
+        <Stack spacing={1} direction="row" alignItems="center">
           {/* <Button
             variant='contained'
             component={Link}

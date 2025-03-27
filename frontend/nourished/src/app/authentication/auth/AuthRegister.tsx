@@ -91,8 +91,8 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
 
       setSuccess("Registration successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+        window.location.href = "/dashboard";
+      }, 1000);
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -22,17 +22,17 @@ module.exports.createGoal = async function createGoal(uid, goal, invitees) {
     }
     // Update the challenge's related
     if (goal.isChallenge && goal.isChallenge === true) {
-      const newChallengeResult = await challengeService.createChallenge(
-        uid, 
-        {
-          goalId: result.id,
-          invitees: invitees,
-        }
-      );
+      const newChallengeResult = await challengeService.createChallenge(uid, {
+        goalId: result.id,
+        invitees: invitees,
+      });
       if (!newChallengeResult.success) {
         return { success: false, error: newChallengeResult.error };
       }
-      return { success: true, data: { id: result.id, challengeId: newChallengeResult.data.id } };
+      return {
+        success: true,
+        data: { id: result.id, challengeId: newChallengeResult.data.id },
+      };
     }
     return { success: true, data: { id: result.id, challengeId: null } };
   } catch (err) {
@@ -81,19 +81,34 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
     if (!allResetTasksGoalIdRes.every((res) => res.success)) {
       return { success: false, error: "Failed to reset task goalId" };
     }
-    
+
     // If user is deleting the challenge that is not belong to him
     if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
       const deleteUserFromChallPromises = [];
       for (const challenge of challengeRes.data) {
-        const deleteUserChallRes = await db.removeFromFieldArray("users", uid, "challenges", challenge.id);
+        const deleteUserChallRes = await db.removeFromFieldArray(
+          "users",
+          uid,
+          "challenges",
+          challenge.id,
+        );
         deleteUserFromChallPromises.push(deleteUserChallRes);
-        const deleteChallPartiRes = await db.removeFromFieldArray("challenges", challenge.id, "participants", uid);
+        const deleteChallPartiRes = await db.removeFromFieldArray(
+          "challenges",
+          challenge.id,
+          "participants",
+          uid,
+        );
         deleteUserFromChallPromises.push(deleteChallPartiRes);
       }
-      const allDeleteUserFromChallRes = await Promise.all(deleteUserFromChallPromises);
+      const allDeleteUserFromChallRes = await Promise.all(
+        deleteUserFromChallPromises,
+      );
       if (!allDeleteUserFromChallRes.every((res) => res.success)) {
-        return { success: false, error: "Failed to remove you from all challenges" };
+        return {
+          success: false,
+          error: "Failed to remove you from all challenges",
+        };
       }
       return { success: true, message: "Removed you from the challenge" };
     }
