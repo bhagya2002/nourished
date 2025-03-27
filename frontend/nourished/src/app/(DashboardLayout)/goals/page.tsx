@@ -14,10 +14,6 @@ import {
   Alert,
   Snackbar,
   AlertColor,
-  Collapse,
-  Typography,
-  Divider,
-  Grid,
   Stack,
   ToggleButtonGroup,
   ToggleButton,
@@ -30,13 +26,11 @@ import {
   FormControl,
   Chip,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import PageContainer from '../components/container/PageContainer';
 import TaskCreateDialog from '../tasks/components/TaskCreateDialog';
 import TaskEditDialog from '../tasks/components/TaskEditDialog';
 import HappinessDialog from '../tasks/components/HappinessDialog';
-import TaskCard from '../tasks/components/TaskCard';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 
 // Import our new components
 import PageHeader from './components/PageHeader';

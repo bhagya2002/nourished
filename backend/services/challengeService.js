@@ -1,5 +1,5 @@
 const db = require("../firebase/firestore");
-const inviteService = require("./inviteService")
+const inviteService = require("./inviteService");
 
 module.exports.getChallenges = async function getChallenges(userId) {
   try {
@@ -49,16 +49,13 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
         // create invites for invitees
         const challengeInvitePromises = [];
         for (const invitee of invitees) {
-          const inviteRes = await inviteService.createInvite(
-            userId,
-            {
-              inviterName: inviterName,
-              invitee: invitee,
-              type: 1,
-              targetId: result.id,
-              targetTitle: targetTitle,
-            }
-          )
+          const inviteRes = await inviteService.createInvite(userId, {
+            inviterName: inviterName,
+            invitee: invitee,
+            type: 1,
+            targetId: result.id,
+            targetTitle: targetTitle,
+          });
           if (!inviteRes.success) {
             return inviteRes;
           }
@@ -71,7 +68,10 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
           return { success: false, error: "Failed to create invites" };
         }
       } else {
-        return { success: false, error: "Failed to update user challenges array" };
+        return {
+          success: false,
+          error: "Failed to update user challenges array",
+        };
       }
     }
     return { success: false, error: "Failed to create challenge" };
@@ -85,7 +85,10 @@ module.exports.deleteChallenge = async function deleteChallenge(
   challengeId,
 ) {
   try {
-    const challengeRes = await db.queryDatabaseSingle(challengeId, "challenges");
+    const challengeRes = await db.queryDatabaseSingle(
+      challengeId,
+      "challenges",
+    );
     if (!challengeRes.success) {
       return challengeRes;
     }
@@ -103,7 +106,10 @@ module.exports.deleteChallenge = async function deleteChallenge(
     if (result.success) {
       const updateResult = await db.deleteSingleDoc("challenges", challengeId);
       if (updateResult.success) {
-        const updateInviteResult = await inviteService.deleteInvites(userId, challengeId);
+        const updateInviteResult = await inviteService.deleteInvites(
+          userId,
+          challengeId,
+        );
         if (!updateInviteResult.success) {
           return updateInviteResult;
         }
