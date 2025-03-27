@@ -1,7 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Grid, Box, CircularProgress, Typography, Button, Chip, Tooltip } from "@mui/material";
+import {
+  Grid,
+  Box,
+  CircularProgress,
+  Typography,
+  Button,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import { useAuth } from "@/context/AuthContext"; // Import Auth Context
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 // components
@@ -17,8 +25,8 @@ import GoalProgress from "@/app/(DashboardLayout)/components/dashboard/GoalProgr
 import PlantHealthVisualizer from "../components/dashboard/PlantHealthVisualizer";
 import PlantGrowthInfo from "../components/dashboard/PlantGrowthInfo";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
-import DailyTipButton from '../components/shared/DailyTipButton';
-import DailyTipDialog from '../components/shared/DailyTipDialog';
+import DailyTipButton from "../components/shared/DailyTipButton";
+import DailyTipDialog from "../components/shared/DailyTipDialog";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
@@ -441,39 +449,39 @@ const Dashboard = () => {
   const handleOpenTipDialog = () => {
     setTipDialogOpen(true);
   };
-  
+
   // Fetch the AI daily tip
   const fetchDailyTip = async () => {
     if (!token) {
-      return { 
-        success: false, 
-        error: 'Authentication required. Please log in again.' 
+      return {
+        success: false,
+        error: "Authentication required. Please log in again.",
       };
     }
-    
+
     try {
       const response = await fetch(`${API_BASE_URL}/getAITip`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error fetching AI tip:', errorText);
+        console.error("Error fetching AI tip:", errorText);
         return {
           success: false,
-          error: 'Failed to fetch your daily tip. Please try again.'
+          error: "Failed to fetch your daily tip. Please try again.",
         };
       }
-      
+
       const data = await response.json();
       return data;
     } catch (err) {
-      console.error('Error in fetchDailyTip:', err);
+      console.error("Error in fetchDailyTip:", err);
       return {
         success: false,
-        error: 'Connection error. Please check your internet connection.'
+        error: "Connection error. Please check your internet connection.",
       };
     }
   };
@@ -581,19 +589,21 @@ const Dashboard = () => {
   return (
     <PageContainer title="Dashboard" description="Welcome to your dashboard">
       {/* Daily Tip Dialog */}
-      <DailyTipDialog 
-        open={tipDialogOpen} 
-        onClose={() => setTipDialogOpen(false)} 
+      <DailyTipDialog
+        open={tipDialogOpen}
+        onClose={() => setTipDialogOpen(false)}
         fetchTip={fetchDailyTip}
       />
-      
+
       {/* Welcome Message */}
-      <Box sx={{ mb: 3, position: 'relative' }}>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+      <Box sx={{ mb: 3, position: "relative" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <Box>
             <Typography
               variant="h1"
@@ -633,17 +643,11 @@ const Dashboard = () => {
               Here's an overview of your wellness journey
             </Typography>
           </Box>
-          
+
           {/* Daily Tip Button - always available */}
-          <Tooltip 
-            title="Get your daily AI wellness tip"
-            placement="left"
-          >
+          <Tooltip title="Get your daily AI wellness tip" placement="left">
             <Box>
-              <DailyTipButton 
-                onClick={handleOpenTipDialog} 
-                available={true}
-              />
+              <DailyTipButton onClick={handleOpenTipDialog} available={true} />
             </Box>
           </Tooltip>
         </Box>
@@ -654,38 +658,56 @@ const Dashboard = () => {
         {/* First Row: Plant Visualization and Wellness Overview */}
         <Grid item xs={12} md={6}>
           {userProfile === null ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
               <CircularProgress />
             </Box>
           ) : (
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              height: '100%',
-              "& .MuiCard-root": { 
-                height: '100%', 
-                display: 'flex', 
-                flexDirection: 'column' 
-              }
-            }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                "& .MuiCard-root": {
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                },
+              }}
+            >
               <DashboardCard
                 title="Your Wellness Plant"
                 action={
                   <Chip
                     icon={<LocalFloristIcon />}
-                    label={userProfile.plantHealth >= 5 ? "Healthy" : userProfile.plantHealth >= 3 ? "Growing" : "Needs Care"}
+                    label={
+                      userProfile.plantHealth >= 5
+                        ? "Healthy"
+                        : userProfile.plantHealth >= 3
+                        ? "Growing"
+                        : "Needs Care"
+                    }
                     size="small"
-                    color={userProfile.plantHealth >= 5 ? "success" : userProfile.plantHealth >= 3 ? "primary" : "warning"}
+                    color={
+                      userProfile.plantHealth >= 5
+                        ? "success"
+                        : userProfile.plantHealth >= 3
+                        ? "primary"
+                        : "warning"
+                    }
                     variant="filled"
                   />
                 }
               >
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  flex: 1
-                }}>
-                  <Box sx={{ position: 'relative', height: 350, width: '100%' }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                  }}
+                >
+                  <Box
+                    sx={{ position: "relative", height: 350, width: "100%" }}
+                  >
                     <PlantHealthVisualizer
                       plantHealth={userProfile.plantHealth ?? 5}
                     />
@@ -706,7 +728,7 @@ const Dashboard = () => {
                 totalCount={tasks.length}
               />
             </Grid>
-            
+
             {/* Streak Counter */}
             <Grid item xs={12}>
               <StreakCounter
@@ -722,14 +744,12 @@ const Dashboard = () => {
         <Grid item xs={12} lg={8}>
           <GoalProgress goals={goals} isLoading={isLoadingGoals} />
         </Grid>
-        
+
         <Grid item xs={12} lg={4}>
           <DashboardCard title="Recent Activity">
             <Box sx={{ p: 2 }}>
               {isLoadingHistory ? (
-                <Box
-                  sx={{ display: "flex", justifyContent: "center", p: 2 }}
-                >
+                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
                   <CircularProgress size={24} />
                 </Box>
               ) : completedTasks.length > 0 ? (
@@ -754,13 +774,13 @@ const Dashboard = () => {
                     <Box sx={{ flexGrow: 1 }}>
                       <Typography
                         variant="body2"
-                        sx={{ 
-                          fontWeight: 'medium',
-                          display: '-webkit-box',
+                        sx={{
+                          fontWeight: "medium",
+                          display: "-webkit-box",
                           WebkitLineClamp: 1,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {task.title}

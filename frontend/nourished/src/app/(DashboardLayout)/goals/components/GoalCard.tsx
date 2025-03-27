@@ -1,5 +1,5 @@
-'use client';
-import React, { useState, useMemo } from 'react';
+"use client";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -18,20 +18,20 @@ import {
   Grid,
   Collapse,
   Divider,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import EditIcon from '@mui/icons-material/Edit';
-import InfoIcon from '@mui/icons-material/Info';
-import DeleteIcon from '@mui/icons-material/Delete';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Groups2Icon from '@mui/icons-material/Groups2';
-import AddTaskIcon from '@mui/icons-material/AddTask';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import TaskCard from '../../tasks/components/TaskCard';
-import { Goal } from '../page'
+} from "@mui/material";
+import { motion } from "framer-motion";
+import EditIcon from "@mui/icons-material/Edit";
+import InfoIcon from "@mui/icons-material/Info";
+import DeleteIcon from "@mui/icons-material/Delete";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import Groups2Icon from "@mui/icons-material/Groups2";
+import AddTaskIcon from "@mui/icons-material/AddTask";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import TaskCard from "../../tasks/components/TaskCard";
+import { Goal } from "../page";
 
 interface GoalCardProps {
   isOwner?: boolean;
@@ -61,41 +61,41 @@ const GoalCard: React.FC<GoalCardProps> = ({
   index,
 }) => {
   const theme = useTheme();
-  
+
   // State for the more actions menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
-  
+
   // Calculate task statistics
   const taskStats = useMemo(() => {
-    // Use the goal's own totalTasks and completedTasks properties 
+    // Use the goal's own totalTasks and completedTasks properties
     // instead of recalculating from the tasks array
     const { totalTasks, completedTasks } = goal;
-    
+
     // Make sure they're numbers
-    const total = typeof totalTasks === 'number' ? totalTasks : 0;
-    const completed = typeof completedTasks === 'number' ? completedTasks : 0;
-    
+    const total = typeof totalTasks === "number" ? totalTasks : 0;
+    const completed = typeof completedTasks === "number" ? completedTasks : 0;
+
     // Calculate percentage, ensure we don't divide by zero
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
+
     return {
       total,
       completed,
-      percentage
+      percentage,
     };
   }, [goal.totalTasks, goal.completedTasks]);
-  
+
   // Format date for display
   const formatDeadline = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
-  
+
   // Calculate days remaining until deadline
   const getDaysRemaining = (deadline: string) => {
     const today = new Date();
@@ -105,35 +105,35 @@ const GoalCard: React.FC<GoalCardProps> = ({
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
-  
+
   // Determine deadline status
   const daysRemaining = getDaysRemaining(goal.deadline);
   const isUrgent = daysRemaining <= 3 && daysRemaining >= 0;
   const isOverdue = daysRemaining < 0;
-  
+
   // Handle menu open
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
-  
+
   // Handle menu close
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
-  
+
   // Handle edit click
   const handleEditClick = () => {
     handleMenuClose();
     onEdit();
   };
-  
+
   // Handle delete click
   const handleDeleteClick = () => {
     handleMenuClose();
     onDelete();
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -142,20 +142,20 @@ const GoalCard: React.FC<GoalCardProps> = ({
     >
       <Card
         sx={{
-          position: 'relative',
-          overflow: 'visible',
+          position: "relative",
+          overflow: "visible",
           boxShadow: theme.shadows[isExpanded ? 8 : 2],
-          borderRadius: '16px',
-          transition: 'all 0.3s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-4px)',
+          borderRadius: "16px",
+          transition: "all 0.3s ease-in-out",
+          "&:hover": {
+            transform: "translateY(-4px)",
             boxShadow: theme.shadows[isExpanded ? 12 : 4],
           },
         }}
       >
         <CardContent sx={{ p: 3 }}>
           {/* Progress bar */}
-          <Box sx={{ position: 'relative', mb: 3 }}>
+          <Box sx={{ position: "relative", mb: 3 }}>
             <LinearProgress
               variant="determinate"
               value={taskStats.percentage}
@@ -163,7 +163,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
                 height: 8,
                 borderRadius: 4,
                 backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                '& .MuiLinearProgress-bar': {
+                "& .MuiLinearProgress-bar": {
                   borderRadius: 4,
                   background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
                 },
@@ -172,7 +172,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
             <Typography
               variant="caption"
               sx={{
-                position: 'absolute',
+                position: "absolute",
                 right: 0,
                 top: -20,
                 fontWeight: 600,
@@ -184,10 +184,18 @@ const GoalCard: React.FC<GoalCardProps> = ({
           </Box>
 
           {/* Goal header section */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              mb: 2,
+            }}
+          >
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
-                {goal.isChallenge ? "Challenge: " : ""}{goal.title}
+                {goal.isChallenge ? "Challenge: " : ""}
+                {goal.title}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 {goal.description}
@@ -197,7 +205,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
               onClick={handleMenuOpen}
               size="small"
               sx={{
-                '&:hover': {
+                "&:hover": {
                   backgroundColor: alpha(theme.palette.primary.main, 0.1),
                 },
               }}
@@ -207,17 +215,19 @@ const GoalCard: React.FC<GoalCardProps> = ({
           </Box>
 
           {/* Goal metadata */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
             <Chip
               icon={<CalendarTodayIcon />}
               label={`Due ${formatDeadline(goal.deadline)}`}
-              color={isOverdue ? 'error' : isUrgent ? 'warning' : 'default'}
+              color={isOverdue ? "error" : isUrgent ? "warning" : "default"}
               size="small"
               variant="outlined"
             />
             <Chip
               icon={<CheckCircleIcon />}
-              label={`${goal.tasks.filter(t => t.completed).length}/${goal.tasks.length} tasks`}
+              label={`${goal.tasks.filter((t) => t.completed).length}/${
+                goal.tasks.length
+              } tasks`}
               color="primary"
               size="small"
               variant="outlined"
@@ -226,21 +236,30 @@ const GoalCard: React.FC<GoalCardProps> = ({
               <Chip
                 icon={<Groups2Icon />}
                 label={"Challenge"}
-                color='error'
-                size='small'
-                variant='outlined'
+                color="error"
+                size="small"
+                variant="outlined"
               />
             )}
           </Box>
 
           {/* Expand/Collapse button */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 2,
+            }}
+          >
             <Button
-              startIcon={isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+              startIcon={
+                isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />
+              }
               onClick={onToggleExpand}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: "none" }}
             >
-              {isExpanded ? 'Hide Tasks' : 'Show Tasks'}
+              {isExpanded ? "Hide Tasks" : "Show Tasks"}
             </Button>
             <Button
               disabled={!isOwner}
@@ -249,10 +268,10 @@ const GoalCard: React.FC<GoalCardProps> = ({
               variant="contained"
               size="small"
               sx={{
-                borderRadius: '8px',
-                textTransform: 'none',
-                boxShadow: 'none',
-                '&:hover': {
+                borderRadius: "8px",
+                textTransform: "none",
+                boxShadow: "none",
+                "&:hover": {
                   boxShadow: theme.shadows[2],
                 },
               }}
@@ -272,9 +291,15 @@ const GoalCard: React.FC<GoalCardProps> = ({
                       <TaskCard
                         disabled={!isOwner}
                         task={task}
-                        onComplete={async () => { onCompleteTask(task.id); }}
-                        onEdit={() => { onEditTask(task, taskIndex); }}
-                        onDelete={async () => { onDeleteTask(task.id); }}
+                        onComplete={async () => {
+                          onCompleteTask(task.id);
+                        }}
+                        onEdit={() => {
+                          onEditTask(task, taskIndex);
+                        }}
+                        onDelete={async () => {
+                          onDeleteTask(task.id);
+                        }}
                       />
                     </Grid>
                   ))
@@ -295,20 +320,30 @@ const GoalCard: React.FC<GoalCardProps> = ({
           anchorEl={anchorEl}
           open={menuOpen}
           onClose={() => setAnchorEl(null)}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
-          <MenuItem onClick={() => { onEdit(); setAnchorEl(null); }}>
+          <MenuItem
+            onClick={() => {
+              onEdit();
+              setAnchorEl(null);
+            }}
+          >
             <ListItemIcon>
-              {isOwner ? <EditIcon fontSize="small" /> : <InfoIcon fontSize="small" />}
+              {isOwner ? (
+                <EditIcon fontSize="small" />
+              ) : (
+                <InfoIcon fontSize="small" />
+              )}
             </ListItemIcon>
-            <ListItemText>
-              {isOwner ? 'Edit' : 'Info'}
-            </ListItemText>
+            <ListItemText>{isOwner ? "Edit" : "Info"}</ListItemText>
           </MenuItem>
-          <MenuItem 
-            onClick={() => { onDelete(); setAnchorEl(null); }}
-            sx={{ color: 'error.main' }}
+          <MenuItem
+            onClick={() => {
+              onDelete();
+              setAnchorEl(null);
+            }}
+            sx={{ color: "error.main" }}
           >
             <ListItemIcon>
               <DeleteIcon fontSize="small" color="error" />
@@ -321,4 +356,4 @@ const GoalCard: React.FC<GoalCardProps> = ({
   );
 };
 
-export default GoalCard; 
+export default GoalCard;

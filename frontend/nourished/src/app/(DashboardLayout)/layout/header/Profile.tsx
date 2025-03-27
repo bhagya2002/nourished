@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
-import { useAuth } from '@/context/AuthContext';
-import {
-  Box,
-  Menu,
-  Button,
-  IconButton,
-} from '@mui/material';
-import DefaultAvatar from '../../components/shared/DefaultAvatar';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
+import { useAuth } from "@/context/AuthContext";
+import { Box, Menu, Button, IconButton } from "@mui/material";
+import DefaultAvatar from "../../components/shared/DefaultAvatar";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -27,10 +22,10 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      localStorage.removeItem('authToken');
-      router.push('/authentication/login');
+      localStorage.removeItem("authToken");
+      router.push("/authentication/login");
     } catch (error) {
-      console.error('Logout Error:', error);
+      console.error("Logout Error:", error);
     }
   };
 
@@ -44,8 +39,8 @@ const Profile = () => {
         aria-haspopup="true"
         onClick={handleClick2}
         sx={{
-          ...(typeof anchorEl2 === 'object' && {
-            color: 'primary.main',
+          ...(typeof anchorEl2 === "object" && {
+            color: "primary.main",
           }),
         }}
       >
@@ -57,11 +52,11 @@ const Profile = () => {
         keepMounted
         open={Boolean(anchorEl2)}
         onClose={handleClose2}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
-          '& .MuiMenu-paper': {
-            width: '200px',
+          "& .MuiMenu-paper": {
+            width: "200px",
             mt: 1.5,
           },
         }}
