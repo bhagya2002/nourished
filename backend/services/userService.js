@@ -33,9 +33,19 @@ module.exports.followUser = async function followUser(follower, followee) {
 
     // if followee is already the follower of the user, add to friends list
     if (user.followers?.includes(followee)) {
-      const followerUpdateRes = await db.updateFieldArray("users", follower, "friends", followee);
+      const followerUpdateRes = await db.updateFieldArray(
+        "users",
+        follower,
+        "friends",
+        followee,
+      );
       if (!followerUpdateRes) return followerUpdateRes;
-      const followeeUpdateRes = await db.updateFieldArray("users", followee, "friends", follower);
+      const followeeUpdateRes = await db.updateFieldArray(
+        "users",
+        followee,
+        "friends",
+        follower,
+      );
       if (!followeeUpdateRes) return followeeUpdateRes;
     } else {
       let input = {};
@@ -69,12 +79,25 @@ module.exports.unfollowUser = async function unfollowUser(follower, followee) {
 
     // if followee is already the friend of the user, remove from friends list
     if (user.friends?.includes(followee)) {
-      const followerUpdateRes = await db.removeFromFieldArray("users", follower, "friends", followee);
+      const followerUpdateRes = await db.removeFromFieldArray(
+        "users",
+        follower,
+        "friends",
+        followee,
+      );
       if (!followerUpdateRes) return followerUpdateRes;
-      const followeeUpdateRes = await db.removeFromFieldArray("users", followee, "friends", follower);
+      const followeeUpdateRes = await db.removeFromFieldArray(
+        "users",
+        followee,
+        "friends",
+        follower,
+      );
       if (!followeeUpdateRes) return followeeUpdateRes;
     } else {
-      const inviteRes = await inviteService.deleteFriendInvite(follower, followee);
+      const inviteRes = await inviteService.deleteFriendInvite(
+        follower,
+        followee,
+      );
       if (!inviteRes.success) return inviteRes;
     }
     return { success: true };
@@ -141,14 +164,22 @@ module.exports.getFriendRecommendations =
 module.exports.searchUser = async function searchUser(data) {
   try {
     const nameOrEmail = data.keyword.trim();
-    const userNameRes = await db.queryDatabaseFuzzy(nameOrEmail, "users", "name");
-    const userEmailRes = await db.queryDatabaseFuzzy(nameOrEmail, "users", "email");
+    const userNameRes = await db.queryDatabaseFuzzy(
+      nameOrEmail,
+      "users",
+      "name",
+    );
+    const userEmailRes = await db.queryDatabaseFuzzy(
+      nameOrEmail,
+      "users",
+      "email",
+    );
     if (!userNameRes.success || !userEmailRes.success) {
       return { success: false, message: "Error searching for user" };
     }
-    const users = [...userNameRes.data,...userEmailRes.data];
+    const users = [...userNameRes.data, ...userEmailRes.data];
     return { success: true, data: users };
   } catch (err) {
     return { success: false, err: err };
   }
-}
+};

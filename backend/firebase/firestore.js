@@ -321,7 +321,9 @@ module.exports.queryDatabaseFuzzy = async function queryDatabaseFuzzy(
       .where(fieldName, ">=", searchTerm)
       .where(fieldName, "<=", searchTerm + "\uf8ff")
       .limit(10);
-    console.log(`Searching for ${searchTerm} in field ${fieldName} of collection ${collectionName}...`);
+    console.log(
+      `Searching for ${searchTerm} in field ${fieldName} of collection ${collectionName}...`,
+    );
 
     const querySnapshot = await query.get();
 

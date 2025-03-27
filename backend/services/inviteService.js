@@ -90,24 +90,32 @@ module.exports.declineInvite = async function declineInvite(data) {
   }
 };
 
-module.exports.deleteInvitesOnChallenge = async function deleteInvitesOnChallenge(uid, challengeId) {
-  try {
-    const batch = db.batch();
-    const invites = await db.queryDatabase(challengeId, "invites", "targetId");
-    if (!invites.success) {
-      return { success: false, error: "Challenge not found" };
+module.exports.deleteInvitesOnChallenge =
+  async function deleteInvitesOnChallenge(uid, challengeId) {
+    try {
+      const batch = db.batch();
+      const invites = await db.queryDatabase(
+        challengeId,
+        "invites",
+        "targetId",
+      );
+      if (!invites.success) {
+        return { success: false, error: "Challenge not found" };
+      }
+      for (const invite of invites.data) {
+        batch.delete(db.getRef("invites", invite.id));
+      }
+      await batch.commit();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message || "Invite not found" };
     }
-    for (const invite of invites.data) {
-      batch.delete(db.getRef("invites", invite.id));
-    }
-    await batch.commit();
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message || "Invite not found" };
-  }
-};
+  };
 
-module.exports.deleteFriendInvite = async function deleteFriendInvite(uid, invitee) {
+module.exports.deleteFriendInvite = async function deleteFriendInvite(
+  uid,
+  invitee,
+) {
   try {
     const batch = db.batch();
     const invitesRes = await db.queryDatabase(invitee, "invites", "invitee");
