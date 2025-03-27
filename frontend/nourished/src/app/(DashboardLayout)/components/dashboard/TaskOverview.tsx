@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { useTheme, Typography, Box, CircularProgress, Chip } from '@mui/material';
+import { useTheme, Typography, Box, Chip } from '@mui/material';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AssignmentIcon from '@mui/icons-material/Assignment';

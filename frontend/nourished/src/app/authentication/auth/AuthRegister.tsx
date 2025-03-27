@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
   Button,
   CircularProgress,
   Alert,
-} from '@mui/material';
-import { Stack } from '@mui/system';
-import CustomTextField from '@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/firebaseConfig';
+} from "@mui/material";
+import { Stack } from "@mui/system";
+import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/firebaseConfig";
 
 interface AuthRegisterProps {
   title?: string;
@@ -26,9 +26,9 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
   subtext,
 }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
+    name: "",
+    email: "",
+    password: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -59,11 +59,11 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
     const { name, email, password } = formData;
 
     // Validate inputs
-    if (!name.trim()) return setError('Name is required.');
-    if (!isValidEmail(email)) return setError('Invalid email format.');
+    if (!name.trim()) return setError("Name is required.");
+    if (!isValidEmail(email)) return setError("Invalid email format.");
     if (!isValidPassword(password))
       return setError(
-        'Password must be at least 8 characters, contain a number and a special character.'
+        "Password must be at least 8 characters, contain a number and a special character."
       );
 
     try {
@@ -78,7 +78,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
       const user = userCredential.user;
 
       // Store user in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name,
         email,
@@ -86,11 +86,12 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
         tasks: [],
         goals: [],
         friends: [],
+        plantHealth: 2,
       });
 
-      setSuccess('Registration successful! Redirecting...');
+      setSuccess("Registration successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = "/";
       }, 2000);
     } catch (err: any) {
       setError(err.message);
@@ -102,89 +103,89 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
   return (
     <>
       {title && (
-        <Typography fontWeight='700' variant='h2' mb={1}>
+        <Typography fontWeight="700" variant="h2" mb={1}>
           {title}
         </Typography>
       )}
       {subtext}
 
-      <Box component='form' onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={handleSubmit}>
         <Stack mb={3}>
           <Typography
-            variant='subtitle1'
+            variant="subtitle1"
             fontWeight={600}
-            component='label'
-            htmlFor='name'
-            mb='5px'
+            component="label"
+            htmlFor="name"
+            mb="5px"
           >
             Name
           </Typography>
           <CustomTextField
-            id='name'
-            variant='outlined'
+            id="name"
+            variant="outlined"
             fullWidth
-            placeholder='John Doe'
+            placeholder="John Doe"
             onChange={handleChange}
           />
 
           <Typography
-            variant='subtitle1'
+            variant="subtitle1"
             fontWeight={600}
-            component='label'
-            htmlFor='email'
-            mb='5px'
-            mt='25px'
+            component="label"
+            htmlFor="email"
+            mb="5px"
+            mt="25px"
           >
             Email Address
           </Typography>
           <CustomTextField
-            id='email'
-            variant='outlined'
+            id="email"
+            variant="outlined"
             fullWidth
-            placeholder='JohnDoe@email.com'
+            placeholder="JohnDoe@email.com"
             onChange={handleChange}
           />
 
           <Typography
-            variant='subtitle1'
+            variant="subtitle1"
             fontWeight={600}
-            component='label'
-            htmlFor='password'
-            mb='5px'
-            mt='25px'
+            component="label"
+            htmlFor="password"
+            mb="5px"
+            mt="25px"
           >
             Password
           </Typography>
           <CustomTextField
-            id='password'
-            variant='outlined'
-            type='password'
+            id="password"
+            variant="outlined"
+            type="password"
             fullWidth
-            placeholder='********'
+            placeholder="********"
             onChange={handleChange}
           />
         </Stack>
 
         {error && (
-          <Alert severity='error' sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
         {success && (
-          <Alert severity='success' sx={{ mb: 2 }}>
+          <Alert severity="success" sx={{ mb: 2 }}>
             {success}
           </Alert>
         )}
 
         <Button
-          type='submit'
-          color='primary'
-          variant='contained'
-          size='large'
+          type="submit"
+          color="primary"
+          variant="contained"
+          size="large"
           fullWidth
           disabled={loading}
         >
-          {loading ? <CircularProgress size={24} color='inherit' /> : 'Sign Up'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
         </Button>
       </Box>
 

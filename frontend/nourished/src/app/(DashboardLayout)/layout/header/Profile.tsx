@@ -4,7 +4,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
 import {
-  Avatar,
   Box,
   Menu,
   Button,
@@ -15,6 +14,7 @@ import {
 } from '@mui/material';
 import { AccountCircle, Logout, PersonSearch } from '@mui/icons-material';
 import UserSearchDialog from '../components/UserSearchDialog';
+import DefaultAvatar from '../../components/shared/DefaultAvatar';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -44,33 +44,22 @@ const Profile = () => {
   return (
     <Box>
       <IconButton
-        size='large'
-        aria-label='show profile menu'
-        color='inherit'
-        aria-controls='profile-menu'
-        aria-haspopup='true'
+        size="large"
+        aria-label="show profile menu"
+        color="inherit"
+        aria-controls="profile-menu"
+        aria-haspopup="true"
+        onClick={handleClick2}
         sx={{
           ...(typeof anchorEl2 === 'object' && {
             color: 'primary.main',
           }),
         }}
-        onClick={handleClick2}
       >
-        <Avatar
-          src='/images/profile/user-1.jpg'
-          alt='User Avatar'
-          sx={{
-            width: 35,
-            height: 35,
-          }}
-        />
+        <DefaultAvatar name={user?.displayName || undefined} />
       </IconButton>
-
-      {/* ------------------------------------------- */}
-      {/* Profile Dropdown */}
-      {/* ------------------------------------------- */}
       <Menu
-        id='profile-menu'
+        id="profile-menu"
         anchorEl={anchorEl2}
         keepMounted
         open={Boolean(anchorEl2)}

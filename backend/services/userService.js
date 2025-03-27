@@ -48,13 +48,17 @@ module.exports.followUser = async function followUser(follower, followee) {
   } catch (err) {
     return { success: false, err: err };
   }
-}
+};
 
 module.exports.unfollowUser = async function unfollowUser(follower, followee) {
   try {
-    if (!(await db.removeFromFieldArray("users", follower, "following", followee)))
+    if (
+      !(await db.removeFromFieldArray("users", follower, "following", followee))
+    )
       return { success: false };
-    if (!(await db.removeFromFieldArray("users", followee, "followers", follower)))
+    if (
+      !(await db.removeFromFieldArray("users", followee, "followers", follower))
+    )
       return { success: false };
 
     const userRes = await db.queryDatabaseSingle(follower, "users");
@@ -75,25 +79,27 @@ module.exports.unfollowUser = async function unfollowUser(follower, followee) {
   } catch (err) {
     return { success: false, err: err };
   }
-}
+};
 
 module.exports.getFollowers = async function getFollowers(uid) {
   try {
-    const followers = (await db.queryDatabaseSingle(uid, "users")).data.followers;
+    const followers = (await db.queryDatabaseSingle(uid, "users")).data
+      .followers;
     return { success: true, data: followers };
   } catch (err) {
     return { success: false, err: err };
   }
-}
+};
 
 module.exports.getFollowing = async function getFollowing(uid) {
   try {
-    const following = (await db.queryDatabaseSingle(uid, "users")).data.following;
+    const following = (await db.queryDatabaseSingle(uid, "users")).data
+      .following;
     return { success: true, data: following };
   } catch (err) {
     return { success: false, err: err };
   }
-}
+};
 
 module.exports.addFriendConnection = async function addFriendConnection(
   uid1,

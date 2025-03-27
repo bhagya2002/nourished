@@ -3,7 +3,6 @@ import {
   List, 
   ListItem, 
   ListItemAvatar, 
-  Avatar, 
   Typography, 
   IconButton, 
   Box, 
@@ -13,6 +12,7 @@ import { Delete } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Comment } from '../page';
+import DefaultAvatar from '../../components/shared/DefaultAvatar';
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -23,8 +23,7 @@ const StyledListItem = styled(ListItem)(({ theme }) => ({
   },
 }));
 
-const StyledAvatar = styled(Avatar)(({ theme }) => ({
-  backgroundColor: theme.palette.secondary.main,
+const StyledAvatar = styled(DefaultAvatar)(({ theme }) => ({
   width: 36,
   height: 36,
 }));
