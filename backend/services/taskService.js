@@ -117,7 +117,7 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
         );
         // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
         if (taskResult.data.completedAt) {
@@ -394,6 +394,15 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
     try {
       if (completed) {
         console.log(`Setting completedAt timestamp for task ${taskId}`);
+
+        const userData = await db.queryDatabaseSingle(uid, "users");
+        if (userData.success) {
+          const plantHealth = userData.data.plantHealth;
+          if (plantHealth < 6) {
+            await db.incrementField("users", uid, "plantHealth", 1);
+          }
+        }
+
         const update2 = await db.updateField(
           "tasks",
           taskId,
@@ -425,7 +434,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -524,7 +533,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -821,7 +830,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-          (1000 * 3600 * 24),
+        (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {
@@ -1091,6 +1100,8 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
     const tasksToReset = [];
     const now = new Date();
 
+    const decrementByUID = new Map();
+
     // Determine which tasks need to be reset
     for (const task of completedTasksResult.data) {
       if (!task.completedAt) continue; // Skip if no completion date
@@ -1123,6 +1134,11 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
       }
 
       if (shouldReset) {
+        if (decrementByUID.has(task.uid)) {
+          decrementByUID.set(task.uid, decrementByUID.get(task.uid) - 1);
+        } else {
+          decrementByUID.set(task.uid, -1)
+        }
         tasksToReset.push(task.id);
         console.log(
           `Task ${task.id} (${task.title}) - ${task.frequency} will be reset from completed state`,
@@ -1156,6 +1172,24 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
         resetResults.push({ taskId, success: false, error: resetErr.message });
       }
     }
+
+    let updatePromises = [];
+    for (const [uid, val] of decrementByUID.entries()) {
+      const userData = await db.queryDatabaseSingle(uid, "users");
+
+      if (userData.success) {
+        const plantHealth = userData.data.plantHealth;
+        let decrementPromise
+        if (plantHealth + val > 0) {
+          decrementPromise = db.incrementField("users", uid, "plantHealth", val);
+        } else {
+          decrementPromise = db.updateField("users", uid, "plantHealth", 1);
+        }
+        updatePromises.push(decrementPromise);
+      }
+    }
+
+    await Promise.all(updatePromises);
 
     console.log(
       `Completed task reset check. Reset ${tasksToReset.length} tasks.`,
