@@ -23,6 +23,9 @@ import { IconMail, IconMapPin, IconCalendar, IconUsers, IconUserPlus, IconUserCh
 import { useRouter, useParams } from 'next/navigation';
 import { format } from 'date-fns';
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
+
 interface Activity {
   id: string;
   title: string;
@@ -69,7 +72,7 @@ const UserProfilePage = () => {
 
       try {
         // Get user profile data from API
-        const response = await fetch('/api/getUserProfile', {
+        const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

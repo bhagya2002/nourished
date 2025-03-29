@@ -1,4 +1,5 @@
 const db = require("../firebase/firestore");
+const inviteService = require("./inviteService");
 
 module.exports.getUserInfo = async function getUserInfo(uid) {
   return db.queryDatabaseSingle(uid, "users");
@@ -25,6 +26,36 @@ module.exports.followUser = async function followUser(follower, followee) {
       return { success: false };
     if (!(await db.updateFieldArray("users", followee, "followers", follower)))
       return { success: false };
+
+    const userRes = await db.queryDatabaseSingle(follower, "users");
+    if (!userRes.success) return userRes;
+    const user = userRes.data;
+
+    // if followee is already the follower of the user, add to friends list
+    if (user.followers?.includes(followee)) {
+      const followerUpdateRes = await db.updateFieldArray(
+        "users",
+        follower,
+        "friends",
+        followee,
+      );
+      if (!followerUpdateRes) return followerUpdateRes;
+      const followeeUpdateRes = await db.updateFieldArray(
+        "users",
+        followee,
+        "friends",
+        follower,
+      );
+      if (!followeeUpdateRes) return followeeUpdateRes;
+    } else {
+      let input = {};
+      input.type = 0;
+      input.inviterName = user.name;
+      input.invitee = followee;
+      const inviteRes = await inviteService.createInvite(follower, input);
+      if (!inviteRes.success) return inviteRes;
+    }
+
     return { success: true };
   } catch (err) {
     return { success: false, err: err };
@@ -41,6 +72,34 @@ module.exports.unfollowUser = async function unfollowUser(follower, followee) {
       !(await db.removeFromFieldArray("users", followee, "followers", follower))
     )
       return { success: false };
+
+    const userRes = await db.queryDatabaseSingle(follower, "users");
+    if (!userRes.success) return userRes;
+    const user = userRes.data;
+
+    // if followee is already the friend of the user, remove from friends list
+    if (user.friends?.includes(followee)) {
+      const followerUpdateRes = await db.removeFromFieldArray(
+        "users",
+        follower,
+        "friends",
+        followee,
+      );
+      if (!followerUpdateRes) return followerUpdateRes;
+      const followeeUpdateRes = await db.removeFromFieldArray(
+        "users",
+        followee,
+        "friends",
+        follower,
+      );
+      if (!followeeUpdateRes) return followeeUpdateRes;
+    } else {
+      const inviteRes = await inviteService.deleteFriendInvite(
+        follower,
+        followee,
+      );
+      if (!inviteRes.success) return inviteRes;
+    }
     return { success: true };
   } catch (err) {
     return { success: false, err: err };
@@ -100,3 +159,27 @@ module.exports.getFriendRecommendations =
       .slice(0, 2)
       .map((x) => x[0]);
   };
+
+// Search for users by name or email
+module.exports.searchUser = async function searchUser(data) {
+  try {
+    const nameOrEmail = data.keyword.trim();
+    const userNameRes = await db.queryDatabaseFuzzy(
+      nameOrEmail,
+      "users",
+      "name",
+    );
+    const userEmailRes = await db.queryDatabaseFuzzy(
+      nameOrEmail,
+      "users",
+      "email",
+    );
+    if (!userNameRes.success || !userEmailRes.success) {
+      return { success: false, message: "Error searching for user" };
+    }
+    const users = [...userNameRes.data, ...userEmailRes.data];
+    return { success: true, data: users };
+  } catch (err) {
+    return { success: false, err: err };
+  }
+};

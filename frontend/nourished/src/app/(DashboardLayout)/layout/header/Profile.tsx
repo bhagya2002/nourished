@@ -1,15 +1,26 @@
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { auth } from "@/firebaseConfig";
-import { useAuth } from "@/context/AuthContext";
-import { Box, Menu, Button, IconButton } from "@mui/material";
-import DefaultAvatar from "../../components/shared/DefaultAvatar";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/firebaseConfig';
+import { useAuth } from '@/context/AuthContext';
+import {
+  Box,
+  Menu,
+  IconButton,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+} from '@mui/material';
+import { AccountCircle, Logout, PersonSearch } from '@mui/icons-material';
+import UserSearchDialog from '../components/UserSearchDialog';
+import DefaultAvatar from '../../components/shared/DefaultAvatar';
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, token, loading, refreshToken } = useAuth();
+
+  const [friendSearchOpen, setFriendSearchOpen] = useState(false);
 
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
@@ -55,25 +66,55 @@ const Profile = () => {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
-          "& .MuiMenu-paper": {
-            width: "200px",
-            mt: 1.5,
+          '& .MuiMenu-paper': {
+            width: 'auto',
           },
         }}
       >
+        {/* <MenuItem onClick={() => { router.push('/profile'); handleClose2(); }}>
+          <ListItemIcon>
+            <IconUser width={20} />
+          </ListItemIcon>
+          <ListItemText>My Profile</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { router.push('/profile/account'); handleClose2(); }}>
+          <ListItemIcon>
+            <IconMail width={20} />
+          </ListItemIcon>
+          <ListItemText>My Account</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => { router.push('/tasks'); handleClose2(); }}>
+          <ListItemIcon>
+            <IconListCheck width={20} />
+          </ListItemIcon>
+          <ListItemText>My Tasks</ListItemText>
+        </MenuItem> */}
         <Box>
-          <Box sx={{ p: 2, pt: 0 }}>
-            <Button
-              color="primary"
-              variant="outlined"
-              fullWidth
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
-          </Box>
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); router.push('/profile'); }}>
+            <ListItemIcon>
+              <AccountCircle fontSize="small" />
+            </ListItemIcon>
+            My Profile
+          </MenuItem>
+          <Divider />
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); setFriendSearchOpen(true); }}>
+            <ListItemIcon>
+              <PersonSearch fontSize="small" />
+            </ListItemIcon>
+            Search Friends
+          </MenuItem>
+          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); handleLogout(); }}>
+            <ListItemIcon>
+              <Logout fontSize="small" />
+            </ListItemIcon>
+            Logout
+          </MenuItem>
         </Box>
       </Menu>
+      <UserSearchDialog
+        open={friendSearchOpen}
+        onClose={() => setFriendSearchOpen(false)}
+      />
     </Box>
   );
 };
