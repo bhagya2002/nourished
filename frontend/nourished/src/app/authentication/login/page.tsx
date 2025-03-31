@@ -12,7 +12,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import GoogleIcon from "@mui/icons-material/Google";
 import { auth, provider, db } from "@/firebaseConfig";
-import { signInWithPopup } from "firebase/auth";
+import {
+  signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
 // Components
@@ -37,6 +41,10 @@ const Login2 = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
+      // Set Firebase Auth to persist session across tabs/reloads
+      await setPersistence(auth, browserLocalPersistence);
+
+      // Sign in with Google
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
@@ -50,7 +58,7 @@ const Login2 = () => {
         throw new Error("User not found in database.");
       }
 
-      // Store token in localStorage
+      // Store token in localStorage (optional for APIs)
       localStorage.setItem("authToken", token);
 
       // Redirect

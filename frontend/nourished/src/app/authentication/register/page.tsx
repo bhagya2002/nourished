@@ -12,7 +12,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import GoogleIcon from "@mui/icons-material/Google";
-import { signInWithPopup } from "firebase/auth";
+import {
+  signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { auth, provider, db } from "@/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -27,6 +31,10 @@ const Register2 = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
+      // Ensure session persists across tabs/reloads
+      await setPersistence(auth, browserLocalPersistence);
+
+      // Sign in with Google
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 

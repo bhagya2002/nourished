@@ -10,7 +10,12 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
-import { signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  updateProfile,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 
@@ -35,12 +40,16 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
   };
 
   // Handle login
+  // Handle login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
+      // Ensure the session persists across tabs/reloads
+      await setPersistence(auth, browserLocalPersistence);
+
       // Authenticate with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
