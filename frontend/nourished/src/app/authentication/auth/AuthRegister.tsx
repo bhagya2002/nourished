@@ -10,7 +10,11 @@ import {
 } from "@mui/material";
 import { Stack } from "@mui/system";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  browserLocalPersistence,
+  setPersistence,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
 
@@ -68,6 +72,9 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
 
     try {
       setLoading(true);
+
+      // Set persistent session BEFORE user creation
+      await setPersistence(auth, browserLocalPersistence);
 
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
