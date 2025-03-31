@@ -20,6 +20,11 @@ module.exports.getCommentsOnPost = async function getCommentsOnPost(postId) {
 module.exports.createComment = async function createComment(userId, data) {
   try {
     data.uid = userId;
+    if (!data.name) {
+      const userResult = await db.queryDatabaseSingle(userId, "users");
+      if (!userResult.success) return userResult;
+      data.name = userResult.data?.name;
+    }
     const result = await db.addSingleDoc("comments", data);
     if (result.success) {
       const updateResult = await db.updateFieldArray(
