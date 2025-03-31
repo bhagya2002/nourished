@@ -9,13 +9,14 @@ import {
   Button,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GoogleIcon from "@mui/icons-material/Google";
 import { auth, provider, db } from "@/firebaseConfig";
 import {
   signInWithPopup,
   setPersistence,
   browserLocalPersistence,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -27,6 +28,18 @@ const Login2 = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/dashboard");
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const handleDelayedNavigation = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -41,27 +54,21 @@ const Login2 = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      // Set Firebase Auth to persist session across tabs/reloads
       await setPersistence(auth, browserLocalPersistence);
 
-      // Sign in with Google
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Fetch ID Token
       const token = await user.getIdToken();
 
-      // Check if user exists in Firestore
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
       if (!userDoc.exists()) {
         throw new Error("User not found in database.");
       }
 
-      // Store token in localStorage (optional for APIs)
       localStorage.setItem("authToken", token);
 
-      // Redirect
       router.push("/dashboard");
     } catch (error) {
       console.error("Google sign-in error:", error);
