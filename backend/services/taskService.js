@@ -1083,6 +1083,8 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
   try {
     console.log("Starting scheduled task reset check...");
 
+    plantHealthPromise = decrementPlantHealth();
+
     // Get all completed tasks with frequencies
     const completedTasksResult = await db.queryDatabaseCustom("tasks", [
       ["completed", "==", true],
@@ -1173,23 +1175,7 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
       }
     }
 
-    let updatePromises = [];
-    for (const [uid, val] of decrementByUID.entries()) {
-      const userData = await db.queryDatabaseSingle(uid, "users");
-
-      if (userData.success) {
-        const plantHealth = userData.data.plantHealth;
-        let decrementPromise
-        if (plantHealth + val > 0) {
-          decrementPromise = db.incrementField("users", uid, "plantHealth", val);
-        } else {
-          decrementPromise = db.updateField("users", uid, "plantHealth", 1);
-        }
-        updatePromises.push(decrementPromise);
-      }
-    }
-
-    await Promise.all(updatePromises);
+    await (plantHealthPromise);
 
     console.log(
       `Completed task reset check. Reset ${tasksToReset.length} tasks.`,
@@ -1426,3 +1412,26 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
     };
   }
 };
+
+async function decrementPlantHealth() {
+  try {
+    // Fetch all documents from the collection
+    const collectionRef = db.getCollectionRef("users");
+    const snapshot = await collectionRef.get();
+    const batch = db.batch(); // Start a batch for multiple writes
+
+    snapshot.forEach(doc => {
+      // Get current field value (assuming the field is called 'count')
+      const currentPlantHealth = doc.data().plantHealth || 1; // Default to 0 if field is missing
+      if (currentPlantHealth > 1) {
+        const docRef = collectionRef.doc(doc.id);
+        batch.update(docRef, { plantHealth: currentPlantHealth - 1 });
+      }
+    });
+
+    // Commit the batch to apply all updates
+    await db.commitBatch(batch);
+  } catch (error) {
+    console.error('Error decrementing field:', error);
+  }
+}
