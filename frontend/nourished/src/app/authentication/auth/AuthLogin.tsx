@@ -68,10 +68,13 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ token, uid: user.uid }),
+          body: JSON.stringify({ token }),
         });
-        const { name } = await fetchUserInfo.json();
-        await updateProfile(user, { displayName: name });
+        if (!fetchUserInfo.ok) throw new Error("Failed to fetch userInfo");
+        const userData = await fetchUserInfo.json();
+        if (userData && userData.data) {
+          await updateProfile(user, { displayName: userData.data.name });
+        }
       }
 
       // Redirect to dashboard
