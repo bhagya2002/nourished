@@ -312,3 +312,44 @@ module.exports.queryDatabaseCustom = async function queryDatabaseCustom(
 module.exports.getCollectionRef = function getCollectionRef(collectionName) {
   return db.collection(collectionName);
 } 
+
+module.exports.queryDatabaseFuzzy = async function queryDatabaseFuzzy(
+  searchTerm,
+  collectionName,
+  fieldName,
+) {
+  try {
+    const collectionRef = db.collection(collectionName);
+    // Search for matched field from all documents in the collection
+    const query = collectionRef
+      .where(fieldName, ">=", searchTerm)
+      .where(fieldName, "<=", searchTerm + "\uf8ff")
+      .limit(10);
+    console.log(
+      `Searching for ${searchTerm} in field ${fieldName} of collection ${collectionName}...`,
+    );
+
+    const querySnapshot = await query.get();
+
+    if (querySnapshot.empty) {
+      return { success: true, data: [] };
+    }
+
+    // Convert the query results to an array of documents
+    const docs = [];
+    querySnapshot.forEach((doc) => {
+      docs.push({
+        id: doc.id,
+        ...doc.data(),
+      });
+    });
+
+    return { success: true, data: docs };
+  } catch (error) {
+    logger.error("Error in queryDatabaseFuzzy:", error);
+    return {
+      success: false,
+      error: typeof error === "object" ? error.message : String(error),
+    };
+  }
+};

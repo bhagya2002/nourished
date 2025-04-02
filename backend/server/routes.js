@@ -159,6 +159,44 @@ function addGetFriends(app) {
   });
 }
 
+function addSearchUser(app) {
+  app.post("/searchUser", async (req, res) => {
+    try {
+      let authResult = {};
+      if (!req.headers.debug) {
+        authResult = await authService.authenticateToken(req.body.token);
+        if (!authResult.uid) {
+          return res.status(401).json({
+            success: false,
+            error: `Authentication failed! ${authResult.message || "Invalid token"}`,
+          });
+        }
+      } else {
+        authResult.uid = req.body.token;
+      }
+
+      const result = await userService.searchUser(req.body.data);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.message || "Failed to search for user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in searchUser endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
+  });
+}
+
 function addCreateTask(app) {
   app.post("/createTask", async (req, res) => {
     try {
@@ -2116,6 +2154,7 @@ module.exports = function injectRoutes(app) {
   addGetFriendRecommendation(app);
   addGetUserProfile(app);
   addGetFriends(app);
+  addSearchUser(app);
 
   // Tasks
   addCreateTask(app);

@@ -106,7 +106,7 @@ module.exports.deleteChallenge = async function deleteChallenge(
     if (result.success) {
       const updateResult = await db.deleteSingleDoc("challenges", challengeId);
       if (updateResult.success) {
-        const updateInviteResult = await inviteService.deleteInvites(
+        const updateInviteResult = await inviteService.deleteInvitesOnChallenge(
           userId,
           challengeId,
         );
