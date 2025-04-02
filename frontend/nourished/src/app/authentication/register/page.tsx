@@ -7,6 +7,8 @@ import {
   Stack,
   Button,
   CircularProgress,
+  useTheme,
+  Avatar,
 } from "@mui/material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +21,7 @@ import {
 } from "firebase/auth";
 import { auth, provider, db } from "@/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
+import { IconLeaf } from "@tabler/icons-react";
 
 // Components
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
@@ -26,6 +29,7 @@ import AuthRegister from "../auth/AuthRegister";
 
 const Register2 = () => {
   const router = useRouter();
+  const theme = useTheme();
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -103,71 +107,116 @@ const Register2 = () => {
           >
             <Card
               elevation={9}
-              sx={{ p: 4, zIndex: 1, width: "100%", maxWidth: "500px" }}
+              sx={{ 
+                p: 4, 
+                zIndex: 1, 
+                width: "100%", 
+                maxWidth: "500px",
+                borderRadius: "16px",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+                position: "relative",
+                overflow: "hidden",
+                "&:before": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "6px",
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                }
+              }}
             >
-              <Box display="flex" alignItems="center" justifyContent="center">
+              <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" mb={4}>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+                    mb: 2,
+                  }}
+                >
+                  <IconLeaf size={40} />
+                </Avatar>
                 <Typography
-                  variant="h1"
+                  variant="h2"
                   textAlign="center"
                   color="textPrimary"
-                  mb={1}
                   fontWeight="700"
+                  sx={{
+                    backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                    letterSpacing: "0.5px",
+                  }}
                 >
                   Nourished
                 </Typography>
               </Box>
+              
               <AuthRegister
                 subtext={
                   <Typography
                     variant="subtitle1"
                     textAlign="center"
                     color="textSecondary"
-                    mb={1}
+                    mb={3}
                   >
                     Wellness Made Simple
                   </Typography>
                 }
                 subtitle={
-                  <Stack direction="column" spacing={2} mt={3}>
-                    {/* Already have an account? */}
-                    <Stack direction="row" justifyContent="center" spacing={1}>
-                      <Typography
-                        color="textSecondary"
-                        variant="h6"
-                        fontWeight="400"
-                      >
-                        Already have an account?
-                      </Typography>
-                      <Typography
-                        component={Link}
-                        href="/authentication/login"
-                        fontWeight="500"
-                        sx={{
-                          textDecoration: "none",
-                          color: "primary.main",
-                        }}
-                      >
-                        Sign In
-                      </Typography>
-                    </Stack>
-
-                    {/* Google Sign-Up */}
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<GoogleIcon />}
-                      onClick={handleGoogleSignIn}
-                      disabled={googleLoading}
+                  <Stack direction="row" justifyContent="center" spacing={1} mt={3}>
+                    <Typography
+                      color="textSecondary"
+                      variant="body1"
+                      fontWeight="500"
                     >
-                      {googleLoading ? (
-                        <CircularProgress size={20} />
-                      ) : (
-                        "Sign up with Google"
-                      )}
-                    </Button>
+                      Already have an account?
+                    </Typography>
+                    <Typography
+                      component={Link}
+                      href="/authentication/login"
+                      fontWeight="500"
+                      sx={{
+                        color: theme.palette.primary.main,
+                        textDecoration: "none",
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      Sign In
+                    </Typography>
                   </Stack>
                 }
               />
+              
+              <Box mt={3} textAlign="center">
+                <Button
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  startIcon={
+                    googleLoading ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <GoogleIcon />
+                    )
+                  }
+                  disabled={googleLoading}
+                  onClick={handleGoogleSignIn}
+                  sx={{
+                    borderRadius: "30px",
+                    textTransform: "none",
+                    py: 1.2,
+                  }}
+                >
+                  Sign Up With Google
+                </Button>
+              </Box>
             </Card>
           </Grid>
         </Grid>

@@ -7,6 +7,8 @@ import {
   Stack,
   Alert,
   CircularProgress,
+  InputAdornment,
+  useTheme,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
@@ -18,6 +20,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
+import { IconMail, IconLock } from "@tabler/icons-react";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
@@ -30,6 +33,7 @@ interface LoginProps {
 
 const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
   const router = useRouter();
+  const theme = useTheme();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +92,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
 
       // Redirect to dashboard
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err) {
       setError("Invalid email or password.");
       console.error("Login error:", err);
     } finally {
@@ -106,7 +110,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
       {subtext}
 
       <Box component="form" onSubmit={handleLogin}>
-        <Stack>
+        <Stack spacing={3}>
           <Box>
             <Typography
               variant="subtitle1"
@@ -121,11 +125,24 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
               id="email"
               variant="outlined"
               fullWidth
-              placeholder="JohnDoe@email.com"
+              placeholder="your@email.com"
               onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconMail size={20} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: "10px",
+                  "& .MuiOutlinedInput-input": {
+                    py: 1.5,
+                  },
+                }
+              }}
             />
           </Box>
-          <Box mt="25px">
+          <Box>
             <Typography
               variant="subtitle1"
               fontWeight={600}
@@ -142,6 +159,19 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
               fullWidth
               placeholder="********"
               onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconLock size={20} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: "10px",
+                  "& .MuiOutlinedInput-input": {
+                    py: 1.5,
+                  },
+                }
+              }}
             />
           </Box>
         </Stack>
@@ -152,7 +182,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
           </Alert>
         )}
 
-        <Box mt={2}>
+        <Box mt={3}>
           <Button
             type="submit"
             color="primary"
@@ -160,6 +190,16 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
             size="large"
             fullWidth
             disabled={loading}
+            sx={{
+              borderRadius: "30px",
+              py: 1.2,
+              textTransform: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              "&:hover": {
+                background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+              }
+            }}
           >
             {loading ? (
               <CircularProgress size={24} color="inherit" />
