@@ -311,7 +311,7 @@ module.exports.queryDatabaseCustom = async function queryDatabaseCustom(
 
 module.exports.getCollectionRef = function getCollectionRef(collectionName) {
   return db.collection(collectionName);
-} 
+};
 
 module.exports.queryDatabaseFuzzy = async function queryDatabaseFuzzy(
   searchTerm,

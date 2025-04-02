@@ -11,8 +11,6 @@ import {
   ListSubheader,
   Card,
   Tooltip,
-  Typography,
-  Chip,
 } from "@mui/material";
 import { AccountCircle, KeyboardReturn, LockOutlined } from "@mui/icons-material";
 import { usePathname, useRouter } from "next/navigation";
