@@ -145,6 +145,10 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       setErrorMsg("Description is required.");
       return;
     }
+    if (!frequency.trim()) {
+      setErrorMsg("Frequency is required.");
+      return;
+    }
     if (title.length > 50) {
       setErrorMsg("Title must be <= 50 characters.");
       return;
@@ -658,15 +662,16 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           />
           <TextField
             select
+            required
             label="Frequency"
             value={frequency}
             onChange={(e) => setFrequency(e.target.value)}
             size="small"
           >
-            <MenuItem value="">(none)</MenuItem>
-            <MenuItem value="Daily">Daily</MenuItem>
-            <MenuItem value="Weekly">Weekly</MenuItem>
-            <MenuItem value="Monthly">Monthly</MenuItem>
+            <MenuItem value="">Select frequency</MenuItem>
+            <MenuItem value='Daily'>Daily</MenuItem>
+            <MenuItem value='Weekly'>Weekly</MenuItem>
+            <MenuItem value='Monthly'>Monthly</MenuItem>
           </TextField>
 
           {goals && goals.length > 0 && (
