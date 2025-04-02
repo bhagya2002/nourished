@@ -23,10 +23,82 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
 import { IconLeaf } from "@tabler/icons-react";
+import { keyframes } from '@emotion/react';
+import { alpha } from '@mui/material/styles';
 
 // Components
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import AuthLogin from "../auth/AuthLogin";
+
+// Create keyframes for floating animation
+const floatAnimation1 = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+  50% { transform: translate(20px, -15px) rotate(5deg); opacity: 0.9; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+`;
+
+const floatAnimation2 = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+  50% { transform: translate(-15px, -10px) rotate(-5deg); opacity: 0.8; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.5; }
+`;
+
+const floatAnimation3 = keyframes`
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0.6; }
+  50% { transform: translate(10px, 20px) rotate(8deg); opacity: 0.9; }
+  100% { transform: translate(0, 0) rotate(0deg); opacity: 0.6; }
+`;
+
+interface BackgroundLeafProps {
+  size: number;
+  top?: string;
+  left?: string;
+  right?: string;
+  bottom?: string;
+  animation: any; // Using any for keyframes
+  rotation?: number;
+}
+
+// Background decorative leaf component
+const BackgroundLeaf: React.FC<BackgroundLeafProps> = ({ 
+  size, 
+  top, 
+  left, 
+  right, 
+  bottom, 
+  animation, 
+  rotation = 0 
+}) => {
+  const theme = useTheme();
+  
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        width: size,
+        height: size,
+        top,
+        left,
+        right,
+        bottom,
+        transform: `rotate(${rotation}deg)`,
+        animation: `${animation} 8s infinite ease-in-out`,
+        zIndex: 0,
+        opacity: 0.7,
+        pointerEvents: 'none', // Make sure it doesn't interfere with clicks
+      }}
+    >
+      <IconLeaf 
+        size={size} 
+        style={{ 
+          color: theme.palette.mode === 'dark' 
+            ? alpha(theme.palette.primary.main, 0.3) 
+            : alpha(theme.palette.primary.main, 0.2) 
+        }} 
+      />
+    </Box>
+  );
+};
 
 const Login2 = () => {
   const router = useRouter();
@@ -87,6 +159,8 @@ const Login2 = () => {
       <Box
         sx={{
           position: "relative",
+          height: "100vh",
+          overflow: "hidden",
           "&:before": {
             content: '""',
             background: "radial-gradient(#d2f1df, #d3d7fa, #bad8f4)",
@@ -99,11 +173,18 @@ const Login2 = () => {
           },
         }}
       >
+        {/* Background decorative elements */}
+        <BackgroundLeaf size={80} top="15%" left="10%" animation={floatAnimation1} rotation={15} />
+        <BackgroundLeaf size={120} top="60%" left="5%" animation={floatAnimation2} rotation={-10} />
+        <BackgroundLeaf size={100} top="20%" right="8%" animation={floatAnimation3} rotation={30} />
+        <BackgroundLeaf size={70} bottom="15%" right="15%" animation={floatAnimation1} rotation={-20} />
+        <BackgroundLeaf size={90} bottom="25%" left="20%" animation={floatAnimation3} rotation={10} />
+        
         <Grid
           container
           spacing={0}
           justifyContent="center"
-          sx={{ height: "100vh" }}
+          sx={{ height: "100vh", position: "relative", zIndex: 1 }}
         >
           <Grid
             item
