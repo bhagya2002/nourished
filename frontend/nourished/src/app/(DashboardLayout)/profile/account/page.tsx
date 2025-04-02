@@ -9,13 +9,17 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  FormControlLabel,
+  Switch,
+  Typography,
+  Divider,
 } from '@mui/material';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
 import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import { IconLock } from '@tabler/icons-react';
+import { IconLock, IconArrowLeft } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import {
   updateEmail,
@@ -39,6 +43,7 @@ const AccountPage = () => {
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
+    isPrivate: false,
   });
 
   useEffect(() => {
@@ -61,6 +66,7 @@ const AccountPage = () => {
               email: user.email || '',
               location: data.location || '',
               bio: data.bio || '',
+              isPrivate: data.isPrivate || false,
             }));
           }
         } catch (error) {
@@ -85,6 +91,17 @@ const AccountPage = () => {
     setSuccess(null);
   };
 
+  const handleSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+    // Clear any previous error/success messages
+    setError(null);
+    setSuccess(null);
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -98,6 +115,7 @@ const AccountPage = () => {
       await updateDoc(userRef, {
         name: formData.name,
         bio: formData.bio,
+        isPrivate: formData.isPrivate,
       });
       setSuccess('Profile updated successfully');
     } catch (error) {
@@ -200,31 +218,22 @@ const AccountPage = () => {
       title='Account Settings'
       description='Manage your account settings'
     >
+      <Box sx={{ mb: 3 }}>
+        <Button
+          variant="text"
+          startIcon={<IconArrowLeft size={18} />}
+          onClick={() => router.push('/profile')}
+        >
+          Back to Profile
+        </Button>
+      </Box>
+      
       <Grid container spacing={3}>
         {/* Profile Settings */}
-        {/* <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <form onSubmit={handleProfileUpdate}>
             <DashboardCard title='Profile Settings'>
               <Stack spacing={3}>
-                <Box display='flex' alignItems='center' gap={2}>
-                  <Avatar
-                    src={user?.photoURL || '/images/profile/user-1.jpg'}
-                    sx={{ width: 100, height: 100 }}
-                  />
-                  <Box>
-                    <Typography variant='subtitle1' gutterBottom>
-                      Profile Picture
-                    </Typography>
-                    <Button
-                      variant='outlined'
-                      startIcon={<IconCamera size={18} />}
-                      size='small'
-                    >
-                      Change Avatar
-                    </Button>
-                  </Box>
-                </Box>
-
                 <TextField
                   label='Display Name'
                   name='name'
@@ -244,18 +253,49 @@ const AccountPage = () => {
                   fullWidth
                 />
 
+                <Divider />
+                
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Privacy Settings
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.isPrivate}
+                        onChange={handleSwitchChange}
+                        name="isPrivate"
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box>
+                        <Typography variant="body1">Private Account</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          When enabled, only approved users can follow you
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </Box>
+
+                {error && <Alert severity='error'>{error}</Alert>}
+                {success && <Alert severity='success'>{success}</Alert>}
+
                 <Button
                   type='submit'
                   variant='contained'
                   disabled={isSaving}
-                  fullWidth
+                  startIcon={
+                    isSaving ? <CircularProgress size={20} /> : undefined
+                  }
                 >
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </Stack>
             </DashboardCard>
           </form>
-        </Grid> */}
+        </Grid>
 
         {/* Security Settings */}
         <Grid item xs={12} md={6}>

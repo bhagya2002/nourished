@@ -10,8 +10,11 @@ import {
   Box,
   ListSubheader,
   Card,
+  Tooltip,
+  Typography,
+  Chip,
 } from "@mui/material";
-import { AccountCircle, KeyboardReturn } from "@mui/icons-material";
+import { AccountCircle, KeyboardReturn, LockOutlined } from "@mui/icons-material";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
@@ -23,6 +26,7 @@ export type SearchedUser = {
   name: string;
   email: string;
   followers: string[];
+  isPrivate?: boolean;
 }
 
 interface UserSearchDialogProps {
@@ -114,12 +118,26 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
       if (!user || !token) {
         return;
       }
+      
+      // Find the user in the appropriate array
+      const targetUser = type === 0 
+        ? searchResults.find(user => user.id === followee)
+        : recommendedUsers.find(user => user.id === followee);
+      
+      // Check if user is private and not already followed
+      if (targetUser?.isPrivate && !targetUser.followers?.includes(user.uid)) {
+        // TODO: In the future, you could implement a follow request system here
+        console.log("This account is private and cannot be followed");
+        return;
+      }
+      
       let followOrUnfollow = "";
       if (type === 0) {
         followOrUnfollow = searchResults.find((theUser) => theUser.followers?.includes(user.uid)) ? "unfollowUser" : "followUser";
       } else if (type === 1) {
         followOrUnfollow = recommendedUsers.find((theUser) => theUser.followers?.includes(user.uid)) ? "unfollowUser" : "followUser";
       }
+      
       const followRes = await fetch(`${API_BASE_URL}/${followOrUnfollow}`, {
         method: 'POST',
         headers: {
@@ -130,6 +148,9 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
           followee,
         })
       });
+      
+      const responseData = await followRes.json();
+      
       if (!followRes.ok) {
         throw new Error("Failed to follow user");
       }
@@ -233,15 +254,32 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
                     <AccountCircle />
                   </Box>
                   <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                    <Box sx={{ fontWeight: 'bold', textOverflow: 'ellipsis', overflow: 'hidden' }}>{theUser.name}</Box>
+                    <Box sx={{ fontWeight: 'bold', textOverflow: 'ellipsis', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                      {theUser.name}
+                      {theUser.isPrivate && (
+                        <Tooltip title="Private Account">
+                          <LockOutlined fontSize="small" sx={{ ml: 0.5, fontSize: '1rem', color: 'text.secondary' }} />
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Box sx={{ color: 'grey.500', textOverflow: 'ellipsis', overflow: 'hidden' }}>{theUser.email}</Box>
                   </Box>
                   {theUser.id !== user.uid && (
                     <Box sx={{ ml: '1' }}>
-                      <Button variant={theUser.followers?.includes(user.uid) ? "contained" : "outlined"} size="small"
-                        onClick={() => { handleFollow(0, theUser.id) }}>
-                        {theUser.followers?.includes(user.uid) ? "Following" : "Follow"}
-                      </Button>
+                      {theUser.isPrivate && !theUser.followers?.includes(user.uid) ? (
+                        <Tooltip title="This account is private and cannot be followed">
+                          <span>
+                            <Button variant="outlined" size="small" disabled>
+                              Private
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <Button variant={theUser.followers?.includes(user.uid) ? "contained" : "outlined"} size="small"
+                          onClick={() => { handleFollow(0, theUser.id) }}>
+                          {theUser.followers?.includes(user.uid) ? "Following" : "Follow"}
+                        </Button>
+                      )}
                     </Box>
                   )}
                 </Box>
@@ -262,15 +300,32 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
                     <AccountCircle />
                   </Box>
                   <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-                    <Box sx={{ fontWeight: 'bold', textOverflow: 'ellipsis', overflow: 'hidden' }}>{theUser.name}</Box>
+                    <Box sx={{ fontWeight: 'bold', textOverflow: 'ellipsis', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                      {theUser.name}
+                      {theUser.isPrivate && (
+                        <Tooltip title="Private Account">
+                          <LockOutlined fontSize="small" sx={{ ml: 0.5, fontSize: '1rem', color: 'text.secondary' }} />
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Box sx={{ color: 'grey.500', textOverflow: 'ellipsis', overflow: 'hidden' }}>{theUser.email}</Box>
                   </Box>
                   {theUser.id !== user.uid && (
                     <Box sx={{ ml: '1' }}>
-                      <Button variant={theUser.followers?.includes(user.uid) ? "contained" : "outlined"} size="small"
-                        onClick={() => { handleFollow(1, theUser.id) }}>
-                        {theUser.followers?.includes(user.uid) ? "Following" : "Follow"}
-                      </Button>
+                      {theUser.isPrivate && !theUser.followers?.includes(user.uid) ? (
+                        <Tooltip title="This account is private and cannot be followed">
+                          <span>
+                            <Button variant="outlined" size="small" disabled>
+                              Private
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <Button variant={theUser.followers?.includes(user.uid) ? "contained" : "outlined"} size="small"
+                          onClick={() => { handleFollow(1, theUser.id) }}>
+                          {theUser.followers?.includes(user.uid) ? "Following" : "Follow"}
+                        </Button>
+                      )}
                     </Box>
                   )}
                 </Box>
