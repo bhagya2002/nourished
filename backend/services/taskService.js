@@ -117,7 +117,7 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-          (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
         );
         // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
         if (taskResult.data.completedAt) {
@@ -434,7 +434,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -533,7 +533,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -830,7 +830,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-        (1000 * 3600 * 24),
+          (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {
@@ -1083,7 +1083,7 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
   try {
     console.log("Starting scheduled task reset check...");
 
-    plantHealthPromise = decrementPlantHealth();
+    let plantHealthPromise = decrementPlantHealth();
 
     // Get all completed tasks with frequencies
     const completedTasksResult = await db.queryDatabaseCustom("tasks", [
@@ -1139,7 +1139,7 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
         if (decrementByUID.has(task.uid)) {
           decrementByUID.set(task.uid, decrementByUID.get(task.uid) - 1);
         } else {
-          decrementByUID.set(task.uid, -1)
+          decrementByUID.set(task.uid, -1);
         }
         tasksToReset.push(task.id);
         console.log(
@@ -1175,7 +1175,7 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
       }
     }
 
-    await (plantHealthPromise);
+    await plantHealthPromise;
 
     console.log(
       `Completed task reset check. Reset ${tasksToReset.length} tasks.`,
@@ -1420,7 +1420,7 @@ async function decrementPlantHealth() {
     const snapshot = await collectionRef.get();
     const batch = db.batch(); // Start a batch for multiple writes
 
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       // Get current field value (assuming the field is called 'count')
       const currentPlantHealth = doc.data().plantHealth || 1; // Default to 0 if field is missing
       if (currentPlantHealth > 1) {
@@ -1432,6 +1432,6 @@ async function decrementPlantHealth() {
     // Commit the batch to apply all updates
     await db.commitBatch(batch);
   } catch (error) {
-    console.error('Error decrementing field:', error);
+    console.error("Error decrementing field:", error);
   }
 }

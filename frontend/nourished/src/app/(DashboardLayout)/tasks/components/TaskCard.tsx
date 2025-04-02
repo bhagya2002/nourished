@@ -19,7 +19,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { motion } from 'framer-motion';
 import FlagIcon from '@mui/icons-material/Flag';
-import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmationDialog from './ConfirmationDialog';
 
 // Import task-related icons

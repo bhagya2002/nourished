@@ -8,7 +8,6 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
-  Divider,
   Paper,
   Grid,
   useTheme,

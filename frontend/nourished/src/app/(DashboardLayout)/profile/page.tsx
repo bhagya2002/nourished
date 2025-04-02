@@ -16,7 +16,6 @@ import {
   ListItemAvatar,
   ListItemText,
   Container,
-  useTheme,
   Tooltip,
   FormControlLabel,
   Switch,

@@ -16,7 +16,6 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, provider, db } from "@/firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import Image from "next/image";
 import { IconLeaf } from "@tabler/icons-react";
 import { keyframes } from '@emotion/react';
 import { alpha } from '@mui/material/styles';

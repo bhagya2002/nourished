@@ -64,7 +64,10 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
       return userResult;
     }
 
-    const followersAndFriends = [...userResult.data.friends, ...userResult.data.following];
+    const followersAndFriends = [
+      ...userResult.data.friends,
+      ...userResult.data.following,
+    ];
     const allUids = [...followersAndFriends, uid];
 
     // Initialize an array to hold all the promises for fetching user and friend posts
