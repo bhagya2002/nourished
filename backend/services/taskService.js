@@ -117,7 +117,7 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
         );
         // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
         if (taskResult.data.completedAt) {
@@ -394,6 +394,15 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
     try {
       if (completed) {
         console.log(`Setting completedAt timestamp for task ${taskId}`);
+
+        const userData = await db.queryDatabaseSingle(uid, "users");
+        if (userData.success) {
+          const plantHealth = userData.data.plantHealth;
+          if (plantHealth < 6) {
+            await db.incrementField("users", uid, "plantHealth", 1);
+          }
+        }
+
         const update2 = await db.updateField(
           "tasks",
           taskId,
@@ -425,7 +434,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -524,7 +533,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -821,7 +830,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-          (1000 * 3600 * 24),
+        (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {
@@ -1074,6 +1083,8 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
   try {
     console.log("Starting scheduled task reset check...");
 
+    plantHealthPromise = decrementPlantHealth();
+
     // Get all completed tasks with frequencies
     const completedTasksResult = await db.queryDatabaseCustom("tasks", [
       ["completed", "==", true],
@@ -1090,6 +1101,8 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
 
     const tasksToReset = [];
     const now = new Date();
+
+    const decrementByUID = new Map();
 
     // Determine which tasks need to be reset
     for (const task of completedTasksResult.data) {
@@ -1123,6 +1136,11 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
       }
 
       if (shouldReset) {
+        if (decrementByUID.has(task.uid)) {
+          decrementByUID.set(task.uid, decrementByUID.get(task.uid) - 1);
+        } else {
+          decrementByUID.set(task.uid, -1)
+        }
         tasksToReset.push(task.id);
         console.log(
           `Task ${task.id} (${task.title}) - ${task.frequency} will be reset from completed state`,
@@ -1156,6 +1174,8 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
         resetResults.push({ taskId, success: false, error: resetErr.message });
       }
     }
+
+    await (plantHealthPromise);
 
     console.log(
       `Completed task reset check. Reset ${tasksToReset.length} tasks.`,
@@ -1392,3 +1412,26 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
     };
   }
 };
+
+async function decrementPlantHealth() {
+  try {
+    // Fetch all documents from the collection
+    const collectionRef = db.getCollectionRef("users");
+    const snapshot = await collectionRef.get();
+    const batch = db.batch(); // Start a batch for multiple writes
+
+    snapshot.forEach(doc => {
+      // Get current field value (assuming the field is called 'count')
+      const currentPlantHealth = doc.data().plantHealth || 1; // Default to 0 if field is missing
+      if (currentPlantHealth > 1) {
+        const docRef = collectionRef.doc(doc.id);
+        batch.update(docRef, { plantHealth: currentPlantHealth - 1 });
+      }
+    });
+
+    // Commit the batch to apply all updates
+    await db.commitBatch(batch);
+  } catch (error) {
+    console.error('Error decrementing field:', error);
+  }
+}
