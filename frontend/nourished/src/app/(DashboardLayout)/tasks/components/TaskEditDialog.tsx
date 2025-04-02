@@ -73,6 +73,10 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
       setErrorMsg('Description must be <= 200 characters.');
       return;
     }
+    if (!frequency.trim()) {
+      setErrorMsg('Frequency is required.');
+      return;
+    }
 
     const duplicates = userTasks.filter(
       (t) =>
@@ -130,12 +134,13 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
           />
           <TextField
             select
+            required
             label='Frequency'
             value={frequency}
             onChange={(e) => setFrequency(e.target.value)}
             size='small'
           >
-            <MenuItem value=''>(none)</MenuItem>
+            <MenuItem value="">Select frequency</MenuItem>
             <MenuItem value='Daily'>Daily</MenuItem>
             <MenuItem value='Weekly'>Weekly</MenuItem>
             <MenuItem value='Monthly'>Monthly</MenuItem>
