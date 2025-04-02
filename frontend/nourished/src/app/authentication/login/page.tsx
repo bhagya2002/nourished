@@ -7,6 +7,8 @@ import {
   Typography,
   CircularProgress,
   Button,
+  useTheme,
+  Avatar,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +16,8 @@ import GoogleIcon from "@mui/icons-material/Google";
 import { auth, provider, db } from "@/firebaseConfig";
 import { signInWithPopup } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import Image from "next/image";
+import { IconLeaf } from "@tabler/icons-react";
 
 // Components
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
@@ -21,6 +25,7 @@ import AuthLogin from "../auth/AuthLogin";
 
 const Login2 = () => {
   const router = useRouter();
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -97,80 +102,127 @@ const Login2 = () => {
           >
             <Card
               elevation={9}
-              sx={{ p: 4, zIndex: 1, width: "100%", maxWidth: "500px" }}
+              sx={{ 
+                p: 4, 
+                zIndex: 1, 
+                width: "100%", 
+                maxWidth: "500px",
+                borderRadius: "16px",
+                boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+                position: "relative",
+                overflow: "hidden",
+                "&:before": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "6px",
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                }
+              }}
             >
-              <Box display="flex" alignItems="center" justifyContent="center">
+              <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" mb={4}>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.light})`,
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+                    mb: 2,
+                  }}
+                >
+                  <IconLeaf size={40} />
+                </Avatar>
                 <Typography
-                  variant="h1"
+                  variant="h2"
                   textAlign="center"
                   color="textPrimary"
-                  mb={1}
                   fontWeight="700"
+                  sx={{
+                    backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    color: "transparent",
+                    letterSpacing: "0.5px",
+                  }}
                 >
                   Nourished
                 </Typography>
               </Box>
+              
               <AuthLogin
                 subtext={
                   <Typography
                     variant="subtitle1"
                     textAlign="center"
                     color="textSecondary"
-                    mb={1}
+                    mb={3}
                   >
                     Wellness Made Simple
                   </Typography>
                 }
                 subtitle={
-                  <Stack direction="column" spacing={2} mt={3}>
-                    {/* Create an account */}
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      <Typography
-                        color="textSecondary"
-                        variant="h6"
-                        fontWeight="500"
-                      >
-                        New to Nourished?
-                      </Typography>
-                      <Typography
-                        component="a"
-                        href="/authentication/register"
-                        fontWeight="500"
-                        onClick={handleDelayedNavigation}
-                        sx={{
-                          textDecoration: "none",
-                          color: loading ? "grey" : "primary.main",
-                          cursor: loading ? "default" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        {loading ? (
-                          <CircularProgress size={16} color="inherit" />
-                        ) : (
-                          "Create an account"
-                        )}
-                      </Typography>
-                    </Stack>
-
-                    {/* Google Sign-In */}
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<GoogleIcon />}
-                      onClick={handleGoogleSignIn}
-                      disabled={googleLoading}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    justifyContent="center"
+                    mt={3}
+                  >
+                    <Typography
+                      color="textSecondary"
+                      variant="body1"
+                      fontWeight="500"
                     >
-                      {googleLoading ? (
-                        <CircularProgress size={20} />
+                      New to Nourished?
+                    </Typography>
+                    <Typography
+                      component="a"
+                      href="/authentication/register"
+                      fontWeight="500"
+                      sx={{
+                        color: theme.palette.primary.main,
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                      onClick={handleDelayedNavigation}
+                    >
+                      {loading ? (
+                        <CircularProgress size={16} color="primary" />
                       ) : (
-                        "Sign in with Google"
+                        "Create an Account"
                       )}
-                    </Button>
+                    </Typography>
                   </Stack>
                 }
               />
+
+              <Box mt={3} textAlign="center">
+                <Button
+                  variant="outlined"
+                  size="large"
+                  fullWidth
+                  startIcon={
+                    googleLoading ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : (
+                      <GoogleIcon />
+                    )
+                  }
+                  disabled={googleLoading}
+                  onClick={handleGoogleSignIn}
+                  sx={{
+                    borderRadius: "30px",
+                    textTransform: "none",
+                    py: 1.2,
+                  }}
+                >
+                  Sign In With Google
+                </Button>
+              </Box>
             </Card>
           </Grid>
         </Grid>
