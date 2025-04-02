@@ -15,6 +15,12 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
+  Container,
+  useTheme,
+  Tooltip,
+  FormControlLabel,
+  Switch,
+  Divider,
 } from '@mui/material';
 import {
   collection,
@@ -23,6 +29,7 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '@/firebaseConfig';
 import { useAuth } from '@/context/AuthContext';
@@ -33,10 +40,12 @@ import {
   IconMail,
   IconMapPin,
   IconUsers,
+  IconLock,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import DefaultAvatar from '../components/shared/DefaultAvatar';
+import FollowList from './components/FollowList';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,6 +68,18 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+interface UserData {
+  name: string;
+  photoURL?: string;
+  email?: string;
+}
+
+interface FollowData {
+  id: string;
+  name: string;
+  photoURL?: string;
+}
+
 const ProfilePage = () => {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -70,6 +91,7 @@ const ProfilePage = () => {
     friends: string[];
     joinedDate?: string;
     location?: string;
+    isPrivate?: boolean;
     // bio?: string;
     stats?: {
       tasksCompleted: number;
@@ -96,6 +118,9 @@ const ProfilePage = () => {
     }>
   >([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [followers, setFollowers] = useState<FollowData[]>([]);
+  const [followees, setFollowees] = useState<FollowData[]>([]);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -166,6 +191,7 @@ const ProfilePage = () => {
               email: data.email,
               friends: data.friends || [],
               joinedDate: data.createdAt || new Date().toISOString(),
+              isPrivate: data.isPrivate || false,
               // bio: data.bio || 'No bio yet',
               stats: {
                 tasksCompleted: tasks.length,
@@ -174,6 +200,8 @@ const ProfilePage = () => {
                 averageHappiness: avgHappiness,
               },
             });
+            
+            setIsPrivate(data.isPrivate || false);
 
             // Fetch friends data
             if (data.friends && data.friends.length > 0) {
@@ -219,6 +247,43 @@ const ProfilePage = () => {
 
           setAllActivity(allActivityData);
           setRecentActivity(allActivityData.slice(0, 5));
+
+          // Fetch followers and followees - CORRECTED METHOD
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const userData = userDoc.data();
+          
+          // Get arrays of follower and followee IDs from user document
+          const followerIds = userData?.followers || [];
+          const followeeIds = userData?.following || [];
+          
+          // Fetch user data for all followers
+          const followersData = await Promise.all(
+            followerIds.map(async (followerId: string) => {
+              const followerDoc = await getDoc(doc(db, 'users', followerId));
+              const followerData = followerDoc.data() as UserData;
+              return {
+                id: followerId,
+                name: followerData?.name || 'Unknown User',
+                photoURL: followerData?.photoURL,
+              };
+            })
+          );
+
+          // Fetch user data for all followees
+          const followeesData = await Promise.all(
+            followeeIds.map(async (followeeId: string) => {
+              const followeeDoc = await getDoc(doc(db, 'users', followeeId));
+              const followeeData = followeeDoc.data() as UserData;
+              return {
+                id: followeeId,
+                name: followeeData?.name || 'Unknown User',
+                photoURL: followeeData?.photoURL,
+              };
+            })
+          );
+
+          setFollowers(followersData);
+          setFollowees(followeesData);
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
@@ -232,6 +297,29 @@ const ProfilePage = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handlePrivacyToggle = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newPrivacyValue = event.target.checked;
+    setIsPrivate(newPrivacyValue);
+    
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        isPrivate: newPrivacyValue
+      });
+      
+      // Update local userData state
+      setUserData(prev => prev ? {
+        ...prev,
+        isPrivate: newPrivacyValue
+      } : null);
+      
+    } catch (error) {
+      console.error("Error updating privacy setting:", error);
+      // Revert toggle state if update fails
+      setIsPrivate(!newPrivacyValue);
+    }
   };
 
   if (loading || isLoading) {
@@ -261,6 +349,7 @@ const ProfilePage = () => {
 
   return (
     <PageContainer title='Profile' description='View and manage your profile'>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Grid container spacing={3}>
         {/* Profile Header */}
         <Grid item xs={12}>
@@ -298,20 +387,27 @@ const ProfilePage = () => {
                     boxShadow: 1,
                   }}
                 />
-                <Box sx={{ flex: 1, mb: 2 }}>
-                  <Typography variant='h4' fontWeight='bold'>
-                    {userData.name}
+                  <Box sx={{ flex: 1, mb: 2, mt: 4 }}>
+                    <Typography variant='h4' fontWeight='bold' sx={{ display: 'flex', alignItems: 'center' }}>
+                      {userData?.name}
+                      {userData?.isPrivate && (
+                        <Tooltip title="Private Account">
+                          <Box component="span" sx={{ display: 'inline-flex', ml: 1 }}>
+                            <IconLock size={20} />
+                          </Box>
+                        </Tooltip>
+                      )}
                   </Typography>
                   <Stack direction='row' spacing={1} alignItems='center'>
                     <IconMail size={16} />
                     <Typography variant='body2' color='text.secondary'>
-                      {userData.email}
+                        {userData?.email}
                     </Typography>
-                    {userData.location && (
+                      {userData?.location && (
                       <>
                         <IconMapPin size={16} />
                         <Typography variant='body2' color='text.secondary'>
-                          {userData.location}
+                            {userData?.location}
                         </Typography>
                       </>
                     )}
@@ -321,8 +417,9 @@ const ProfilePage = () => {
                   variant='contained'
                   startIcon={<IconEdit size={18} />}
                   onClick={() => router.push('/profile/account')}
+                    sx={{ mt: 2 }}
                 >
-                  Change Password
+                    Edit Profile
                 </Button>
               </Box>
             </Box>
@@ -390,6 +487,7 @@ const ProfilePage = () => {
                 <Tab label='Overview' sx={{ minHeight: 48 }} />
                 <Tab label='Activity' sx={{ minHeight: 48 }} />
                 <Tab label='Friends' sx={{ minHeight: 48 }} />
+                  <Tab label='Connections' sx={{ minHeight: 48 }} />
               </Tabs>
             </Box>
           </DashboardCard>
@@ -401,22 +499,37 @@ const ProfilePage = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} md={4}>
                 <DashboardCard title='About'>
-                  {/* <Typography variant='body1' paragraph>
-                    {userData.bio}
-                  </Typography> */}
                   <Stack spacing={2}>
-                    {/* <Box display='flex' alignItems='center' gap={1}>
-                      <IconCalendar size={20} />
-                      <Typography variant='body2'>
-                        Joined{' '}
-                        {new Date(userData.joinedDate!).toLocaleDateString()}
-                      </Typography>
-                    </Box> */}
                     <Box display='flex' alignItems='center' gap={1}>
                       <IconUsers size={20} />
                       <Typography variant='body2'>
-                        {userData.friends.length} Friends
+                          {userData?.friends.length} Friends
+                        </Typography>
+                      </Box>
+                      
+                      <Divider />
+                      
+                      <Box>
+                        <Typography variant='subtitle2' gutterBottom>
+                          Privacy Settings
+                        </Typography>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={isPrivate}
+                              onChange={handlePrivacyToggle}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Box>
+                              <Typography variant='body2'>Private Account</Typography>
+                              <Typography variant='caption' color='text.secondary'>
+                                Only approved users can follow you
                       </Typography>
+                            </Box>
+                          }
+                        />
                     </Box>
                   </Stack>
                 </DashboardCard>
@@ -530,8 +643,15 @@ const ProfilePage = () => {
               </List>
             </DashboardCard>
           </TabPanel>
+
+            <TabPanel value={tabValue} index={3}>
+              <DashboardCard>
+                <FollowList followers={followers} followees={followees} />
+              </DashboardCard>
+            </TabPanel>
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
     </PageContainer>
   );
 };
