@@ -175,6 +175,4 @@ describe("challengeService", function () {
             expect(result).to.deep.equal({ success: false, error: "Batch commit failed" });
         });
     });
-
-    // Additional tests for other functions like `addUserToChallenge`, `removeUserFromChallenge`, etc., can be written similarly.
 });
