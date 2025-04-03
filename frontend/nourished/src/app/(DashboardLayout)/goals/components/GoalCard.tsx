@@ -31,6 +31,7 @@ import AddTaskIcon from "@mui/icons-material/AddTask";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import TaskCard from "../../tasks/components/TaskCard";
+import ConfirmationDialog from "../../tasks/components/ConfirmationDialog";
 import { Goal } from "../page";
 
 interface GoalCardProps {
@@ -65,6 +66,8 @@ const GoalCard: React.FC<GoalCardProps> = ({
   // State for the more actions menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Calculate task statistics
   const taskStats = useMemo(() => {
@@ -132,6 +135,13 @@ const GoalCard: React.FC<GoalCardProps> = ({
   const handleDeleteClick = () => {
     handleMenuClose();
     onDelete();
+  };
+
+  const handleConfirmDelete = () => {
+    setDeleteDialogOpen(false);
+    if (onDelete) {
+      onDelete();
+    }
   };
 
   return (
@@ -225,9 +235,8 @@ const GoalCard: React.FC<GoalCardProps> = ({
             />
             <Chip
               icon={<CheckCircleIcon />}
-              label={`${goal.tasks.filter((t) => t.completed).length}/${
-                goal.tasks.length
-              } tasks`}
+              label={`${goal.tasks.filter((t) => t.completed).length}/${goal.tasks.length
+                } tasks`}
               color="primary"
               size="small"
               variant="outlined"
@@ -340,7 +349,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
           </MenuItem>
           <MenuItem
             onClick={() => {
-              onDelete();
+              setDeleteDialogOpen(true);
               setAnchorEl(null);
             }}
             sx={{ color: "error.main" }}
@@ -351,6 +360,17 @@ const GoalCard: React.FC<GoalCardProps> = ({
             <ListItemText>Delete</ListItemText>
           </MenuItem>
         </Menu>
+
+        {/* Add the confirmation dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          title="Delete Goal"
+          message="Are you sure you want to delete this goal? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteDialogOpen(false)}
+        />
       </Card>
     </motion.div>
   );

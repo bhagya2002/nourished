@@ -259,8 +259,8 @@ export default function GoalsPage() {
       const tasksArray = Array.isArray(tasksData)
         ? tasksData
         : tasksData && Array.isArray(tasksData.data)
-        ? tasksData.data
-        : [];
+          ? tasksData.data
+          : [];
 
       setGoals((prevGoals) => {
         // Additional safety check
@@ -302,30 +302,28 @@ export default function GoalsPage() {
 
   // Deletes a goal after confirmation
   const handleDeleteGoalClick = async (index: number) => {
-    if (window.confirm("Are you sure you want to delete this goal?")) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/deleteGoal`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token, goalId: goals[index].id }),
-        });
-        if (!response.ok) throw new Error("Failed to delete goal");
-        setGoals((prevGoals) => prevGoals.filter((_, i) => i !== index));
-        setToast({
-          open: true,
-          message: "Goal deleted successfully!",
-          severity: "success",
-        });
-      } catch (error) {
-        console.error("Error deleting goal:", error);
-        setToast({
-          open: true,
-          message: "Failed to delete goal",
-          severity: "error",
-        });
-      }
+    try {
+      const response = await fetch(`${API_BASE_URL}/deleteGoal`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, goalId: goals[index].id }),
+      });
+      if (!response.ok) throw new Error("Failed to delete goal");
+      setGoals((prevGoals) => prevGoals.filter((_, i) => i !== index));
+      setToast({
+        open: true,
+        message: "Goal deleted successfully!",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting goal:", error);
+      setToast({
+        open: true,
+        message: "Failed to delete goal",
+        severity: "error",
+      });
     }
   };
 
@@ -566,7 +564,7 @@ export default function GoalsPage() {
         const taskCreatedTime = new Date(taskCreatedAt);
         const daysLeft = Math.ceil(
           (goalDeadline.getTime() - taskCreatedTime.getTime()) /
-            (1000 * 60 * 60 * 24)
+          (1000 * 60 * 60 * 24)
         );
         let totalTasks = 0;
         // Calculate total tasks incompleted based on goal deadline and frequency
@@ -649,7 +647,7 @@ export default function GoalsPage() {
           const taskEditTime = new Date();
           let daysLeft = Math.ceil(
             (goalDeadline.getTime() - taskEditTime.getTime()) /
-              (1000 * 60 * 60 * 24)
+            (1000 * 60 * 60 * 24)
           );
           if (updatedTasks[taskEditingIndex].completedAt) {
             const completedAt: Date = new Date(
@@ -781,7 +779,7 @@ export default function GoalsPage() {
           const taskDeletedTime = new Date();
           let daysLeft = Math.ceil(
             (goalDeadline.getTime() - taskDeletedTime.getTime()) /
-              (1000 * 60 * 60 * 24)
+            (1000 * 60 * 60 * 24)
           );
           if (updatedTasks[taskIndex].completedAt) {
             const completedAt: Date = new Date(
@@ -1134,9 +1132,9 @@ export default function GoalsPage() {
                     isOwner={
                       goal.isChallenge
                         ? user.uid ===
-                          challenges.find(
-                            (challenge) => challenge.goalId === goal.id
-                          )?.uid
+                        challenges.find(
+                          (challenge) => challenge.goalId === goal.id
+                        )?.uid
                         : true
                     }
                     key={goal.id}
@@ -1240,8 +1238,8 @@ export default function GoalsPage() {
               {isEditing
                 ? newGoal.isChallenge
                   ? challenges.find(
-                      (challenge) => challenge.goalId === newGoal.id
-                    )?.goalId === newGoal.id
+                    (challenge) => challenge.goalId === newGoal.id
+                  )?.goalId === newGoal.id
                     ? "Challenge Info"
                     : "Edit Challenge"
                   : "Edit goal"
@@ -1267,9 +1265,9 @@ export default function GoalsPage() {
                   isEditing &&
                   newGoal.isChallenge &&
                   user.uid !==
-                    challenges.find(
-                      (challenge) => challenge.goalId === newGoal.id
-                    )?.uid
+                  challenges.find(
+                    (challenge) => challenge.goalId === newGoal.id
+                  )?.uid
                 }
               />
               <TextField
@@ -1285,9 +1283,9 @@ export default function GoalsPage() {
                   isEditing &&
                   newGoal.isChallenge &&
                   user.uid !==
-                    challenges.find(
-                      (challenge) => challenge.goalId === newGoal.id
-                    )?.uid
+                  challenges.find(
+                    (challenge) => challenge.goalId === newGoal.id
+                  )?.uid
                 }
               />
               <TextField
@@ -1381,14 +1379,14 @@ export default function GoalsPage() {
                 isEditing &&
                 newGoal.isChallenge &&
                 user.uid !==
-                  challenges.find(
-                    (challenge) => challenge.goalId === newGoal.id
-                  )?.uid
+                challenges.find(
+                  (challenge) => challenge.goalId === newGoal.id
+                )?.uid
               ) && (
-                <Button variant="contained" onClick={handleSubmit}>
-                  {isEditing ? "Update" : "Create"}
-                </Button>
-              )}
+                  <Button variant="contained" onClick={handleSubmit}>
+                    {isEditing ? "Update" : "Create"}
+                  </Button>
+                )}
             </DialogActions>
           </Dialog>
         )}
@@ -1401,8 +1399,8 @@ export default function GoalsPage() {
             onCreate={handleGoalTaskCreate}
             userTasks={
               expandingGoalIndex >= 0 &&
-              goals[expandingGoalIndex] !== undefined &&
-              Array.isArray(goals[expandingGoalIndex].tasks)
+                goals[expandingGoalIndex] !== undefined &&
+                Array.isArray(goals[expandingGoalIndex].tasks)
                 ? goals[expandingGoalIndex].tasks
                 : []
             }
