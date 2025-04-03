@@ -4,7 +4,7 @@
   "description": "The backend for nourished, the gamified wellness app",
   "main": "server/server.js",
   "scripts": {
-    "test": "mocha",
+    "test": "nyc --reporter=text mocha",
     "tested": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development nodemon server/server.js",
     "start": "NODE_ENV=production node server/server.js",
@@ -34,6 +34,7 @@
     "eslint-plugin-prettier": "^5.2.3",
     "globals": "^16.0.0",
     "nodemon": "^3.1.9",
+    "nyc": "^17.1.0",
     "prettier": "^3.5.3"
   }
 }
