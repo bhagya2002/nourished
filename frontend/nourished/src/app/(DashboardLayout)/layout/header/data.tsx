@@ -113,11 +113,11 @@ const appsLink = [
 
 const pageLinks = [
   {
-    href: "/auth/login",
+    href: "/authentication/login",
     title: "Authentication Design",
   },
   {
-    href: "/auth/register",
+    href: "/authentication/register",
     title: "Register Now",
   },
   {
