@@ -93,5 +93,25 @@ test('Sign-up and login flow', async ({ page }) => {
 
         await page.waitForURL('**/dashboard');
         await expect(page.url()).toContain('/dashboard');
+
+        // Instead of clicking, assert visibility of dashboard sections
+        await expect(page.getByRole('heading', { name: 'Welcome back,' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Your Wellness Plant' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Task Progress' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Get your daily wellness tip' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Your Streak' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Goal Progress' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Task Completion Trends' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Happiness Trends' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Wellness Categories' })).toBeVisible();
+
+        // Navigation links
+        await expect(page.getByRole('link', { name: 'Goals (Challenges)' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Tasks' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Mood Tracker' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Friend Circle' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Profile' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Logout' })).toBeVisible();
     });
 });

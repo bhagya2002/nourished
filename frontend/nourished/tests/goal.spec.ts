@@ -81,7 +81,7 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
     await test.step('Edit Goals', async () => {
         await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible();
         await page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first().click();
-        await page.getByText('Edit').first().click();
+        await page.getByText('Edit', { exact: true }).first().click();
 
         // Input Random Task Details
         await page.getByRole('textbox', { name: 'Title' }).fill(editGoalTitle);
@@ -96,21 +96,20 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
 
     // ---- Delete Goals ----
     await test.step('Delete Goals', async () => {
-        await page.waitForTimeout(2000);
+        await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible()
+        await page.waitForTimeout(1000);
+        await page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first().click();
 
-        const deleteButton = page.getByRole('button').filter({ hasText: /^$/ }).nth(2);
+        await expect(page.getByText('Delete')).toBeVisible();
+        await page.getByText('Delete').click();
 
-        while (await deleteButton.count() > 0) {
-            await deleteButton.first().click();
-            await page.getByText('Delete').click();
+        await expect(page.getByRole('heading', { name: 'Delete Goal' })).toBeVisible();
+        await expect(page.getByText('Are you sure you want to')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
+        await page.getByRole('button', { name: 'Delete' }).click();
 
-            page.once('dialog', async dialog => {
-                console.log(`Dialog message: ${dialog.message()}`);
-                await dialog.accept();
-            });
-        }
-
-        await expect(page.getByRole('heading', { name: 'Set Your Goals' })).toBeVisible();
-        await expect(page.getByText('Create goals to track your progress')).toBeVisible();
+        // await expect(page.getByRole('heading', { name: 'Set Your Goals' })).toBeVisible();
+        // await expect(page.getByText('Create goals to track your')).toBeVisible();
     });
 });

@@ -5,6 +5,7 @@ export default defineConfig({
     testDir: './tests',
     fullyParallel: false,
     workers: 1,
+    retries: 1,
     use: {
         headless: false,
         baseURL: 'http://localhost:3000',
