@@ -130,7 +130,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!loading && !user) {
       console.log("❌ No user, redirecting to login...");
-      router.push("/login");
+      router.push("/");
     }
   }, [user, token, loading, router]);
 

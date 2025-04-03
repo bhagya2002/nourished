@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const sinon = require("sinon");
+const { afterEach, describe, it } = require("mocha");
 const inviteService = require("../services/inviteService");
 const db = require("../firebase/firestore");
 
@@ -66,6 +67,10 @@ describe("inviteService Tests", function () {
       sinon.stub(db, "batch").returns(batchStub);
       sinon.stub(db, "getRef").returnsArg(1);
       sinon.stub(db, "getAddToArray").returnsArg(0);
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .returns({ success: true, data: {} });
+      sinon.stub(db, "updateFieldArray").returns({ success: true });
 
       const result = await inviteService.acceptInvite("user123", {
         inviteId: "invite789",
@@ -83,6 +88,9 @@ describe("inviteService Tests", function () {
         update: sinon.stub(),
         commit: sinon.stub().rejects(new Error("Invite not found")),
       });
+
+      sinon.stub(db, "getRef").returnsArg(1);
+      sinon.stub(db, "getAddToArray").returnsArg(0);
 
       const result = await inviteService.acceptInvite("user123", {
         inviteId: "invite789",

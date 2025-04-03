@@ -67,35 +67,35 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
         return (
           <SentimentVeryDissatisfiedIcon
             fontSize='large'
-            sx={{ color: theme.palette.error.main }}
+            sx={{ color: '#f44336' }}
           />
         );
       case 2:
         return (
           <SentimentDissatisfiedIcon
             fontSize='large'
-            sx={{ color: theme.palette.warning.main }}
+            sx={{ color: '#ff9800' }}
           />
         );
       case 3:
         return (
           <SentimentNeutralIcon
             fontSize='large'
-            sx={{ color: theme.palette.info.main }}
+            sx={{ color: '#2196f3' }}
           />
         );
       case 4:
         return (
           <SentimentSatisfiedIcon
             fontSize='large'
-            sx={{ color: theme.palette.success.light }}
+            sx={{ color: '#4caf50' }}
           />
         );
       case 5:
         return (
           <SentimentSatisfiedAltIcon
             fontSize='large'
-            sx={{ color: theme.palette.success.main }}
+            sx={{ color: '#00c853' }}
           />
         );
       default:

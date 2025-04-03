@@ -7,12 +7,19 @@ import {
   Button,
   CircularProgress,
   Alert,
+  InputAdornment,
+  useTheme,
+  Stack,
 } from "@mui/material";
-import { Stack } from "@mui/system";
 import CustomTextField from "@/app/(DashboardLayout)/components/forms/theme-elements/CustomTextField";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  browserLocalPersistence,
+  setPersistence,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/firebaseConfig";
+import { IconMail, IconLock, IconUser } from "@tabler/icons-react";
 
 interface AuthRegisterProps {
   title?: string;
@@ -25,6 +32,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
   subtitle,
   subtext,
 }) => {
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -69,6 +77,9 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
     try {
       setLoading(true);
 
+      // Set persistent session BEFORE user creation
+      await setPersistence(auth, browserLocalPersistence);
+
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -110,83 +121,138 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
       {subtext}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack mb={3}>
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            component="label"
-            htmlFor="name"
-            mb="5px"
-          >
-            Name
-          </Typography>
-          <CustomTextField
-            id="name"
-            variant="outlined"
-            fullWidth
-            placeholder="John Doe"
-            onChange={handleChange}
-          />
+        <Stack spacing={3}>
+          <Box>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              component="label"
+              htmlFor="name"
+              mb="5px"
+            >
+              Name
+            </Typography>
+            <CustomTextField
+              id="name"
+              variant="outlined"
+              fullWidth
+              placeholder="John Doe"
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconUser size={20} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: "10px",
+                  "& .MuiOutlinedInput-input": {
+                    py: 1.5,
+                  },
+                }
+              }}
+            />
+          </Box>
 
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            component="label"
-            htmlFor="email"
-            mb="5px"
-            mt="25px"
-          >
-            Email Address
-          </Typography>
-          <CustomTextField
-            id="email"
-            variant="outlined"
-            fullWidth
-            placeholder="JohnDoe@email.com"
-            onChange={handleChange}
-          />
+          <Box>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              component="label"
+              htmlFor="email"
+              mb="5px"
+            >
+              Email Address
+            </Typography>
+            <CustomTextField
+              id="email"
+              variant="outlined"
+              fullWidth
+              placeholder="your@email.com"
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconMail size={20} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: "10px",
+                  "& .MuiOutlinedInput-input": {
+                    py: 1.5,
+                  },
+                }
+              }}
+            />
+          </Box>
 
-          <Typography
-            variant="subtitle1"
-            fontWeight={600}
-            component="label"
-            htmlFor="password"
-            mb="5px"
-            mt="25px"
-          >
-            Password
-          </Typography>
-          <CustomTextField
-            id="password"
-            variant="outlined"
-            type="password"
-            fullWidth
-            placeholder="********"
-            onChange={handleChange}
-          />
+          <Box>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              component="label"
+              htmlFor="password"
+              mb="5px"
+            >
+              Password
+            </Typography>
+            <CustomTextField
+              id="password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              placeholder="********"
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconLock size={20} color={theme.palette.text.secondary} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: "10px",
+                  "& .MuiOutlinedInput-input": {
+                    py: 1.5,
+                  },
+                }
+              }}
+            />
+          </Box>
         </Stack>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             {error}
           </Alert>
         )}
         {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
+          <Alert severity="success" sx={{ mt: 2 }}>
             {success}
           </Alert>
         )}
 
-        <Button
-          type="submit"
-          color="primary"
-          variant="contained"
-          size="large"
-          fullWidth
-          disabled={loading}
-        >
-          {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
-        </Button>
+        <Box mt={3}>
+          <Button
+            type="submit"
+            color="primary"
+            variant="contained"
+            size="large"
+            fullWidth
+            disabled={loading}
+            sx={{
+              borderRadius: "30px",
+              py: 1.2,
+              textTransform: "none",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+              "&:hover": {
+                background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+              }
+            }}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
+          </Button>
+        </Box>
       </Box>
 
       {subtitle}

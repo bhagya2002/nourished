@@ -1,7 +1,7 @@
-'use client';
-import { createContext, useState, useEffect, useContext } from 'react';
-import { auth } from '@/firebaseConfig';
-import { onAuthStateChanged, onIdTokenChanged, User } from 'firebase/auth';
+"use client";
+import { createContext, useState, useEffect, useContext } from "react";
+import { auth } from "@/firebaseConfig";
+import { onAuthStateChanged, onIdTokenChanged, User } from "firebase/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -14,45 +14,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(
-    typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  );
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  console.log('🔥 AuthProvider is mounted');
+  console.log("🔥 AuthProvider is mounted");
 
   const refreshToken = async (): Promise<string | null> => {
     if (!user) return null;
-    
     try {
-      console.log('🔄 Manually refreshing token...');
+      console.log("🔄 Manually refreshing token...");
       const newToken = await user.getIdToken(true);
       setToken(newToken);
-      localStorage.setItem('authToken', newToken);
-      console.log('✅ Token refreshed successfully');
+      localStorage.setItem("authToken", newToken); // optional, for API access
+      console.log("✅ Token refreshed successfully");
       return newToken;
     } catch (error) {
-      console.error('❌ Failed to refresh token:', error);
+      console.error("❌ Failed to refresh token:", error);
       return null;
     }
   };
 
   useEffect(() => {
-    console.log('🛠 Listening for Firebase Auth changes...');
+    console.log("🛠 Listening for Firebase Auth changes...");
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('📌 Auth state changed:', firebaseUser);
+      console.log("📌 Auth state changed:", firebaseUser);
       if (firebaseUser) {
         const idToken = await firebaseUser.getIdToken();
         setUser(firebaseUser);
         setToken(idToken);
-        localStorage.setItem('authToken', idToken);
-        console.log('User is authenticated:', firebaseUser.email);
+        localStorage.setItem("authToken", idToken); // optional
+        console.log("✅ User is authenticated:", firebaseUser.email);
       } else {
         setUser(null);
         setToken(null);
-        localStorage.removeItem('authToken');
-        console.log('❌ No user found, setting user to null.');
+        localStorage.removeItem("authToken");
+        console.log("❌ No user found, setting user to null.");
       }
       setLoading(false);
     });
@@ -60,18 +57,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribeToken = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          console.log('🔄 Token changed, updating...');
+          console.log("🔄 Token changed, updating...");
           const newToken = await firebaseUser.getIdToken();
           setToken(newToken);
-          localStorage.setItem('authToken', newToken);
+          localStorage.setItem("authToken", newToken); // optional
         } catch (error) {
-          console.error('❌ Failed to get new token:', error);
+          console.error("❌ Failed to get new token:", error);
         }
       }
     });
 
     return () => {
-      console.log('🛑 Unsubscribing from Firebase Auth...');
+      console.log("🛑 Unsubscribing from Firebase Auth...");
       unsubscribeAuth();
       unsubscribeToken();
     };
@@ -87,7 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

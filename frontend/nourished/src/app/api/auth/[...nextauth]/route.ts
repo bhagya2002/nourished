@@ -10,7 +10,7 @@ const authOptions = {
     ],
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
-        signIn: '/login', // Redirect to your login page if not authenticated
+        signIn: '/authentication/login', // Redirect to your login page if not authenticated
     },
 };
 

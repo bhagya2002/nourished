@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-require("dotenv").config();
+require("dotenv").config({ path: "./../.env" });
 const serviceAccount = {
   type: process.env.TYPE,
   project_id: process.env.PROJECT_ID,

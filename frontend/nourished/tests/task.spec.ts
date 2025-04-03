@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test('Create, Edit, and Delete Task', async ({ page }) => {
-    const testEmail = 'testuser@email.com';
-    const testPassword = 'testuser@1234';
+    const testEmail = 'playwright@email.com';
+    const testPassword = 'playwright@1234';
+
+    const randomId = Math.floor(Math.random() * 99999) + 1;
+    const taskTitle = `Create Task${randomId}`;
+    const editTaskTitle = `Edit Task${randomId}`;
+
 
     // ---- Log In ----
     await test.step('Login', async () => {
@@ -28,16 +33,12 @@ test('Create, Edit, and Delete Task', async ({ page }) => {
     // ---- Create Task ----
     await test.step('Create Task', async () => {
         // Time to load the page
-        await page.waitForTimeout(3000);
-
         await page.getByRole('link', { name: 'Tasks' }).click();
         await page.waitForURL('**/tasks');
         await expect(page.url()).toContain('/tasks');
 
         await expect(page.locator('div').filter({ hasText: /^Create Task$/ }).getByRole('button')).toBeVisible();
         await page.locator('div').filter({ hasText: /^Create Task$/ }).getByRole('button').click();
-
-        await page.waitForTimeout(1000);
 
         await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible();
         await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible();
@@ -46,57 +47,54 @@ test('Create, Edit, and Delete Task', async ({ page }) => {
         await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
 
         // Input Random Task Details
-        await page.getByRole('textbox', { name: 'Title' }).fill('Create Task');
+        await page.getByRole('textbox', { name: 'Title' }).fill(taskTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Create Description');
         await page.getByRole('combobox', { name: 'Frequency' }).click();
         await page.getByRole('option', { name: 'Daily' }).click();
 
-        await page.waitForTimeout(1000);
+        await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
         await page.getByRole('button', { name: 'Create' }).click();
 
-        await page.waitForTimeout(2000);
-
-        await expect(page.getByText('DailyCreate TaskCreate')).toBeVisible();
-        await expect(page.getByText('Daily', { exact: true })).toBeVisible();
-        await expect(page.getByRole('heading', { name: 'Create Task' })).toBeVisible();
-        await expect(page.getByText('Create Description')).toBeVisible();
-        await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(2)).toBeVisible();
+        await expect(page.getByRole('heading', { name: taskTitle })).toBeVisible();
+        await expect(page.getByText('Daily', { exact: true }).first()).toBeVisible();
+        await expect(page.getByRole('heading', { name: taskTitle })).toBeVisible();
+        await expect(page.getByText('Create Description').first()).toBeVisible();
+        await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(2).first()).toBeVisible();
     });
 
     // ---- Edit Task ----
     await test.step('Edit Task', async () => {
         // Time to load the page
-        await page.waitForTimeout(2000);
-
+        await expect(page.locator('div:nth-child(6) > .MuiButtonBase-root').first()).toBeVisible();
         await page.locator('div:nth-child(6) > .MuiButtonBase-root').first().click();
         await page.getByRole('menuitem', { name: 'Edit' }).click();
 
         // Input Random Task Details
-        await page.getByRole('textbox', { name: 'Title' }).fill('Edit Task');
+        await page.getByRole('textbox', { name: 'Title' }).fill(editTaskTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Edit Description');
         await page.getByRole('combobox', { name: 'Frequency' }).click();
         await page.getByRole('option', { name: 'Monthly' }).click();
 
-        await page.waitForTimeout(2000);
+        await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
         await page.getByRole('button', { name: 'Save' }).click();
 
-        await page.waitForTimeout(2000);
-
-        await expect(page.getByText('MonthlyEdit TaskEdit')).toBeVisible();
-        await expect(page.getByText('Monthly', { exact: true })).toBeVisible();
-        await expect(page.getByRole('heading', { name: 'Edit Task' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: editTaskTitle }).first()).toBeVisible();
+        await expect(page.getByText('Monthly', { exact: true }).first()).toBeVisible();
     });
 
     // ---- Delete Task ----
     await test.step('Delete Task', async () => {
-        await page.waitForTimeout(2000);
-
+        await expect(page.locator('div:nth-child(6) > .MuiButtonBase-root').first()).toBeVisible();
         await page.locator('div:nth-child(6) > .MuiButtonBase-root').first().click();
         await page.getByRole('menuitem', { name: 'Delete' }).click();
 
-        await page.waitForTimeout(1000);
+        await expect(page.getByRole('heading', { name: 'Delete Task' })).toBeVisible();
+        await expect(page.getByText('Are you sure you want to')).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
 
-        // No Tasks
+        await page.getByRole('button', { name: 'Delete' }).click();
+
         await expect(page.getByRole('heading', { name: 'You don\'t have any active' })).toBeVisible();
         await expect(page.getByText('Create your first task to get')).toBeVisible();
 

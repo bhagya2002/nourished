@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Typography,
   Grid,
@@ -13,15 +13,23 @@ import {
   ListItem,
   ListItemText,
   Alert,
-} from '@mui/material';
-import DefaultAvatar from '../../components/shared/DefaultAvatar';
+} from "@mui/material";
+import DefaultAvatar from "../../components/shared/DefaultAvatar";
 
-import { useAuth } from '@/context/AuthContext';
-import PageContainer from '@/app/(DashboardLayout)/components/container/PageContainer';
-import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
-import { IconMail, IconMapPin, IconCalendar, IconUsers, IconUserPlus, IconUserCheck, IconArrowLeft } from '@tabler/icons-react';
-import { useRouter, useParams } from 'next/navigation';
-import { format } from 'date-fns';
+import { useAuth } from "@/context/AuthContext";
+import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
+import DashboardCard from "@/app/(DashboardLayout)/components/shared/DashboardCard";
+import {
+  IconMail,
+  IconMapPin,
+  IconCalendar,
+  IconUsers,
+  IconUserPlus,
+  IconUserCheck,
+  IconArrowLeft,
+} from "@tabler/icons-react";
+import { useRouter, useParams } from "next/navigation";
+import { format } from "date-fns";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
@@ -60,49 +68,49 @@ const UserProfilePage = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push("/authentication/login");
       return;
     }
 
     const fetchUserData = async () => {
       if (!userId || userId === user?.uid) {
-        router.push('/profile');
+        router.push("/profile");
         return;
       }
 
       try {
         // Get user profile data from API
         const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             token: await user?.getIdToken(),
-            userId: userId
+            userId: userId,
           }),
         });
 
         const result = await response.json();
-        
+
         if (!result.success) {
-          setError(result.error || 'Failed to load user profile');
+          setError(result.error || "Failed to load user profile");
           setIsLoading(false);
           return;
         }
 
         const data = result.data;
         setIsFriend(data.isFriend);
-        
+
         // Set user data
         setUserData({
           id: userId,
-          name: data.name || 'Anonymous',
+          name: data.name || "Anonymous",
           email: data.email,
           friends: data.friends || [],
           joinedDate: data.createdAt || new Date().toISOString(),
-          location: data.location || 'Not specified',
-          bio: data.bio || 'No bio yet',
+          location: data.location || "Not specified",
+          bio: data.bio || "No bio yet",
           stats: {
             tasksCompleted: data.taskHistory?.completions?.length || 0,
             currentStreak: data.taskHistory?.streaks?.current || 0,
@@ -113,15 +121,17 @@ const UserProfilePage = () => {
 
         // Set recent activity
         if (data.taskHistory?.completions) {
-          setRecentActivity(data.taskHistory.completions.slice(0, 5).map((task: any) => ({
-            id: task.id,
-            title: task.title,
-            completedAt: task.completedAt
-          })));
+          setRecentActivity(
+            data.taskHistory.completions.slice(0, 5).map((task: any) => ({
+              id: task.id,
+              title: task.title,
+              completedAt: task.completedAt,
+            }))
+          );
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
-        setError('Failed to load user profile');
+        console.error("Error fetching user data:", error);
+        setError("Failed to load user profile");
       } finally {
         setIsLoading(false);
       }
@@ -136,43 +146,48 @@ const UserProfilePage = () => {
     if (!user || !userData) return;
 
     try {
-      const response = await fetch('/api/addFriendConnection', {
-        method: 'POST',
+      const response = await fetch("/api/addFriendConnection", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           token: await user.getIdToken(),
           uid1: user.uid,
-          uid2: userData.id
+          uid2: userData.id,
         }),
       });
 
       if (response.ok) {
         setIsFriend(!isFriend);
       } else {
-        console.error('Failed to update friend status');
+        console.error("Failed to update friend status");
       }
     } catch (error) {
-      console.error('Error updating friends:', error);
+      console.error("Error updating friends:", error);
     }
   };
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Date not available';
+    if (!dateString) return "Date not available";
     try {
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Invalid date';
-      return format(date, 'PP');
+      if (isNaN(date.getTime())) return "Invalid date";
+      return format(date, "PP");
     } catch (error) {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
 
   if (loading || isLoading) {
     return (
       <PageContainer title="Loading..." description="Please wait">
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="400px"
+        >
           <CircularProgress />
         </Box>
       </PageContainer>
@@ -197,47 +212,47 @@ const UserProfilePage = () => {
     <PageContainer title={userData.name} description="View user profile">
       {/* Back Button */}
       <Box sx={{ mb: 2 }}>
-        <Button 
-          variant="text" 
-          color="primary" 
+        <Button
+          variant="text"
+          color="primary"
           onClick={() => router.back()}
           startIcon={<IconArrowLeft size={18} />}
-          sx={{ 
+          sx={{
             fontWeight: 500,
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
-            }
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.04)",
+            },
           }}
         >
           Back
         </Button>
       </Box>
-      
+
       <Grid container spacing={3}>
         {/* Profile Header */}
         <Grid item xs={12}>
           <DashboardCard>
-            <Box sx={{ position: 'relative', pb: 3 }}>
+            <Box sx={{ position: "relative", pb: 3 }}>
               {/* Cover Image */}
               <Box
                 sx={{
                   height: 200,
-                  width: '100%',
+                  width: "100%",
                   borderRadius: 2,
-                  overflow: 'hidden',
-                  background: (theme) => 
+                  overflow: "hidden",
+                  background: (theme) =>
                     `linear-gradient(45deg, ${theme.palette.secondary.light}, ${theme.palette.secondary.main})`,
                   mb: -8,
                 }}
               />
-              
+
               {/* Profile Info */}
               <Box
                 sx={{
-                  position: 'relative',
+                  position: "relative",
                   px: 3,
-                  display: 'flex',
-                  alignItems: 'flex-end',
+                  display: "flex",
+                  alignItems: "flex-end",
                   mt: 10,
                 }}
               >
@@ -246,7 +261,7 @@ const UserProfilePage = () => {
                   sx={{
                     width: 120,
                     height: 120,
-                    border: '4px solid white',
+                    border: "4px solid white",
                     boxShadow: 1,
                     mb: 2,
                   }}
@@ -272,11 +287,17 @@ const UserProfilePage = () => {
                 </Box>
                 <Button
                   variant={isFriend ? "outlined" : "contained"}
-                  startIcon={isFriend ? <IconUserCheck size={18} /> : <IconUserPlus size={18} />}
+                  startIcon={
+                    isFriend ? (
+                      <IconUserCheck size={18} />
+                    ) : (
+                      <IconUserPlus size={18} />
+                    )
+                  }
                   onClick={handleAddFriend}
                   color={isFriend ? "secondary" : "primary"}
                 >
-                  {isFriend ? 'Friends' : 'Add Friend'}
+                  {isFriend ? "Friends" : "Add Friend"}
                 </Button>
               </Box>
             </Box>
@@ -353,7 +374,7 @@ const UserProfilePage = () => {
         </Grid>
 
         <Grid item xs={12} md={8}>
-          <DashboardCard 
+          <DashboardCard
             title="Recent Activity"
             action={
               <Chip
@@ -380,7 +401,11 @@ const UserProfilePage = () => {
                 </ListItem>
               ))}
               {recentActivity.length === 0 && (
-                <Typography color="text.secondary" align="center" sx={{ py: 3 }}>
+                <Typography
+                  color="text.secondary"
+                  align="center"
+                  sx={{ py: 3 }}
+                >
                   No recent activity
                 </Typography>
               )}
@@ -392,4 +417,4 @@ const UserProfilePage = () => {
   );
 };
 
-export default UserProfilePage; 
+export default UserProfilePage;

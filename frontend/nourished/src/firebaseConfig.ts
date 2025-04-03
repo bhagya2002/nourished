@@ -1,7 +1,11 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import {
+    getAuth,
+    GoogleAuthProvider,
+    browserLocalPersistence,
+    setPersistence,
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-
 
 // Use environment variables
 const firebaseConfig = {
@@ -13,12 +17,9 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-setPersistence(auth, browserLocalPersistence).catch(console.error);
-
-export { auth, provider, db };
+export { auth, provider, db, browserLocalPersistence, setPersistence };

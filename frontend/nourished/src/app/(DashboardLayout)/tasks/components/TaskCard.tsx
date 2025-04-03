@@ -12,12 +12,14 @@ import {
   Fade,
   styled,
   alpha,
+  useTheme,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { motion } from 'framer-motion';
 import FlagIcon from '@mui/icons-material/Flag';
+import ConfirmationDialog from './ConfirmationDialog';
 
 // Import task-related icons
 import BookIcon from '@mui/icons-material/Book';
@@ -244,6 +246,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [wasJustCompleted, setWasJustCompleted] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const theme = useTheme();
 
   // Reset wasJustCompleted when task changes
   useEffect(() => {
@@ -288,9 +292,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
     onEdit(task);
   };
 
-  const handleDelete = async () => {
-    handleMenuClose();
-    await onDelete(id);
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeleteDialogOpen(false);
+    if (onDelete) {
+      await onDelete(id);
+    }
   };
 
   const handleAddToGoal = () => {
@@ -500,7 +510,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               Edit
             </MenuItem>
             <MenuItem 
-              onClick={handleDelete} 
+              onClick={handleDeleteClick} 
               sx={{ 
                 color: 'error.main',
                 transition: 'all 0.2s ease-in-out',
@@ -533,6 +543,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
             )}
           </Menu>
         </CardContent>
+
+        {/* Add the confirmation dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          title="Delete Task"
+          message="Are you sure you want to delete this task? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteDialogOpen(false)}
+        />
       </Card>
     </Fade>
   );

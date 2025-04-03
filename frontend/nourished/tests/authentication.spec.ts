@@ -49,13 +49,17 @@ test('Sign-up and login flow', async ({ page }) => {
 
         await expect(page.getByText('Registration successful! Redirecting...')).toBeVisible();
 
-        await page.waitForTimeout(6000);
+        await page.waitForURL('**/dashboard');
+        await expect(page.url()).toContain('/dashboard');
+
+        await page.waitForTimeout(1500);
+
+        await page.getByRole('button', { name: 'show profile menu' }).click();
+        await page.getByRole('menuitem', { name: 'Logout' }).click();
     });
 
     // ---- Log In ----
     await test.step('Login form validation and successful login', async () => {
-        await page.goto('/');
-
         // Time to load the page
         await page.waitForTimeout(3000);
 
@@ -86,6 +90,7 @@ test('Sign-up and login flow', async ({ page }) => {
         // Valid credentials
         await page.getByLabel('Password').fill(testPassword);
         await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+
         await page.waitForURL('**/dashboard');
         await expect(page.url()).toContain('/dashboard');
     });

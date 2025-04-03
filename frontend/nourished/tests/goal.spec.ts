@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test('Create, Edit, and Delete Goals', async ({ page }) => {
-    const testEmail = 'testuser@email.com';
-    const testPassword = 'testuser@1234';
+    const testEmail = 'playwright@email.com';
+    const testPassword = 'playwright@1234';
+
+    const randomId = Math.floor(Math.random() * 99999) + 1;
+    const goalTitle = `Create Goal${randomId}`;
+    const editGoalTitle = `Edit Goal${randomId}`;
+
 
     // ---- Log In ----
     await test.step('Login', async () => {
@@ -27,17 +32,12 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
 
     // ---- Create Goals ----
     await test.step('Create Goals', async () => {
-        // Time to load the page
-        await page.waitForTimeout(3000);
-
         await page.getByRole('link', { name: 'Goals (Challenges)' }).click();
         await page.waitForURL('**/goals');
         await expect(page.url()).toContain('/goals');
 
         await expect(page.locator('div').filter({ hasText: /^Create Goal$/ }).getByRole('button')).toBeVisible();
         await page.locator('div').filter({ hasText: /^Create Goal$/ }).getByRole('button').click();
-
-        await page.waitForTimeout(1000);
 
         await expect(page.getByRole('textbox', { name: 'Title' })).toBeVisible();
         await expect(page.getByRole('textbox', { name: 'Description' })).toBeVisible();
@@ -46,7 +46,7 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
 
         // Input Random Task Details
-        await page.getByRole('textbox', { name: 'Title' }).fill('Create Goal');
+        await page.getByRole('textbox', { name: 'Title' }).fill(goalTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Create Description');
 
         // Get today's date in YYYY-MM-DD format
@@ -65,68 +65,52 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         // Fill the input with today's date
         await page.getByRole('textbox', { name: 'Deadline' }).fill(formattedDate);
 
-        await page.waitForTimeout(1000);
+        await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
         await page.getByRole('button', { name: 'Create' }).click();
 
-        await page.waitForTimeout(2000);
 
-        await expect(page.getByRole('heading', { name: 'Create Goal' })).toBeVisible();
-        await expect(page.getByText('Create Description')).toBeVisible();
-        await page.waitForTimeout(2000);
-        await expect(page.getByRole('button', { name: 'Show Tasks' })).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Add Task' })).toBeVisible();
-        await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(3)).toBeVisible();
+        await expect(page.getByRole('heading', { name: goalTitle })).toBeVisible();
+        await expect(page.getByText('Create Description').first()).toBeVisible();
+
+        await expect(page.getByRole('button', { name: 'Show Tasks' }).first()).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Add Task' }).first()).toBeVisible();
+        await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(2).first()).toBeVisible();
     });
 
     // ---- Edit Goals ----
     await test.step('Edit Goals', async () => {
-        // Time to load the page
-        await page.waitForTimeout(2000);
-
-        await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click();
-        await page.getByText('Edit').click();
-
-        // generate random number
-        const random = Math.floor(Math.random() * 1000);
+        await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible();
+        await page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first().click();
+        await page.getByText('Edit').first().click();
 
         // Input Random Task Details
-        await page.getByRole('textbox', { name: 'Title' }).fill(`Edit Goal ${random}`);
+        await page.getByRole('textbox', { name: 'Title' }).fill(editGoalTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Edit Description');
 
-        await page.waitForTimeout(2000);
+        await expect(page.getByRole('button', { name: 'Update' })).toBeVisible();
         await page.getByRole('button', { name: 'Update' }).click();
 
-        await page.waitForTimeout(2000);
-
-        await expect(page.getByRole('heading', { name: 'Edit Goal' })).toBeVisible();
-        await expect(page.getByText('Edit Description')).toBeVisible();
+        await expect(page.getByRole('heading', { name: editGoalTitle })).toBeVisible();
+        await expect(page.getByText('Edit Description').first()).toBeVisible();
     });
 
     // ---- Delete Goals ----
-    // await test.step('Delete Goals', async () => {
-    //     await page.waitForTimeout(2000);
+    await test.step('Delete Goals', async () => {
+        await page.waitForTimeout(2000);
 
-    //     // Open the delete dropdown or trigger button
-    //     await page.getByRole('button').filter({ hasText: /^$/ }).nth(3).click();
+        const deleteButton = page.getByRole('button').filter({ hasText: /^$/ }).nth(2);
 
-    //     // Click the 'Delete' option
-    //     await page.getByText('Delete').click();
+        while (await deleteButton.count() > 0) {
+            await deleteButton.first().click();
+            await page.getByText('Delete').click();
 
-    //     // Wait for the confirmation toast/message
-    //     await expect(page.getByText('Are you sure you want to delete this goal?')).toBeVisible();
+            page.once('dialog', async dialog => {
+                console.log(`Dialog message: ${dialog.message()}`);
+                await dialog.accept();
+            });
+        }
 
-    //     // Click the "OK" button to confirm
-    //     await page.getByRole('button', { name: 'OK' }).click();
-
-    //     // Optionally, verify the toast disappears or success message appears
-    //     await expect(page.getByText('Are you sure you want to delete this goal?')).toBeHidden();
-
-    //     await page.waitForTimeout(5000);
-
-    //     // No Tasks
-    //     // await expect(page.getByRole('heading', { name: 'You don\'t have any active' })).toBeVisible();
-    //     // await expect(page.getByText('Create your first task to get')).toBeVisible();
-
-    //     await page.waitForTimeout(1000);
-    // });
+        await expect(page.getByRole('heading', { name: 'Set Your Goals' })).toBeVisible();
+        await expect(page.getByText('Create goals to track your progress')).toBeVisible();
+    });
 });
