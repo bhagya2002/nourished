@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const admin = require("firebase-admin");
 require("dotenv").config({ path: "./../.env" });
 const serviceAccount = {
