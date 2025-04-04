@@ -69,12 +69,12 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
       ...userResult.data.following,
     ];
     const allUids = [...followersAndFriends, uid];
-
+    const uniqueUIds = [...new Set(allUids)];
     // Initialize an array to hold all the promises for fetching user and friend posts
     const postFetchPromises = [];
 
     // For each friend, get their posts from function getUserPosts(uid)
-    for (const singleUid of allUids) {
+    for (const singleUid of uniqueUIds) {
       const getPostsRes = await this.getUserPosts(singleUid);
       if (!getPostsRes.success) {
         return getPostsRes;
