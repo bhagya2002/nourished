@@ -26,7 +26,10 @@ describe("challengeService", function () {
     inviteServiceStub = {
       createInvite: sinon.stub(inviteService, "createInvite"),
       declineInvite: sinon.stub(inviteService, "declineInvite"),
-      deleteInvitesOnChallenge: sinon.stub(inviteService, "deleteInvitesOnChallenge"),
+      deleteInvitesOnChallenge: sinon.stub(
+        inviteService,
+        "deleteInvitesOnChallenge",
+      ),
     };
   });
 

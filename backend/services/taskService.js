@@ -55,9 +55,17 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
     }
     if (goalId) {
       // Update fields in the goal document
-      const updateGoalResult = await db.updateFieldArray("goals", goalId, "taskIds", taskResult.id);
+      const updateGoalResult = await db.updateFieldArray(
+        "goals",
+        goalId,
+        "taskIds",
+        taskResult.id,
+      );
       if (!updateGoalResult.success) {
-        return { success: false, error: updateGoalResult.error || "Failed to update goal with task ID" };
+        return {
+          success: false,
+          error: updateGoalResult.error || "Failed to update goal with task ID",
+        };
       }
       const goalResult = await db.queryDatabaseSingle(goalId, "goals");
       if (!goalResult.success) {
@@ -120,7 +128,7 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-          (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
         );
         // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
         if (taskResult.data.completedAt) {
@@ -274,7 +282,12 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
     if (!goalResult.success) {
       return goalResult;
     }
-    const goalDelTaskIdRes = await db.removeFromFieldArray("goals", goalId, "taskIds", taskId);
+    const goalDelTaskIdRes = await db.removeFromFieldArray(
+      "goals",
+      goalId,
+      "taskIds",
+      taskId,
+    );
     if (!goalDelTaskIdRes.success) return goalDelTaskIdRes;
     let daysLeft = Math.ceil(
       (new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24),
@@ -439,7 +452,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -538,7 +551,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+              (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
             // Update fields in the goal document
@@ -835,7 +848,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-        (1000 * 3600 * 24),
+          (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {

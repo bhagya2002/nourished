@@ -132,8 +132,16 @@ describe("taskService Tests", function () {
         .onSecondCall()
         .resolves({ success: false, error: "Task not found" }); // Task lookup fails
 
-      const result = await taskService.editTask(uid, taskId, "frequency", "Weekly");
-      assert.deepStrictEqual(result, { success: false, error: "Task not found" });
+      const result = await taskService.editTask(
+        uid,
+        taskId,
+        "frequency",
+        "Weekly",
+      );
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Task not found",
+      });
     });
 
     it("should return an error if goal lookup fails", async function () {
@@ -145,12 +153,23 @@ describe("taskService Tests", function () {
         .onFirstCall()
         .resolves({ success: true }) // User exists
         .onSecondCall()
-        .resolves({ success: true, data: { goalId: "goal789", frequency: "Daily" } }) // Task data
+        .resolves({
+          success: true,
+          data: { goalId: "goal789", frequency: "Daily" },
+        }) // Task data
         .onThirdCall()
         .resolves({ success: false, error: "Goal not found" }); // Goal lookup fails
 
-      const result = await taskService.editTask(uid, taskId, "frequency", "Weekly");
-      assert.deepStrictEqual(result, { success: false, error: "Goal not found" });
+      const result = await taskService.editTask(
+        uid,
+        taskId,
+        "frequency",
+        "Weekly",
+      );
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Goal not found",
+      });
     });
   });
 
@@ -249,7 +268,10 @@ describe("taskService Tests", function () {
         .resolves({ success: false, error: "Task not found" }); // Task lookup fails
 
       const result = await taskService.deleteTask(uid, taskId, "badval");
-      assert.deepStrictEqual(result, { success: false, error: "Task not found" });
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Task not found",
+      });
     });
 
     it("should return an error if goal lookup fails", async function () {
@@ -265,7 +287,10 @@ describe("taskService Tests", function () {
         .resolves({ success: false, error: "Goal not found" }); // Goal lookup fails
 
       const result = await taskService.deleteTask(uid, taskId, goalId);
-      assert.deepStrictEqual(result, { success: false, error: "Goal not found" });
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Goal not found",
+      });
     });
 
     it("should return an error if removing task from user fails", async function () {
@@ -331,7 +356,10 @@ describe("taskService Tests", function () {
         .resolves({ success: false, error: "Task not found" });
 
       const result = await taskService.toggleTaskCompletion(uid, taskId, true);
-      assert.deepStrictEqual(result, { success: false, error: "Failed to find task: Unknown error" });
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Failed to find task: Unknown error",
+      });
     });
 
     it("should return an error if task does not belong to user", async function () {
@@ -393,7 +421,10 @@ describe("taskService Tests", function () {
         });
 
         const result = await taskService.getTaskHistory("user123");
-        assert.deepStrictEqual(result, { success: false, error: "User not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "User not found",
+        });
       });
     });
 
@@ -404,7 +435,9 @@ describe("taskService Tests", function () {
           data: { uid: "user123", completed: true },
         });
         sinon.stub(db, "queryDatabase").resolves({ success: true, data: [] });
-        sinon.stub(db, "addSingleDoc").resolves({ success: true, id: "rating123" });
+        sinon
+          .stub(db, "addSingleDoc")
+          .resolves({ success: true, id: "rating123" });
         sinon.stub(db, "updateFieldArray").resolves({ success: true });
 
         const result = await taskService.submitHappinessRating(
@@ -413,7 +446,10 @@ describe("taskService Tests", function () {
           5,
           "2025-04-02",
         );
-        assert.deepStrictEqual(result, { success: true, data: { id: "rating123", updated: false } });
+        assert.deepStrictEqual(result, {
+          success: true,
+          data: { id: "rating123", updated: false },
+        });
       });
 
       it("should return an error if task is not completed", async function () {
@@ -459,7 +495,10 @@ describe("taskService Tests", function () {
         });
 
         const result = await taskService.getHappinessData("user123");
-        assert.deepStrictEqual(result, { success: false, error: "User not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "User not found",
+        });
       });
     });
 
@@ -468,7 +507,11 @@ describe("taskService Tests", function () {
         sinon.stub(db, "queryDatabaseCustom").resolves({
           success: true,
           data: [
-            { id: "task1", frequency: "Daily", completedAt: "2025-04-01T10:00:00Z" },
+            {
+              id: "task1",
+              frequency: "Daily",
+              completedAt: "2025-04-01T10:00:00Z",
+            },
           ],
         });
         sinon.stub(db, "updateField").resolves({ success: true });
@@ -494,11 +537,15 @@ describe("taskService Tests", function () {
 
     describe("associateTaskWithGoal", function () {
       it("should associate a task with a goal successfully", async function () {
-        sinon.stub(db, "queryDatabaseSingle")
+        sinon
+          .stub(db, "queryDatabaseSingle")
           .onFirstCall()
           .resolves({ success: true, data: { uid: "user123" } }) // Task lookup
           .onSecondCall()
-          .resolves({ success: true, data: { uid: "user123", deadline: "2025-04-10" } }); // Goal lookup
+          .resolves({
+            success: true,
+            data: { uid: "user123", deadline: "2025-04-10" },
+          }); // Goal lookup
         sinon.stub(db, "updateField").resolves({ success: true });
         sinon.stub(db, "updateFieldArray").resolves({ success: true });
         sinon.stub(db, "incrementField").resolves({ success: true });
@@ -508,7 +555,10 @@ describe("taskService Tests", function () {
           "task456",
           "goal789",
         );
-        assert.deepStrictEqual(result, { success: true, data: { taskId: "task456", goalId: "goal789" } });
+        assert.deepStrictEqual(result, {
+          success: true,
+          data: { taskId: "task456", goalId: "goal789" },
+        });
       });
 
       it("should return an error if task is already associated with a goal", async function () {
@@ -539,11 +589,15 @@ describe("taskService Tests", function () {
           "task456",
           "goal789",
         );
-        assert.deepStrictEqual(result, { success: false, error: "Task not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Task not found",
+        });
       });
 
       it("should return an error if goal lookup fails", async function () {
-        sinon.stub(db, "queryDatabaseSingle")
+        sinon
+          .stub(db, "queryDatabaseSingle")
           .onFirstCall()
           .resolves({ success: true, data: { uid: "user123", goalId: null } }) // Task lookup
           .onSecondCall()
@@ -554,7 +608,10 @@ describe("taskService Tests", function () {
           "task456",
           "goal789",
         );
-        assert.deepStrictEqual(result, { success: false, error: "Goal not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Goal not found",
+        });
       });
 
       it("should return an error if user does not own the task", async function () {
@@ -577,11 +634,18 @@ describe("taskService Tests", function () {
 
     describe("unassociateTaskFromGoal", function () {
       it("should unassociate a task from a goal successfully", async function () {
-        sinon.stub(db, "queryDatabaseSingle")
+        sinon
+          .stub(db, "queryDatabaseSingle")
           .onFirstCall()
-          .resolves({ success: true, data: { uid: "user123", goalId: "goal789", frequency: "Daily" } }) // Task lookup
+          .resolves({
+            success: true,
+            data: { uid: "user123", goalId: "goal789", frequency: "Daily" },
+          }) // Task lookup
           .onSecondCall()
-          .resolves({ success: true, data: { uid: "user123", deadline: "2025-04-10" } }); // Goal lookup
+          .resolves({
+            success: true,
+            data: { uid: "user123", deadline: "2025-04-10" },
+          }); // Goal lookup
         sinon.stub(db, "updateField").resolves({ success: true });
         sinon.stub(db, "removeFromFieldArray").resolves({ success: true });
         sinon.stub(db, "incrementField").resolves({ success: true });
@@ -590,7 +654,10 @@ describe("taskService Tests", function () {
           "user123",
           "task456",
         );
-        assert.deepStrictEqual(result, { success: true, data: { taskId: "task456", goalId: "goal789" } });
+        assert.deepStrictEqual(result, {
+          success: true,
+          data: { taskId: "task456", goalId: "goal789" },
+        });
       });
 
       it("should return an error if task is not associated with a goal", async function () {
@@ -619,13 +686,20 @@ describe("taskService Tests", function () {
           "user123",
           "task456",
         );
-        assert.deepStrictEqual(result, { success: false, error: "Task not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Task not found",
+        });
       });
 
       it("should return an error if goal lookup fails", async function () {
-        sinon.stub(db, "queryDatabaseSingle")
+        sinon
+          .stub(db, "queryDatabaseSingle")
           .onFirstCall()
-          .resolves({ success: true, data: { uid: "user123", goalId: "goal789" } }) // Task lookup
+          .resolves({
+            success: true,
+            data: { uid: "user123", goalId: "goal789" },
+          }) // Task lookup
           .onSecondCall()
           .resolves({ success: false, error: "Goal not found" }); // Goal lookup
 
@@ -633,7 +707,10 @@ describe("taskService Tests", function () {
           "user123",
           "task456",
         );
-        assert.deepStrictEqual(result, { success: false, error: "Goal not found" });
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Goal not found",
+        });
       });
 
       it("should return an error if user does not own the task", async function () {

@@ -133,7 +133,8 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if updating the follower's following list fails", async function () {
-      sinon.stub(db, "updateFieldArray")
+      sinon
+        .stub(db, "updateFieldArray")
         .withArgs("users", "user123", "following", "user456")
         .resolves(false);
 
@@ -142,7 +143,8 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if updating the followee's followers list fails", async function () {
-      sinon.stub(db, "updateFieldArray")
+      sinon
+        .stub(db, "updateFieldArray")
         .withArgs("users", "user123", "following", "user456")
         .resolves(true)
         .withArgs("users", "user456", "followers", "user123")
@@ -189,7 +191,8 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if removing the follower's following list fails", async function () {
-      sinon.stub(db, "removeFromFieldArray")
+      sinon
+        .stub(db, "removeFromFieldArray")
         .withArgs("users", "user123", "following", "user456")
         .resolves(false);
 
@@ -198,7 +201,8 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if removing the followee's followers list fails", async function () {
-      sinon.stub(db, "removeFromFieldArray")
+      sinon
+        .stub(db, "removeFromFieldArray")
         .withArgs("users", "user123", "following", "user456")
         .resolves(true)
         .withArgs("users", "user456", "followers", "user123")
@@ -238,10 +242,15 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if fetching followers fails", async function () {
-      sinon.stub(db, "queryDatabaseSingle").rejects(new Error("Database error"));
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .rejects(new Error("Database error"));
 
       const result = await userService.getFollowers("user123");
-      assert.deepStrictEqual(result, { success: false, err: new Error("Database error") });
+      assert.deepStrictEqual(result, {
+        success: false,
+        err: new Error("Database error"),
+      });
     });
   });
 
@@ -260,20 +269,32 @@ describe("userService Tests", function () {
     });
 
     it("should return an error if fetching following users fails", async function () {
-      sinon.stub(db, "queryDatabaseSingle").rejects(new Error("Database error"));
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .rejects(new Error("Database error"));
 
       const result = await userService.getFollowing("user123");
-      assert.deepStrictEqual(result, { success: false, err: new Error("Database error") });
+      assert.deepStrictEqual(result, {
+        success: false,
+        err: new Error("Database error"),
+      });
     });
   });
 
   describe("searchUser", function () {
     it("should return users matching the search keyword", async function () {
-      sinon.stub(db, "queryDatabaseFuzzy")
+      sinon
+        .stub(db, "queryDatabaseFuzzy")
         .withArgs("John", "users", "name")
-        .resolves({ success: true, data: [{ uid: "user123", name: "John Doe" }] })
+        .resolves({
+          success: true,
+          data: [{ uid: "user123", name: "John Doe" }],
+        })
         .withArgs("John", "users", "email")
-        .resolves({ success: true, data: [{ uid: "user456", email: "john@example.com" }] });
+        .resolves({
+          success: true,
+          data: [{ uid: "user456", email: "john@example.com" }],
+        });
 
       const result = await userService.searchUser({ keyword: "John" });
       assert.deepStrictEqual(result, {
@@ -289,7 +310,10 @@ describe("userService Tests", function () {
       sinon.stub(db, "queryDatabaseFuzzy").rejects(new Error("Search error"));
 
       const result = await userService.searchUser({ keyword: "John" });
-      assert.deepStrictEqual(result, { success: false, err: new Error("Search error") });
+      assert.deepStrictEqual(result, {
+        success: false,
+        err: new Error("Search error"),
+      });
     });
   });
 });

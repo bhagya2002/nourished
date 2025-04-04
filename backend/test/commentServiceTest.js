@@ -72,7 +72,10 @@ describe("commentService", function () {
       const commentId = "comment123";
 
       dbStub.addSingleDoc.resolves({ success: true, id: commentId });
-      dbStub.queryDatabaseSingle.resolves({ success: true, data: { name: "User Name" } });
+      dbStub.queryDatabaseSingle.resolves({
+        success: true,
+        data: { name: "User Name" },
+      });
       dbStub.updateFieldArray.resolves({ success: true });
 
       const result = await commentService.createComment(userId, data);
@@ -83,8 +86,14 @@ describe("commentService", function () {
       const userId = "user123";
       const data = { postId: "post123", content: "New comment" };
 
-      dbStub.queryDatabaseSingle.resolves({ success: true, data: { name: "User Name" } });
-      dbStub.addSingleDoc.resolves({ success: false, error: "Failed to create comment" });
+      dbStub.queryDatabaseSingle.resolves({
+        success: true,
+        data: { name: "User Name" },
+      });
+      dbStub.addSingleDoc.resolves({
+        success: false,
+        error: "Failed to create comment",
+      });
 
       const result = await commentService.createComment(userId, data);
       expect(result).to.deep.equal({
@@ -98,9 +107,15 @@ describe("commentService", function () {
       const data = { postId: "post123", content: "New comment" };
       const commentId = "comment123";
 
-      dbStub.queryDatabaseSingle.resolves({ success: true, data: { name: "User Name" } });
+      dbStub.queryDatabaseSingle.resolves({
+        success: true,
+        data: { name: "User Name" },
+      });
       dbStub.addSingleDoc.resolves({ success: true, id: commentId });
-      dbStub.updateFieldArray.resolves({ success: false, error: "Failed to update post comments" });
+      dbStub.updateFieldArray.resolves({
+        success: false,
+        error: "Failed to update post comments",
+      });
 
       const result = await commentService.createComment(userId, data);
       expect(result).to.deep.equal({
