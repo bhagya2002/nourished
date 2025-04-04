@@ -772,8 +772,6 @@ export default function GoalsPage() {
           const taskIndex = updatedTasks.findIndex(
             (task) => task.id === taskId
           );
-          updatedTasks.splice(taskIndex, 1);
-          updatedGoal.tasks = updatedTasks;
           // Update goal's totalTasks
           const goalDeadline = new Date(updatedGoal.deadline);
           const taskDeletedTime = new Date();
@@ -809,6 +807,8 @@ export default function GoalsPage() {
               break;
           }
           updatedGoal.totalTasks -= totalTasksDecreased;
+          updatedTasks.splice(taskIndex, 1);
+          updatedGoal.tasks = updatedTasks;
           return prevGoals.map((goal, idx) =>
             idx === expandingGoalIndex ? updatedGoal : goal
           );
@@ -1154,6 +1154,7 @@ export default function GoalsPage() {
                       setTaskEditModalOpen(true);
                     }}
                     onDeleteTask={async (taskId: string) => {
+                      setExpandingGoalIndex(index);
                       await handleGoalTaskDelete(taskId);
                     }}
                     index={index}
