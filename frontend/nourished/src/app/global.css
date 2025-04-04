@@ -1,0 +1,6 @@
+/* Hide Next.js/React error overlay */
+#__next-build-watcher,
+.nextjs-toastify-container,
+.nextjs-portal {
+  display: none !important;
+}

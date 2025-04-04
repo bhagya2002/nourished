@@ -55,7 +55,7 @@ const UserProfilePage = () => {
     email: string;
     friends: string[];
     joinedDate?: string;
-    location?: string;
+    // location?: string;
     bio?: string;
     stats?: {
       tasksCompleted: number;
@@ -109,8 +109,8 @@ const UserProfilePage = () => {
           email: data.email,
           friends: data.friends || [],
           joinedDate: data.createdAt || new Date().toISOString(),
-          location: data.location || "Not specified",
-          bio: data.bio || "No bio yet",
+          // location: data.location || "Not specified",
+          // bio: data.bio || "No bio yet",
           stats: {
             tasksCompleted: data.taskHistory?.completions?.length || 0,
             currentStreak: data.taskHistory?.streaks?.current || 0,
@@ -270,7 +270,7 @@ const UserProfilePage = () => {
                   <Typography variant="h4" fontWeight="bold">
                     {userData.name}
                   </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  {/* <Stack direction="row" spacing={1} alignItems="center">
                     <IconMail size={16} />
                     <Typography variant="body2" color="text.secondary">
                       {userData.email}
@@ -283,7 +283,7 @@ const UserProfilePage = () => {
                         </Typography>
                       </>
                     )}
-                  </Stack>
+                  </Stack> */}
                 </Box>
                 <Button
                   variant={isFriend ? "outlined" : "contained"}
@@ -353,16 +353,7 @@ const UserProfilePage = () => {
         {/* Content */}
         <Grid item xs={12} md={4}>
           <DashboardCard title="About">
-            <Typography variant="body1" paragraph>
-              {userData.bio}
-            </Typography>
             <Stack spacing={2}>
-              <Box display="flex" alignItems="center" gap={1}>
-                <IconCalendar size={20} />
-                <Typography variant="body2">
-                  Joined {formatDate(userData.joinedDate)}
-                </Typography>
-              </Box>
               <Box display="flex" alignItems="center" gap={1}>
                 <IconUsers size={20} />
                 <Typography variant="body2">

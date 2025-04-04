@@ -17,7 +17,7 @@ if (typeof window !== "undefined") {
     ) {
       return;
     }
-    originalError.apply(console, args);
+    // originalError.apply(console, args);
   };
 }
 
@@ -31,7 +31,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body suppressHydrationWarning={true}>
+      <body suppressHydrationWarning>
         <AuthProvider>
           <ThemeProvider theme={baselightTheme}>
             <CssBaseline />
