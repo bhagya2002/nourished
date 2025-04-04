@@ -178,15 +178,17 @@ describe("goalService", function () {
     it("should delete a goal and its challenges successfully", async function () {
       const uid = "user123";
       const goalId = "goal123";
+      const goalData = { uid: "user123", taskIds: ["task1", "task2"] };
+      const challenges = [{ id: "challenge1" }];
+
       dbStub.removeFromFieldArray.resolves({ success: true });
-      dbStub.queryDatabaseSingle.resolves({
-        success: true,
-        data: { uid: "user123" },
-      });
-      dbStub.queryDatabase.resolves({
-        success: true,
-        data: [{ id: "challenge1" }],
-      });
+      dbStub.queryDatabaseSingle
+        .onFirstCall()
+        .resolves({ success: true, data: goalData }) // Goal data
+        .onSecondCall()
+        .resolves({ success: true }); // Task reset response
+      dbStub.queryDatabase.resolves({ success: true, data: challenges });
+      dbStub.updateField.resolves({ success: true });
       challengeServiceStub.deleteChallenge.resolves({ success: true });
       dbStub.deleteSingleDoc.resolves({ success: true });
 
@@ -197,41 +199,72 @@ describe("goalService", function () {
     it("should return an error if goal deletion fails", async function () {
       const uid = "user123";
       const goalId = "goal123";
-      dbStub.removeFromFieldArray.resolves({
-        success: false,
-        error: "Failed to delete goal",
-      });
+
+      dbStub.removeFromFieldArray.resolves({ success: false, error: "Failed to delete goal" });
 
       const result = await goalService.deleteGoal(uid, goalId);
-      expect(result).to.deep.equal({
-        success: false,
-        error: "Failed to delete goal",
-      });
+      expect(result).to.deep.equal({ success: false, error: "Failed to delete goal" });
+    });
+
+    it("should return an error if resetting task goalId fails", async function () {
+      const uid = "user123";
+      const goalId = "goal123";
+      const goalData = { uid: "user123", taskIds: ["task1", "task2"] };
+
+      dbStub.removeFromFieldArray.resolves({ success: true });
+      dbStub.queryDatabaseSingle.resolves({ success: true, data: goalData });
+      dbStub.queryDatabase.resolves({ success: true });
+
+      dbStub.updateField.resolves({ success: false, error: "Failed to reset task goalId" });
+
+      const result = await goalService.deleteGoal(uid, goalId);
+      expect(result).to.deep.equal({ success: false, error: "Failed to reset task goalId" });
     });
 
     it("should return an error if challenge deletion fails", async function () {
       const uid = "user123";
       const goalId = "goal123";
+      const goalData = { uid: "user123", taskIds: [] };
+      const challenges = [{ id: "challenge1" }];
+
       dbStub.removeFromFieldArray.resolves({ success: true });
-      dbStub.queryDatabaseSingle.resolves({
-        success: true,
-        data: { uid: "user123" },
-      });
-      dbStub.queryDatabase.resolves({
-        success: true,
-        data: [{ id: "challenge1" }],
-      });
-      dbStub.deleteSingleDoc.resolves({ success: true });
-      challengeServiceStub.deleteChallenge.resolves({
-        success: false,
-        error: "Failed to delete challenge",
-      });
+      dbStub.queryDatabaseSingle.resolves({ success: true, data: goalData });
+      dbStub.queryDatabase.resolves({ success: true, data: challenges });
+      challengeServiceStub.deleteChallenge.resolves({ success: false, error: "Failed to delete challenge" });
+      dbStub.deleteSingleDoc.resolves({ success: false, error: "Failed to delete challenge" });
 
       const result = await goalService.deleteGoal(uid, goalId);
-      expect(result).to.deep.equal({
-        success: false,
-        error: "Failed to delete challenge",
-      });
+      expect(result).to.deep.equal({ success: false, error: "Failed to delete challenge" });
+    });
+
+    it("should remove the user from challenges if the goal does not belong to them", async function () {
+      const uid = "user123";
+      const goalId = "goal123";
+      const goalData = { uid: "user456", taskIds: [] };
+      const challenges = [{ id: "challenge1" }];
+
+      dbStub.removeFromFieldArray.resolves({ success: true });
+      dbStub.queryDatabaseSingle.resolves({ success: true, data: goalData });
+      dbStub.queryDatabase.resolves({ success: true, data: challenges });
+      dbStub.removeFromFieldArray.resolves({ success: true });
+
+      const result = await goalService.deleteGoal(uid, goalId);
+      expect(result).to.deep.equal({ success: true, message: "Removed you from the challenge" });
+    });
+
+    it("should return an error if removing the user from challenges fails", async function () {
+      const uid = "user123";
+      const goalId = "goal123";
+      const goalData = { uid: "user456", taskIds: [] };
+      const challenges = [{ id: "challenge1" }];
+
+      dbStub.removeFromFieldArray.resolves({ success: true });
+      dbStub.queryDatabaseSingle.resolves({ success: true, data: goalData });
+      dbStub.queryDatabase.resolves({ success: true, data: challenges });
+      dbStub.removeFromFieldArray.onFirstCall().resolves({ success: false, error: "Failed to remove user from challenge" });
+
+      const result = await goalService.deleteGoal(uid, goalId);
+      expect(result).to.deep.equal({ success: false, error: "Failed to remove user from challenge" });
     });
   });
 });

@@ -5,3 +5,4 @@ capstone2025.*
 logs*
 .env
 env-secrets.txt
+.nyc_output

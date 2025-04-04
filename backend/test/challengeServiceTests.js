@@ -25,7 +25,8 @@ describe("challengeService", function () {
 
     inviteServiceStub = {
       createInvite: sinon.stub(inviteService, "createInvite"),
-      deleteInvites: sinon.stub(inviteService, "deleteInvites"),
+      declineInvite: sinon.stub(inviteService, "declineInvite"),
+      deleteInvitesOnChallenge: sinon.stub(inviteService, "deleteInvitesOnChallenge"),
     };
   });
 
@@ -165,7 +166,8 @@ describe("challengeService", function () {
       });
       dbStub.commitBatch.resolves({ success: true });
       dbStub.deleteSingleDoc.resolves({ success: true });
-      inviteServiceStub.deleteInvites.resolves({ success: true });
+      inviteServiceStub.declineInvite.resolves({ success: true });
+      inviteServiceStub.deleteInvitesOnChallenge.resolves({ success: true });
 
       const result = await challengeService.deleteChallenge(
         userId,
