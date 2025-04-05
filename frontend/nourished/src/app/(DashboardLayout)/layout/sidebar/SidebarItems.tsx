@@ -4,12 +4,16 @@ import { usePathname } from 'next/navigation';
 import { Box, List, useTheme } from '@mui/material';
 import NavItem from './NavItem';
 import NavGroup from './NavGroup/NavGroup';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/firebaseConfig';
+import { useRouter } from 'next/navigation';
 
 interface SidebarItemsProps {
   toggleMobileSidebar?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
+  const router = useRouter();
   const pathname = usePathname();
   const pathDirect = pathname;
   const theme = useTheme();
@@ -63,7 +67,18 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
                 item={item}
                 key={item.id}
                 pathDirect={pathDirect}
-                onClick={toggleMobileSidebar}
+                onClick={async (e) => {
+                  if (toggleMobileSidebar) toggleMobileSidebar(e);
+                  if (item.title === 'Logout') {
+                    try {
+                      await signOut(auth);
+                      localStorage.removeItem("authToken");
+                      router.push("/authentication/login");
+                    } catch (error) {
+                      console.error("Logout Error:", error);
+                    }
+                  }
+                }}
               />
             );
           }
