@@ -11,7 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "backend/server/server.js",
+            "cwd": "${workspaceFolder}/backend",
+            "program": "server/server.js",
             "console": "integratedTerminal"
         }
     ]

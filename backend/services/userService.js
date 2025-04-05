@@ -152,12 +152,21 @@ module.exports.getFriendRecommendations =
       }
     }
 
-    return Object.entries(frequencyByFriends)
+    const mostFrequentFriends = Object.entries(frequencyByFriends)
       .sort(function (a, b) {
         return b[1] - a[1];
       })
       .slice(0, 2)
       .map((x) => x[0]);
+
+    const mostFrequentFriendsData = await db.queryMultiple(
+      mostFrequentFriends,
+      "users",
+    );
+    if (!mostFrequentFriendsData.success)
+      return { success: false, message: mostFrequentFriendsData.message };
+    const mostFrequentFriendsDocs = mostFrequentFriendsData.data;
+    return { success: true, data: mostFrequentFriendsDocs };
   };
 
 // Search for users by name or email
@@ -177,7 +186,7 @@ module.exports.searchUser = async function searchUser(data) {
     if (!userNameRes.success || !userEmailRes.success) {
       return { success: false, message: "Error searching for user" };
     }
-    
+
     // Combine both results and remove duplicates based on user id
     const combined = [...userNameRes.data, ...userEmailRes.data];
     const uniqueUsersMap = new Map();
