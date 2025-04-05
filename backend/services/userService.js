@@ -177,7 +177,16 @@ module.exports.searchUser = async function searchUser(data) {
     if (!userNameRes.success || !userEmailRes.success) {
       return { success: false, message: "Error searching for user" };
     }
-    const users = [...userNameRes.data, ...userEmailRes.data];
+    
+    // Combine both results and remove duplicates based on user id
+    const combined = [...userNameRes.data, ...userEmailRes.data];
+    const uniqueUsersMap = new Map();
+
+    for (const user of combined) {
+      uniqueUsersMap.set(user.id, user); // will overwrite duplicate ids
+    }
+
+    const users = Array.from(uniqueUsersMap.values());
     return { success: true, data: users };
   } catch (err) {
     return { success: false, err: err };
