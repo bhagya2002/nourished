@@ -66,7 +66,33 @@ function addFriendConnection(app) {
 
 function addGetFriendRecommendation(app) {
   app.post("/getFriendRecommendation", async (req, res) => {
-    res.send(await userService.getFriendRecommendations(req.body.uid));
+    try {
+      const authResult = await authService.authenticateToken(req.body.token);
+      if (!authResult.uid) {
+        return res.status(401).json({
+          success: false,
+          error: `Authentication failed: ${authResult.message || "Invalid token"}`,
+        });
+      }
+      const result = await userService.getFriendRecommendations(req.body.uid);
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          data: result.data,
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.message || "Failed to search for user",
+        });
+      }
+    } catch (err) {
+      console.error("Error in getFriendRecommendation endpoint:", err);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Server error occurred",
+      });
+    }
   });
 }
 
@@ -394,10 +420,10 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                    completions:
-                      freshTaskHistory.data.completions?.slice(0, 5) || [],
-                    streaks: freshTaskHistory.data.streaks,
-                  }
+                  completions:
+                    freshTaskHistory.data.completions?.slice(0, 5) || [],
+                  streaks: freshTaskHistory.data.streaks,
+                }
                 : null,
             },
           });
