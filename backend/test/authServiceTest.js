@@ -8,7 +8,6 @@ describe("authService", function () {
   let verifyIdTokenStub;
 
   beforeEach(function () {
-    // Stub the verifyIdToken method
     verifyIdTokenStub = sinon.stub(admin.auth(), "verifyIdToken");
   });
 

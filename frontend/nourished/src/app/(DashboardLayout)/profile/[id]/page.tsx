@@ -267,20 +267,6 @@ const UserProfilePage = () => {
                   <Typography variant="h4" fontWeight="bold">
                     {userData.name}
                   </Typography>
-                  {/* <Stack direction="row" spacing={1} alignItems="center">
-                    <IconMail size={16} />
-                    <Typography variant="body2" color="text.secondary">
-                      {userData.email}
-                    </Typography>
-                    {userData.location && (
-                      <>
-                        <IconMapPin size={16} />
-                        <Typography variant="body2" color="text.secondary">
-                          {userData.location}
-                        </Typography>
-                      </>
-                    )}
-                  </Stack> */}
                 </Box>
                 <Button
                   variant={isFriend ? "outlined" : "contained"}

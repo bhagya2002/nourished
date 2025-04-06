@@ -27,7 +27,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
-// Define AI suggestion animation keyframes
 const aiButtonPulse = {
   "@keyframes pulse": {
     "0%": { boxShadow: "0 0 0 0 rgba(126, 87, 194, 0.7)" },
@@ -36,7 +35,6 @@ const aiButtonPulse = {
   },
 };
 
-// Add global styles for keyframe animations
 const globalStyles = `
   @keyframes blink {
     0%, 100% { opacity: 1; }
@@ -68,7 +66,6 @@ const globalStyles = `
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
-// Add a debounce helper to prevent multiple rapid clicks
 const useDebounce = (
   callback: (...args: any[]) => void,
   delay: number
@@ -130,7 +127,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     string | null
   >(null);
 
-  // Add last fetch timestamp to prevent repeated calls
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   const handleSaveClick = async () => {
@@ -193,7 +189,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     onClose();
   };
 
-  // Handle AI suggestion click with debounce
   const handleAiButtonClick = (event: React.MouseEvent<HTMLElement>) => {
     // If already showing, just close it
     if (showAiSuggestion) {
@@ -202,10 +197,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       return;
     }
 
-    // Set anchor element for the popper
     setAiButtonEl(event.currentTarget);
 
-    // Prevent rapid repeated clicks
     const now = Date.now();
     if (now - lastFetchTime < 3000) {
       // 3 second cooldown
@@ -216,12 +209,10 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     // Reset states
     setNotEnoughDataWarning(null);
 
-    // Fetch new suggestion
     fetchAiSuggestion();
     setLastFetchTime(now);
   };
 
-  // Update fetchAiSuggestion to better handle errors
   const fetchAiSuggestion = async () => {
     if (!token) {
       setShowAiSuggestion(true);
@@ -237,7 +228,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     setAiSuggestion(null);
 
     try {
-      // Log the token being used (for debugging only)
       console.log(
         "Fetching AI recommendation with token:",
         token?.substring(0, 10) + "..."
@@ -249,16 +239,13 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         body: JSON.stringify({ token }),
       });
 
-      // Get the raw response text
       const responseText = await response.text();
       console.log("AI recommendation raw response:", responseText);
 
-      // Handle "not enough data" error differently
       if (!response.ok) {
         console.warn("API returned error status:", response.status);
         console.warn("API error text:", responseText);
 
-        // Special handling for "no task history" case - show warning instead of fallback
         if (
           responseText.includes("Failed to find document") ||
           responseText.includes("not found") ||
@@ -271,12 +258,10 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           return;
         }
 
-        // For other errors, use fallback
         provideFallbackSuggestion();
         return;
       }
 
-      // Parse the JSON response (keep fallback for unexpected formats)
       let data;
       try {
         data = JSON.parse(responseText);
@@ -286,14 +271,12 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         return;
       }
 
-      // Check if we have valid data (keep fallback for invalid data)
       if (!data.success || !data.message) {
         console.warn("AI API returned success:false or no message:", data);
         provideFallbackSuggestion();
         return;
       }
 
-      // Clean up the response data - ensure we don't have trailing special chars
       if (typeof data.message.title === "string") {
         data.message.title = data.message.title.trim();
       }
@@ -302,18 +285,15 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         data.message.description = data.message.description.trim();
       }
 
-      // If we have data but it's missing required fields, use fallback
       if (!data.message.title || !data.message.description) {
         console.warn("AI returned incomplete message data:", data.message);
         provideFallbackSuggestion();
         return;
       }
 
-      // We have valid data! Set it and animate
       console.log("Successfully received AI recommendation:", data.message);
       setAiSuggestion(data.message);
 
-      // Start typing effect with the actual suggestion
       const fullText =
         data.message.title +
         (data.message.description ? ": " + data.message.description : "");
@@ -326,7 +306,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     }
   };
 
-  // Improved fallback suggestion implementation
   const provideFallbackSuggestion = () => {
     // Clear any existing errors
     setAiError(null);
@@ -375,7 +354,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       },
     ];
 
-    // Pick a random suggestion
     const randomSuggestion =
       fallbackSuggestions[
         Math.floor(Math.random() * fallbackSuggestions.length)
@@ -387,18 +365,15 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     simulateTyping(fullText);
   };
 
-  // Replace typing animation with a safe reveal animation
   const simulateTyping = (text: string) => {
     if (!text) return;
 
-    // Make sure to remove any trailing special characters that might be causing issues
     const cleanedText = text.replace(/[^\x20-\x7E\s]/g, "").trim();
 
     // Set the clean text immediately
     setTypingEffect(cleanedText);
   };
 
-  // Apply AI suggestion to form
   const applyAiSuggestion = () => {
     if (aiSuggestion) {
       setTitle(aiSuggestion.title || "");
@@ -416,7 +391,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       maxWidth="sm"
       TransitionComponent={Fade}
     >
-      {/* Add global styles using style tag */}
       <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
 
       <DialogTitle>
@@ -466,7 +440,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
         </Box>
       </DialogTitle>
 
-      {/* AI Suggestion Popper */}
       <Popper
         open={showAiSuggestion}
         anchorEl={aiButtonEl}
@@ -607,7 +580,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
                       },
                     }}
                   >
-                    {/* Safe string rendering with explicit trimming */}
                     {typingEffect}
                   </Typography>
 
@@ -669,9 +641,9 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             size="small"
           >
             <MenuItem value="">Select frequency</MenuItem>
-            <MenuItem value='Daily'>Daily</MenuItem>
-            <MenuItem value='Weekly'>Weekly</MenuItem>
-            <MenuItem value='Monthly'>Monthly</MenuItem>
+            <MenuItem value="Daily">Daily</MenuItem>
+            <MenuItem value="Weekly">Weekly</MenuItem>
+            <MenuItem value="Monthly">Monthly</MenuItem>
           </TextField>
 
           {goals && goals.length > 0 && (

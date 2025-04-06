@@ -14,7 +14,6 @@ function addHeartbeatRoute(app) {
     res.send("Hello World!");
   });
 
-  // Add a simple test endpoint
   app.post("/test", (req, res) => {
     res.json({
       success: true,
@@ -107,7 +106,6 @@ function addGetUserProfile(app) {
         });
       }
 
-      // Get user info
       const userResult = await userService.getUserInfo(req.body.userId);
       if (!userResult.success) {
         return res.status(404).json({
@@ -116,7 +114,6 @@ function addGetUserProfile(app) {
         });
       }
 
-      // Get task history
       const taskHistoryResult = await taskService.getTaskHistory(
         req.body.userId,
       );
@@ -420,10 +417,10 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                  completions:
-                    freshTaskHistory.data.completions?.slice(0, 5) || [],
-                  streaks: freshTaskHistory.data.streaks,
-                }
+                    completions:
+                      freshTaskHistory.data.completions?.slice(0, 5) || [],
+                    streaks: freshTaskHistory.data.streaks,
+                  }
                 : null,
             },
           });

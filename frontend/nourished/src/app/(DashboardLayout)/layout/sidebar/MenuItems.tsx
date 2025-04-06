@@ -6,72 +6,72 @@ import {
   IconStack,
   IconUser,
   IconFriends,
-} from '@tabler/icons-react';
+} from "@tabler/icons-react";
 
-import { uniqueId } from 'lodash';
+import { uniqueId } from "lodash";
 
 const Menuitems = [
   {
     navlabel: true,
-    subheader: 'Home',
+    subheader: "Home",
   },
   {
     id: uniqueId(),
-    title: 'Dashboard',
+    title: "Dashboard",
     icon: IconLayoutDashboard,
-    href: '/dashboard',
+    href: "/dashboard",
   },
   {
     navlabel: true,
-    subheader: 'Goals',
+    subheader: "Goals",
   },
   {
     id: uniqueId(),
-    title: 'Goals (Challenges)',
+    title: "Goals (Challenges)",
     icon: IconTarget,
-    href: '/goals',
+    href: "/goals",
   },
   {
     id: uniqueId(),
-    title: 'Tasks',
+    title: "Tasks",
     icon: IconStack,
-    href: '/tasks',
+    href: "/tasks",
   },
   {
     navlabel: true,
-    subheader: 'Wellness',
+    subheader: "Wellness",
   },
   {
     id: uniqueId(),
-    title: 'Mood Tracker',
+    title: "Mood Tracker",
     icon: IconMoodHappy,
-    href: '/mood',
+    href: "/mood",
   },
   {
     navlabel: true,
-    subheader: 'Community',
+    subheader: "Community",
   },
   {
     id: uniqueId(),
-    title: 'Friend Circle',
+    title: "Friend Circle",
     icon: IconFriends,
-    href: '/friend-circle',
+    href: "/friend-circle",
   },
   {
     navlabel: true,
-    subheader: 'Account',
+    subheader: "Account",
   },
   {
     id: uniqueId(),
-    title: 'Profile',
+    title: "Profile",
     icon: IconUser,
-    href: '/profile',
+    href: "/profile",
   },
   {
     id: uniqueId(),
-    title: 'Logout',
+    title: "Logout",
     icon: IconLogin,
-    href: '/authentication/login',
+    href: "/authentication/login",
   },
 ];
 

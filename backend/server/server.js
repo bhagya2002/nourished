@@ -6,7 +6,6 @@ const taskService = require("../services/taskService.js");
 const app = express();
 const port = process.env.PORT || 3010;
 
-// Suppress punycode deprecation warning
 process.emitWarning = (function (originalEmitWarning) {
   return function (warning, ...args) {
     if (typeof warning === "string" && warning.includes("punycode")) {
@@ -16,10 +15,8 @@ process.emitWarning = (function (originalEmitWarning) {
   };
 })(process.emitWarning);
 
-// Middleware
 app.use(express.json());
 
-// Set up CORS
 app.use(
   cors({
     origin: "*",
@@ -29,23 +26,18 @@ app.use(
   }),
 );
 
-// Log all requests
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Health check route
 app.get("/", (req, res) => {
   res.send("Server is running on Vercel!");
 });
 
-// Load routes - this needs to be outside any conditional blocks
 routes(app);
 
-// Task scheduler function - only run in local development
 function setupTaskResetScheduler() {
-  // Your existing scheduler code
   const runResetJob = async () => {
     console.log("Running scheduled task reset job...");
     try {
@@ -66,7 +58,7 @@ function setupTaskResetScheduler() {
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0); // Set to midnight
+    tomorrow.setHours(0, 0, 0, 0);
 
     const timeUntilMidnight = tomorrow.getTime() - now.getTime();
     console.log(
@@ -76,7 +68,7 @@ function setupTaskResetScheduler() {
     setTimeout(runResetJob, timeUntilMidnight);
   };
 
-  runResetJob(); // Run immediately on startup
+  runResetJob();
 }
 
 // Only start the server and scheduler for local development
@@ -86,7 +78,6 @@ if (process.env.NODE_ENV !== "production") {
     setupTaskResetScheduler();
   });
 } else {
-  // For serverless environments, just log that we're ready
   console.log("Serverless environment: Express routes registered");
 }
 

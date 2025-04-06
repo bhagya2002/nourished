@@ -131,14 +131,16 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       if (user) {
         try {
-          // Fetch user profile data
+          if (!user) {
+            console.error("User is null");
+            return;
+          }
           const userRef = doc(db, "users", user.uid);
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
             const data = userSnap.data();
 
-            // Calculate average happiness from tasks
             const tasksQuery = query(
               collection(db, "tasks"),
               where("uid", "==", user.uid),
@@ -160,7 +162,6 @@ const ProfilePage = () => {
                   ) / 10
                 : 0;
 
-            // Calculate current streak
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const yesterday = new Date(today);
@@ -223,7 +224,6 @@ const ProfilePage = () => {
             }
           }
 
-          // Fetch all activity
           const activityQuery = query(
             collection(db, "tasks"),
             where("uid", "==", user.uid),
@@ -237,7 +237,6 @@ const ProfilePage = () => {
             happiness: doc.data().happiness,
           }));
 
-          // Sort by completion date
           allActivityData.sort(
             (a, b) =>
               new Date(b.completedAt).getTime() -
@@ -247,15 +246,12 @@ const ProfilePage = () => {
           setAllActivity(allActivityData);
           setRecentActivity(allActivityData.slice(0, 5));
 
-          // Fetch followers and followees - CORRECTED METHOD
           const userDoc = await getDoc(doc(db, "users", user.uid));
           const userData = userDoc.data();
 
-          // Get arrays of follower and followee IDs from user document
           const followerIds = userData?.followers || [];
           const followeeIds = userData?.following || [];
 
-          // Fetch user data for all followers
           const followersData = await Promise.all(
             followerIds.map(async (followerId: string) => {
               const followerDoc = await getDoc(doc(db, "users", followerId));
@@ -268,7 +264,6 @@ const ProfilePage = () => {
             })
           );
 
-          // Fetch user data for all followees
           const followeesData = await Promise.all(
             followeeIds.map(async (followeeId: string) => {
               const followeeDoc = await getDoc(doc(db, "users", followeeId));
@@ -310,7 +305,6 @@ const ProfilePage = () => {
         isPrivate: newPrivacyValue,
       });
 
-      // Update local userData state
       setUserData((prev) =>
         prev
           ? {
@@ -321,7 +315,6 @@ const ProfilePage = () => {
       );
     } catch (error) {
       console.error("Error updating privacy setting:", error);
-      // Revert toggle state if update fails
       setIsPrivate(!newPrivacyValue);
     }
   };
@@ -355,11 +348,9 @@ const ProfilePage = () => {
     <PageContainer title="Profile" description="View and manage your profile">
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Grid container spacing={3}>
-          {/* Profile Header */}
           <Grid item xs={12}>
             <DashboardCard>
               <Box sx={{ position: "relative", pb: 3 }}>
-                {/* Cover Image */}
                 <Box
                   sx={{
                     height: 200,
@@ -372,7 +363,6 @@ const ProfilePage = () => {
                   }}
                 />
 
-                {/* Profile Info */}
                 <Box
                   sx={{
                     position: "relative",
@@ -435,7 +425,6 @@ const ProfilePage = () => {
                 </Box>
               </Box>
 
-              {/* Stats Row */}
               <Box sx={{ px: 3, py: 2 }}>
                 <Grid container spacing={3}>
                   <Grid item xs={12} sm={3}>
@@ -520,7 +509,6 @@ const ProfilePage = () => {
             </DashboardCard>
           </Grid>
 
-          {/* Tab Content */}
           <Grid item xs={12}>
             <TabPanel value={tabValue} index={0}>
               <Grid container spacing={3}>

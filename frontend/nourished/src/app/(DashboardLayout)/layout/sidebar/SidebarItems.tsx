@@ -1,12 +1,12 @@
-import React from 'react';
-import Menuitems from './MenuItems';
-import { usePathname } from 'next/navigation';
-import { Box, List, useTheme } from '@mui/material';
-import NavItem from './NavItem';
-import NavGroup from './NavGroup/NavGroup';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
-import { useRouter } from 'next/navigation';
+import React from "react";
+import Menuitems from "./MenuItems";
+import { usePathname } from "next/navigation";
+import { Box, List, useTheme } from "@mui/material";
+import NavItem from "./NavItem";
+import NavGroup from "./NavGroup/NavGroup";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
+import { useRouter } from "next/navigation";
 
 interface SidebarItemsProps {
   toggleMobileSidebar?: (event: React.MouseEvent<HTMLElement>) => void;
@@ -22,7 +22,7 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
     <Box
       sx={{
         px: 3,
-        '& .MuiList-root': {
+        "& .MuiList-root": {
           py: 1,
         },
       }}
@@ -30,37 +30,33 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
       <List
         sx={{
           pt: 0,
-          '& .MuiListItemButton-root': {
-            borderRadius: '10px',
+          "& .MuiListItemButton-root": {
+            borderRadius: "10px",
             mb: 1,
-            transition: 'all 0.2s ease-in-out',
+            transition: "all 0.2s ease-in-out",
           },
-          '& .MuiListItemIcon-root': {
-            minWidth: '36px',
+          "& .MuiListItemIcon-root": {
+            minWidth: "36px",
             color: theme.palette.text.secondary,
           },
-          '& .Mui-selected': {
-            color: 'white',
-            '& .MuiListItemIcon-root': {
-              color: 'white',
+          "& .Mui-selected": {
+            color: "white",
+            "& .MuiListItemIcon-root": {
+              color: "white",
             },
             background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             boxShadow: `0 3px 10px rgba(0, 0, 0, 0.15)`,
-            '&:hover': {
+            "&:hover": {
               background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
             },
           },
         }}
-        className='sidebarNav'
-        component='div'
+        className="sidebarNav"
+        component="div"
       >
         {Menuitems.map((item) => {
-          // {/********SubHeader**********/}
           if (item.subheader) {
             return <NavGroup item={item} key={item.subheader} />;
-
-            // {/********If Sub Menu**********/}
-            /* eslint no-else-return: "off" */
           } else {
             return (
               <NavItem
@@ -69,7 +65,7 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
                 pathDirect={pathDirect}
                 onClick={async (e) => {
                   if (toggleMobileSidebar) toggleMobileSidebar(e);
-                  if (item.title === 'Logout') {
+                  if (item.title === "Logout") {
                     try {
                       await signOut(auth);
                       localStorage.removeItem("authToken");

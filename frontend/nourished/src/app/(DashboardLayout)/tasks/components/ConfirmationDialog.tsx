@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,7 @@ import {
   Button,
   Typography,
   Fade,
-} from '@mui/material';
+} from "@mui/material";
 
 interface ConfirmationDialogProps {
   open: boolean;
@@ -24,8 +24,8 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   open,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
   onConfirm,
   onCancel,
 }) => {
@@ -53,4 +53,4 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   );
 };
 
-export default ConfirmationDialog; 
+export default ConfirmationDialog;

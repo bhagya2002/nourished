@@ -1,5 +1,5 @@
-'use client';
-import React, { useState } from 'react';
+"use client";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,13 +13,13 @@ import {
   Fade,
   Paper,
   useTheme,
-} from '@mui/material';
-import SentimentVeryDissatisfiedIcon from '@mui/icons-material/SentimentVeryDissatisfied';
-import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
-import SentimentNeutralIcon from '@mui/icons-material/SentimentNeutral';
-import SentimentSatisfiedIcon from '@mui/icons-material/SentimentSatisfied';
-import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
-import CloseIcon from '@mui/icons-material/Close';
+} from "@mui/material";
+import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
+import SentimentDissatisfiedIcon from "@mui/icons-material/SentimentDissatisfied";
+import SentimentNeutralIcon from "@mui/icons-material/SentimentNeutral";
+import SentimentSatisfiedIcon from "@mui/icons-material/SentimentSatisfied";
+import SentimentSatisfiedAltIcon from "@mui/icons-material/SentimentSatisfiedAlt";
+import CloseIcon from "@mui/icons-material/Close";
 
 interface HappinessDialogProps {
   open: boolean;
@@ -55,7 +55,7 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
       await onSubmit(taskId, happiness);
       onClose();
     } catch (error) {
-      console.error('Error submitting happiness rating:', error);
+      console.error("Error submitting happiness rating:", error);
     } finally {
       setSubmitting(false);
     }
@@ -66,61 +66,54 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
       case 1:
         return (
           <SentimentVeryDissatisfiedIcon
-            fontSize='large'
-            sx={{ color: '#f44336' }}
+            fontSize="large"
+            sx={{ color: "#f44336" }}
           />
         );
       case 2:
         return (
           <SentimentDissatisfiedIcon
-            fontSize='large'
-            sx={{ color: '#ff9800' }}
+            fontSize="large"
+            sx={{ color: "#ff9800" }}
           />
         );
       case 3:
         return (
-          <SentimentNeutralIcon
-            fontSize='large'
-            sx={{ color: '#2196f3' }}
-          />
+          <SentimentNeutralIcon fontSize="large" sx={{ color: "#2196f3" }} />
         );
       case 4:
         return (
-          <SentimentSatisfiedIcon
-            fontSize='large'
-            sx={{ color: '#4caf50' }}
-          />
+          <SentimentSatisfiedIcon fontSize="large" sx={{ color: "#4caf50" }} />
         );
       case 5:
         return (
           <SentimentSatisfiedAltIcon
-            fontSize='large'
-            sx={{ color: '#00c853' }}
+            fontSize="large"
+            sx={{ color: "#00c853" }}
           />
         );
       default:
-        return <SentimentNeutralIcon fontSize='large' />;
+        return <SentimentNeutralIcon fontSize="large" />;
     }
   };
 
   const getHappinessLabel = (value: number) => {
     switch (value) {
       case 1:
-        return 'Very Unhappy';
+        return "Very Unhappy";
       case 2:
-        return 'Unhappy';
+        return "Unhappy";
       case 3:
-        return 'Neutral';
+        return "Neutral";
       case 4:
-        return 'Happy';
+        return "Happy";
       case 5:
-        return 'Very Happy';
+        return "Very Happy";
       default:
-        return 'Neutral';
+        return "Neutral";
     }
   };
 
-  // Array of emoji faces for the slider marks
   const marks = [
     { value: 1, label: <SentimentVeryDissatisfiedIcon /> },
     { value: 2, label: <SentimentDissatisfiedIcon /> },
@@ -133,34 +126,34 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth='sm'
+      maxWidth="sm"
       fullWidth
       TransitionComponent={Fade}
       PaperProps={{
         sx: {
           borderRadius: 2,
-          overflow: 'hidden',
+          overflow: "hidden",
         },
       }}
     >
       <DialogTitle
         sx={{
           background: theme.palette.primary.main,
-          color: 'white',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          color: "white",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <Typography component='div' variant='h6'>
+        <Typography component="div" variant="h6">
           How do you feel after completing this task?
         </Typography>
         <IconButton
-          edge='end'
-          color='inherit'
+          edge="end"
+          color="inherit"
           onClick={onClose}
-          aria-label='close'
-          size='small'
+          aria-label="close"
+          size="small"
         >
           <CloseIcon />
         </IconButton>
@@ -168,7 +161,7 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
 
       <DialogContent>
         <Box sx={{ pt: 3, pb: 1 }}>
-          <Typography variant='subtitle1' gutterBottom>
+          <Typography variant="subtitle1" gutterBottom>
             Task: <strong>{taskTitle}</strong>
           </Typography>
 
@@ -178,19 +171,19 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
               p: 3,
               mt: 2,
               mb: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               background: theme.palette.background.default,
               borderRadius: 2,
             }}
           >
             <Box sx={{ mb: 2 }}>{getHappinessIcon(happiness)}</Box>
-            <Typography variant='h6' align='center' gutterBottom>
+            <Typography variant="h6" align="center" gutterBottom>
               {getHappinessLabel(happiness)}
             </Typography>
 
-            <Box sx={{ width: '100%', px: 2, mt: 3 }}>
+            <Box sx={{ width: "100%", px: 2, mt: 3 }}>
               <Slider
                 value={happiness}
                 onChange={handleHappinessChange}
@@ -198,28 +191,28 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
                 marks={marks}
                 min={1}
                 max={5}
-                valueLabelDisplay='off'
+                valueLabelDisplay="off"
                 sx={{
-                  '& .MuiSlider-thumb': {
+                  "& .MuiSlider-thumb": {
                     width: 28,
                     height: 28,
-                    transition: '0.3s cubic-bezier(.47,1.64,.41,.8)',
-                    '&:before': {
-                      boxShadow: '0 2px 12px 0 rgba(0,0,0,0.4)',
+                    transition: "0.3s cubic-bezier(.47,1.64,.41,.8)",
+                    "&:before": {
+                      boxShadow: "0 2px 12px 0 rgba(0,0,0,0.4)",
                     },
-                    '&:hover, &.Mui-focusVisible': {
+                    "&:hover, &.Mui-focusVisible": {
                       boxShadow: `0px 0px 0px 8px ${
-                        theme.palette.mode === 'dark'
-                          ? 'rgb(255 255 255 / 16%)'
-                          : 'rgb(0 0 0 / 16%)'
+                        theme.palette.mode === "dark"
+                          ? "rgb(255 255 255 / 16%)"
+                          : "rgb(0 0 0 / 16%)"
                       }`,
                     },
-                    '&.Mui-active': {
+                    "&.Mui-active": {
                       width: 34,
                       height: 34,
                     },
                   },
-                  '& .MuiSlider-rail': {
+                  "& .MuiSlider-rail": {
                     opacity: 0.5,
                   },
                 }}
@@ -228,9 +221,9 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
           </Paper>
 
           <Typography
-            variant='body2'
-            color='text.secondary'
-            align='center'
+            variant="body2"
+            color="text.secondary"
+            align="center"
             sx={{ mt: 2 }}
           >
             Your feedback helps us understand how tasks affect your well-being.
@@ -239,16 +232,13 @@ const HappinessDialog: React.FC<HappinessDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        {/* <Button onClick={onClose} disabled={submitting}>
-          Skip
-        </Button> */}
         <Button
-          variant='contained'
+          variant="contained"
           onClick={handleSubmit}
           disabled={submitting}
-          color='primary'
+          color="primary"
         >
-          {submitting ? 'Submitting...' : 'Submit'}
+          {submitting ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>
     </Dialog>

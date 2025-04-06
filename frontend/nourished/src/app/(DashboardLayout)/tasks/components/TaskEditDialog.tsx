@@ -1,5 +1,5 @@
-'use client';
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,7 +11,7 @@ import {
   Stack,
   Fade,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 
 interface TaskEditProps {
   open: boolean;
@@ -44,7 +44,6 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Reset form fields when dialog opens with new initial values
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
@@ -58,23 +57,23 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
     setErrorMsg(null);
 
     if (!title.trim()) {
-      setErrorMsg('Title is required.');
+      setErrorMsg("Title is required.");
       return;
     }
     if (!description.trim()) {
-      setErrorMsg('Description is required.');
+      setErrorMsg("Description is required.");
       return;
     }
     if (title.length > 50) {
-      setErrorMsg('Title must be <= 50 characters.');
+      setErrorMsg("Title must be <= 50 characters.");
       return;
     }
     if (description.length > 200) {
-      setErrorMsg('Description must be <= 200 characters.');
+      setErrorMsg("Description must be <= 200 characters.");
       return;
     }
     if (!frequency.trim()) {
-      setErrorMsg('Frequency is required.');
+      setErrorMsg("Frequency is required.");
       return;
     }
 
@@ -83,7 +82,7 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
         t.title.toLowerCase() === title.toLowerCase() && t.title != initialTitle
     );
     if (duplicates.length > 0) {
-      setErrorMsg('A task with that title alreadyv exist!');
+      setErrorMsg("A task with that title alreadyv exist!");
       return;
     }
 
@@ -92,7 +91,7 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
       await onSave({ title, description, frequency });
       onClose();
     } catch (error: any) {
-      setErrorMsg(error.message || 'Update failed-please retry.');
+      setErrorMsg(error.message || "Update failed-please retry.");
     } finally {
       setSaving(false);
     }
@@ -108,42 +107,42 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
       open={open}
       onClose={handleCancel}
       fullWidth
-      maxWidth='sm'
+      maxWidth="sm"
       TransitionComponent={Fade}
     >
       <DialogTitle>Edit Task</DialogTitle>
       <DialogContent dividers>
         {errorMsg && (
-          <Alert severity='error' sx={{ mb: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {errorMsg}
           </Alert>
         )}
         <Stack spacing={2}>
           <TextField
-            label='Title'
+            label="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            size='small'
+            size="small"
           />
           <TextField
-            label='Description'
+            label="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             multiline
-            size='small'
+            size="small"
           />
           <TextField
             select
             required
-            label='Frequency'
+            label="Frequency"
             value={frequency}
             onChange={(e) => setFrequency(e.target.value)}
-            size='small'
+            size="small"
           >
             <MenuItem value="">Select frequency</MenuItem>
-            <MenuItem value='Daily'>Daily</MenuItem>
-            <MenuItem value='Weekly'>Weekly</MenuItem>
-            <MenuItem value='Monthly'>Monthly</MenuItem>
+            <MenuItem value="Daily">Daily</MenuItem>
+            <MenuItem value="Weekly">Weekly</MenuItem>
+            <MenuItem value="Monthly">Monthly</MenuItem>
           </TextField>
         </Stack>
       </DialogContent>
@@ -151,8 +150,8 @@ const TaskEditDialog: React.FC<TaskEditProps> = ({
         <Button onClick={handleCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button variant='contained' onClick={handleSaveClick} disabled={saving}>
-          {saving ? 'Saving...' : 'Save'}
+        <Button variant="contained" onClick={handleSaveClick} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

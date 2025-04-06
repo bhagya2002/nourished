@@ -48,17 +48,14 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  // Validate email format
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Validate password strength (min 8 chars, at least 1 number & 1 special char)
   const isValidPassword = (password: string) =>
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
       password
     );
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -66,7 +63,6 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
 
     const { name, email, password } = formData;
 
-    // Validate inputs
     if (!name.trim()) return setError("Name is required.");
     if (!isValidEmail(email)) return setError("Invalid email format.");
     if (!isValidPassword(password))
@@ -77,10 +73,8 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
     try {
       setLoading(true);
 
-      // Set persistent session BEFORE user creation
       await setPersistence(auth, browserLocalPersistence);
 
-      // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -88,7 +82,6 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
       );
       const user = userCredential.user;
 
-      // Store user in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         name,
@@ -149,7 +142,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
                   "& .MuiOutlinedInput-input": {
                     py: 1.5,
                   },
-                }
+                },
               }}
             />
           </Box>
@@ -181,7 +174,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
                   "& .MuiOutlinedInput-input": {
                     py: 1.5,
                   },
-                }
+                },
               }}
             />
           </Box>
@@ -214,7 +207,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
                   "& .MuiOutlinedInput-input": {
                     py: 1.5,
                   },
-                }
+                },
               }}
             />
           </Box>
@@ -247,10 +240,14 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
               background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               "&:hover": {
                 background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-              }
+              },
             }}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
+            {loading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Sign Up"
+            )}
           </Button>
         </Box>
       </Box>

@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 const admin = require("./firebaseAdmin");
 const logger = require("../util/logger");
 
@@ -175,10 +174,10 @@ module.exports.removeFromFieldArray = async function removeFromFieldArray(
 
 /**
  * Update a document with new data
- * @param {string} collectionName - The collection name
- * @param {string} docId - The document ID
- * @param {Object} updateData - The data to update
- * @returns {Promise<Object>} - Result object
+ * @param {string} collectionName
+ * @param {string} docId
+ * @param {Object} updateData
+ * @returns {Promise<Object>}
  */
 module.exports.updateSingleDoc = async function updateSingleDoc(
   collectionName,
@@ -197,7 +196,6 @@ module.exports.updateSingleDoc = async function updateSingleDoc(
     });
 };
 
-// Add queryDatabase function to query where a field equals a value
 module.exports.queryDatabase = async function queryDatabase(
   fieldValue,
   collectionName,
@@ -213,7 +211,6 @@ module.exports.queryDatabase = async function queryDatabase(
       return { success: true, data: [] };
     }
 
-    // Convert the query results to an array of documents
     const docs = [];
     querySnapshot.forEach((doc) => {
       docs.push({
@@ -262,9 +259,9 @@ module.exports.getAddToArray = function getAddToArray(valueToAdd) {
 
 /**
  * Query database with multiple custom conditions
- * @param {string} collectionName - Collection to query
- * @param {Array<Array<any>>} conditions - Array of condition arrays [fieldName, operator, value]
- * @returns {Promise<Object>} - Query result
+ * @param {string}
+ * @param {Array<Array<any>>}
+ * @returns {Promise<Object>}
  */
 module.exports.queryDatabaseCustom = async function queryDatabaseCustom(
   collectionName,
@@ -273,7 +270,6 @@ module.exports.queryDatabaseCustom = async function queryDatabaseCustom(
   try {
     let query = db.collection(collectionName);
 
-    // Apply all conditions to the query
     for (const condition of conditions) {
       if (condition.length !== 3) {
         throw new Error(
@@ -291,7 +287,6 @@ module.exports.queryDatabaseCustom = async function queryDatabaseCustom(
       return { success: true, data: [] };
     }
 
-    // Convert the query results to an array of documents
     const docs = [];
     querySnapshot.forEach((doc) => {
       docs.push({
@@ -321,7 +316,6 @@ module.exports.queryDatabaseFuzzy = async function queryDatabaseFuzzy(
 ) {
   try {
     const collectionRef = db.collection(collectionName);
-    // Search for matched field from all documents in the collection
     const query = collectionRef
       .where(fieldName, ">=", searchTerm)
       .where(fieldName, "<=", searchTerm + "\uf8ff")
@@ -336,7 +330,6 @@ module.exports.queryDatabaseFuzzy = async function queryDatabaseFuzzy(
       return { success: true, data: [] };
     }
 
-    // Convert the query results to an array of documents
     const docs = [];
     querySnapshot.forEach((doc) => {
       docs.push({

@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Box,
   Typography,
@@ -12,12 +12,12 @@ import {
   Grid,
   useTheme,
   alpha,
-} from '@mui/material';
-import DefaultAvatar from '../../components/shared/DefaultAvatar';
+} from "@mui/material";
+import DefaultAvatar from "../../components/shared/DefaultAvatar";
 
 interface FollowData {
   id: string;
-  name: string;  // Changed from displayName to name
+  name: string;
   photoURL?: string;
 }
 
@@ -26,11 +26,23 @@ interface FollowListProps {
   followees: FollowData[];
 }
 
-const FollowSection = ({ title, users }: { title: string; users: FollowData[] }) => {
+const FollowSection = ({
+  title,
+  users,
+}: {
+  title: string;
+  users: FollowData[];
+}) => {
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        {title} <Typography component="span" color="text.secondary">({users.length})</Typography>
+      <Typography
+        variant="h6"
+        sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+      >
+        {title}{" "}
+        <Typography component="span" color="text.secondary">
+          ({users.length})
+        </Typography>
       </Typography>
       <List>
         {users.map((user) => (
@@ -46,7 +58,10 @@ const FollowSection = ({ title, users }: { title: string; users: FollowData[] })
           </ListItem>
         ))}
         {users.length === 0 && (
-          <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+          <Typography
+            color="text.secondary"
+            sx={{ py: 2, textAlign: "center" }}
+          >
             Connect with others to see them here
           </Typography>
         )}
@@ -61,11 +76,11 @@ const FollowList: React.FC<FollowListProps> = ({ followers, followees }) => {
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} md={6}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
+        <Paper
+          elevation={0}
+          sx={{
             p: 3,
-            height: '100%',
+            height: "100%",
             bgcolor: alpha(theme.palette.background.paper, 0.1),
           }}
         >
@@ -73,11 +88,11 @@ const FollowList: React.FC<FollowListProps> = ({ followers, followees }) => {
         </Paper>
       </Grid>
       <Grid item xs={12} md={6}>
-        <Paper 
-          elevation={0} 
-          sx={{ 
+        <Paper
+          elevation={0}
+          sx={{
             p: 3,
-            height: '100%',
+            height: "100%",
             bgcolor: alpha(theme.palette.background.paper, 0.1),
           }}
         >
@@ -88,4 +103,4 @@ const FollowList: React.FC<FollowListProps> = ({ followers, followees }) => {
   );
 };
 
-export default FollowList; 
+export default FollowList;

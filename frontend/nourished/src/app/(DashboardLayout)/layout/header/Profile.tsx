@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/firebaseConfig';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
+import { useAuth } from "@/context/AuthContext";
 import {
   Box,
   Menu,
@@ -10,10 +10,10 @@ import {
   MenuItem,
   ListItemIcon,
   Divider,
-} from '@mui/material';
-import { AccountCircle, Logout, PersonSearch } from '@mui/icons-material';
-import UserSearchDialog from '../components/UserSearchDialog';
-import DefaultAvatar from '../../components/shared/DefaultAvatar';
+} from "@mui/material";
+import { AccountCircle, Logout, PersonSearch } from "@mui/icons-material";
+import UserSearchDialog from "../components/UserSearchDialog";
+import DefaultAvatar from "../../components/shared/DefaultAvatar";
 
 const Profile = () => {
   const [anchorEl2, setAnchorEl2] = useState(null);
@@ -66,8 +66,8 @@ const Profile = () => {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         sx={{
-          '& .MuiMenu-paper': {
-            width: 'auto',
+          "& .MuiMenu-paper": {
+            width: "auto",
           },
         }}
       >
@@ -90,20 +90,38 @@ const Profile = () => {
           <ListItemText>My Tasks</ListItemText>
         </MenuItem> */}
         <Box>
-          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); router.push('/profile'); }}>
+          <MenuItem
+            sx={{ py: 1.5 }}
+            onClick={() => {
+              handleClose2();
+              router.push("/profile");
+            }}
+          >
             <ListItemIcon>
               <AccountCircle fontSize="small" />
             </ListItemIcon>
             My Profile
           </MenuItem>
           <Divider />
-          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); setFriendSearchOpen(true); }}>
+          <MenuItem
+            sx={{ py: 1.5 }}
+            onClick={() => {
+              handleClose2();
+              setFriendSearchOpen(true);
+            }}
+          >
             <ListItemIcon>
               <PersonSearch fontSize="small" />
             </ListItemIcon>
             Search Friends
           </MenuItem>
-          <MenuItem sx={{ py: 1.5 }} onClick={() => { handleClose2(); handleLogout(); }}>
+          <MenuItem
+            sx={{ py: 1.5 }}
+            onClick={() => {
+              handleClose2();
+              handleLogout();
+            }}
+          >
             <ListItemIcon>
               <Logout fontSize="small" />
             </ListItemIcon>

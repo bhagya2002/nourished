@@ -9,7 +9,6 @@ const client = new openai.OpenAI({
 const tipByUID = new Map();
 const taskRecommendationByUID = new Map();
 
-// Task recommendation prompt
 const taskRecommendationPrompt = `You are an AI wellness coach specializing in personalized task recommendations. 
 Your role is to analyze a user's task history and happiness ratings to suggest new, personalized tasks that will help them maintain and improve their wellbeing.
 
@@ -29,7 +28,6 @@ IMPORTANT: Return ONLY a raw JSON object without any markdown formatting or back
 Keep titles under 50 characters and descriptions under 200 characters.
 Focus on practical, achievable tasks that build on the user's positive patterns.`;
 
-// Daily tip prompt
 const dailyTipPrompt = `You are an AI wellness coach specializing in personalized daily wellness tips.
 Your role is to analyze a user's happiness data and task patterns to provide an encouraging, thoughtful tip that will help them improve their wellbeing today.
 

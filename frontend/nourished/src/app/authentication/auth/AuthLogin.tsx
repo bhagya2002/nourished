@@ -38,23 +38,18 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  // Handle login
-  // Handle login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      // Ensure the session persists across tabs/reloads
       await setPersistence(auth, browserLocalPersistence);
 
-      // Authenticate with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(
         auth,
         formData.email,
@@ -62,19 +57,15 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
       );
       const user = userCredential.user;
 
-      // Fetch ID Token
       const token = await user.getIdToken();
 
-      // Check if user exists in Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) {
         throw new Error("User not found in database.");
       }
 
-      // Store token in localStorage (optional but useful for API requests)
       localStorage.setItem("authToken", token);
 
-      // Check if auth user has a displayName, if not update the user profile
       if (!user.displayName) {
         const fetchUserInfo = await fetch(`${API_BASE_URL}/userInfo`, {
           method: "POST",
@@ -90,7 +81,6 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
         }
       }
 
-      // Redirect to dashboard
       router.push("/dashboard");
     } catch (err) {
       setError("Invalid email or password.");
@@ -138,7 +128,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
                   "& .MuiOutlinedInput-input": {
                     py: 1.5,
                   },
-                }
+                },
               }}
             />
           </Box>
@@ -170,7 +160,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
                   "& .MuiOutlinedInput-input": {
                     py: 1.5,
                   },
-                }
+                },
               }}
             />
           </Box>
@@ -198,7 +188,7 @@ const AuthLogin: React.FC<LoginProps> = ({ title, subtitle, subtext }) => {
               background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               "&:hover": {
                 background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-              }
+              },
             }}
           >
             {loading ? (

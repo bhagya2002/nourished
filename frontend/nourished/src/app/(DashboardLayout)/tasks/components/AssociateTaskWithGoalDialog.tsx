@@ -1,5 +1,5 @@
-'use client';
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,34 +14,28 @@ import {
   CircularProgress,
   Alert,
   Box,
-} from '@mui/material';
+} from "@mui/material";
 
 // Define props interface
 interface AssociateTaskWithGoalDialogProps {
   open: boolean;
   onClose: () => void;
   onAssociate: (taskId: string, goalId: string) => Promise<void>;
-  task: any; // The task to associate
-  goals: any[]; // Available goals
+  task: any;
+  goals: any[];
   isLoading: boolean;
 }
 
-const AssociateTaskWithGoalDialog: React.FC<AssociateTaskWithGoalDialogProps> = ({
-  open,
-  onClose,
-  onAssociate,
-  task,
-  goals,
-  isLoading,
-}) => {
-  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
+const AssociateTaskWithGoalDialog: React.FC<
+  AssociateTaskWithGoalDialogProps
+> = ({ open, onClose, onAssociate, task, goals, isLoading }) => {
+  const [selectedGoalId, setSelectedGoalId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset state when dialog opens or task changes
   useEffect(() => {
     if (open) {
-      setSelectedGoalId('');
+      setSelectedGoalId("");
       setError(null);
       setIsSubmitting(false);
     }
@@ -50,7 +44,7 @@ const AssociateTaskWithGoalDialog: React.FC<AssociateTaskWithGoalDialogProps> = 
   // Handle association
   const handleAssociate = async () => {
     if (!selectedGoalId) {
-      setError('Please select a goal');
+      setError("Please select a goal");
       return;
     }
 
@@ -61,15 +55,14 @@ const AssociateTaskWithGoalDialog: React.FC<AssociateTaskWithGoalDialogProps> = 
       await onAssociate(task.id, selectedGoalId);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to associate task with goal');
+      setError(err.message || "Failed to associate task with goal");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Filter out goals that already have this task
-  const availableGoals = goals.filter(goal => 
-    !goal.taskIds?.includes(task?.id)
+  const availableGoals = goals.filter(
+    (goal) => !goal.taskIds?.includes(task?.id)
   );
 
   return (
@@ -83,18 +76,20 @@ const AssociateTaskWithGoalDialog: React.FC<AssociateTaskWithGoalDialogProps> = 
         )}
 
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
             <CircularProgress />
           </Box>
         ) : (
           <>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              Associate <strong>{task?.title}</strong> with a goal to track your progress.
+              Associate <strong>{task?.title}</strong> with a goal to track your
+              progress.
             </Typography>
 
             {availableGoals.length === 0 ? (
               <Alert severity="info">
-                No available goals found. Either you have no goals created yet or this task is already associated with all your goals.
+                No available goals found. Either you have no goals created yet
+                or this task is already associated with all your goals.
               </Alert>
             ) : (
               <FormControl fullWidth sx={{ mb: 2 }}>
@@ -124,13 +119,15 @@ const AssociateTaskWithGoalDialog: React.FC<AssociateTaskWithGoalDialogProps> = 
         <Button
           variant="contained"
           onClick={handleAssociate}
-          disabled={isSubmitting || availableGoals.length === 0 || !selectedGoalId}
+          disabled={
+            isSubmitting || availableGoals.length === 0 || !selectedGoalId
+          }
         >
-          {isSubmitting ? 'Associating...' : 'Associate'}
+          {isSubmitting ? "Associating..." : "Associate"}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default AssociateTaskWithGoalDialog; 
+export default AssociateTaskWithGoalDialog;

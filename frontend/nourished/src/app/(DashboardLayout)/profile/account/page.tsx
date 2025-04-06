@@ -229,7 +229,6 @@ const AccountPage = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {/* Profile Settings */}
         <Grid item xs={12} md={6}>
           <form onSubmit={handleProfileUpdate}>
             <DashboardCard title="Profile Settings">
@@ -297,49 +296,8 @@ const AccountPage = () => {
           </form>
         </Grid>
 
-        {/* Security Settings */}
         <Grid item xs={12} md={6}>
           <Stack spacing={3}>
-            {/* Email Settings */}
-            {/* <form onSubmit={handleEmailUpdate}>
-              <DashboardCard
-                title='Email Settings'
-                action={<IconMail size={20} />}
-              >
-                <Stack spacing={3}>
-                  <TextField
-                    label='Email Address'
-                    name='email'
-                    type='email'
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-
-                  <TextField
-                    label='Current Password'
-                    name='currentPassword'
-                    type='password'
-                    value={formData.currentPassword}
-                    onChange={handleInputChange}
-                    fullWidth
-                    required
-                  />
-
-                  <Button
-                    type='submit'
-                    variant='contained'
-                    disabled={isSaving}
-                    fullWidth
-                  >
-                    Update Email
-                  </Button>
-                </Stack>
-              </DashboardCard>
-            </form> */}
-
-            {/* Password Settings */}
             <form onSubmit={handlePasswordUpdate}>
               <DashboardCard
                 title="Password Settings"
@@ -391,7 +349,6 @@ const AccountPage = () => {
         </Grid>
       </Grid>
 
-      {/* Error/Success Messages */}
       <Box mt={3}>
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>

@@ -85,7 +85,7 @@ const Notifications = () => {
       );
       if (invitation.type === 1 && pathname === "/goals") {
         location.reload();
-      } else if (invitation.type === 0 && pathname === '/profile') {
+      } else if (invitation.type === 0 && pathname === "/profile") {
         location.reload();
       }
     } catch (error) {
@@ -125,7 +125,7 @@ const Notifications = () => {
   // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/authentication/login');
+      router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
@@ -193,102 +193,126 @@ const Notifications = () => {
           {notifications.filter((notification) => notification.type === 0)
             .length > 0 && "Friend Requests"}
         </ListSubheader>
-        {notifications.length > 0 && notifications.filter(notification => notification.type === 0).map((notification) => (
-          <Box
-            key={notification.id}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              '&:hover': {
-                backgroundColor: 'grey.100',
-              },
-            }}
-          >
-            <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
-              <Handshake />
-            </Box>
-            <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ fontWeight: 'bold' }}>{notification.inviterName}</Box>
-              {/* <Box sx={{ fontSize: 14, color: 'grey.600' }}>follows you, follow back!</Box> */}
-            </Box>
-            <Box sx={{ ml: 2, display: 'flex', flexDirection: 'row', gap: 1 }}>
-              <CheckCircle color='primary' onClick={() => handleAcceptInvite(notification.id)}
+        {notifications.length > 0 &&
+          notifications
+            .filter((notification) => notification.type === 0)
+            .map((notification) => (
+              <Box
+                key={notification.id}
                 sx={{
-                  cursor: 'pointer',
-                  opacity: 0.3,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    opacity: 1,
-                  }
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 1,
+                  "&:hover": {
+                    backgroundColor: "grey.100",
+                  },
                 }}
-              />
-              <Cancel color='error' onClick={() => handleDeclineInvite(notification.id)}
-                sx={{
-                  cursor: 'pointer',
-                  opacity: 0.2,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    opacity: 1,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-        ))}
+              >
+                <Box sx={{ mr: 2, display: "flex", alignItems: "center" }}>
+                  <Handshake />
+                </Box>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ fontWeight: "bold" }}>
+                    {notification.inviterName}
+                  </Box>
+                  {/* <Box sx={{ fontSize: 14, color: 'grey.600' }}>follows you, follow back!</Box> */}
+                </Box>
+                <Box
+                  sx={{ ml: 2, display: "flex", flexDirection: "row", gap: 1 }}
+                >
+                  <CheckCircle
+                    color="primary"
+                    onClick={() => handleAcceptInvite(notification.id)}
+                    sx={{
+                      cursor: "pointer",
+                      opacity: 0.3,
+                      transition: "all 0.3s ease-in-out",
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <Cancel
+                    color="error"
+                    onClick={() => handleDeclineInvite(notification.id)}
+                    sx={{
+                      cursor: "pointer",
+                      opacity: 0.2,
+                      transition: "all 0.3s ease-in-out",
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            ))}
 
         {/* For Challenges Invites */}
         <ListSubheader sx={{ fontWeight: "bold", userSelect: "none" }}>
           {notifications.filter((notification) => notification.type === 1)
             .length > 0 && "Challenges Invites"}
         </ListSubheader>
-        {notifications.length > 0 && notifications.filter(notification => notification.type === 1).map((notification) => (
-          <Box
-            key={notification.id}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              '&:hover': {
-                backgroundColor: 'grey.100',
-              },
-            }}
-          >
-            <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
-              <Groups2Icon />
-            </Box>
-            <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ fontWeight: 'bold' }}>{notification.inviterName}</Box>
-              <Box sx={{ fontSize: 14, color: 'grey.600' }}>{notification.targetTitle}</Box>
-            </Box>
-            <Box sx={{ ml: 2, display: 'flex', flexDirection: 'row', gap: 1 }}>
-              <CheckCircle color='primary' onClick={() => handleAcceptInvite(notification.id)}
+        {notifications.length > 0 &&
+          notifications
+            .filter((notification) => notification.type === 1)
+            .map((notification) => (
+              <Box
+                key={notification.id}
                 sx={{
-                  cursor: 'pointer',
-                  opacity: 0.3,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    opacity: 1,
-                  }
+                  display: "flex",
+                  alignItems: "center",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 1,
+                  "&:hover": {
+                    backgroundColor: "grey.100",
+                  },
                 }}
-              />
-              <Cancel color='error' onClick={() => handleDeclineInvite(notification.id)}
-                sx={{
-                  cursor: 'pointer',
-                  opacity: 0.2,
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    opacity: 1,
-                  }
-                }}
-              />
-            </Box>
-          </Box>
-        ))}
+              >
+                <Box sx={{ mr: 2, display: "flex", alignItems: "center" }}>
+                  <Groups2Icon />
+                </Box>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ fontWeight: "bold" }}>
+                    {notification.inviterName}
+                  </Box>
+                  <Box sx={{ fontSize: 14, color: "grey.600" }}>
+                    {notification.targetTitle}
+                  </Box>
+                </Box>
+                <Box
+                  sx={{ ml: 2, display: "flex", flexDirection: "row", gap: 1 }}
+                >
+                  <CheckCircle
+                    color="primary"
+                    onClick={() => handleAcceptInvite(notification.id)}
+                    sx={{
+                      cursor: "pointer",
+                      opacity: 0.3,
+                      transition: "all 0.3s ease-in-out",
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <Cancel
+                    color="error"
+                    onClick={() => handleDeclineInvite(notification.id)}
+                    sx={{
+                      cursor: "pointer",
+                      opacity: 0.2,
+                      transition: "all 0.3s ease-in-out",
+                      "&:hover": {
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            ))}
       </Menu>
     </Box>
   );

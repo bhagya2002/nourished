@@ -10,11 +10,10 @@ const authOptions = {
     ],
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
-        signIn: '/authentication/login', // Redirect to your login page if not authenticated
+        signIn: '/authentication/login',
     },
 };
 
-// Handle the NextAuth API request
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

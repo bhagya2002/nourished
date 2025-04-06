@@ -22,14 +22,12 @@ import {
 import { auth, provider, db } from "@/firebaseConfig";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { IconLeaf } from "@tabler/icons-react";
-import { keyframes } from '@emotion/react';
-import { alpha } from '@mui/material/styles';
+import { keyframes } from "@emotion/react";
+import { alpha } from "@mui/material/styles";
 
-// Components
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
 import AuthRegister from "../auth/AuthRegister";
 
-// Create keyframes for floating animation
 const floatAnimation1 = keyframes`
   0% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
   50% { transform: translate(20px, -15px) rotate(5deg); opacity: 0.9; }
@@ -54,26 +52,25 @@ interface BackgroundLeafProps {
   left?: string;
   right?: string;
   bottom?: string;
-  animation: any; // Using any for keyframes
+  animation: any;
   rotation?: number;
 }
 
-// Background decorative leaf component
-const BackgroundLeaf: React.FC<BackgroundLeafProps> = ({ 
-  size, 
-  top, 
-  left, 
-  right, 
-  bottom, 
-  animation, 
-  rotation = 0 
+const BackgroundLeaf: React.FC<BackgroundLeafProps> = ({
+  size,
+  top,
+  left,
+  right,
+  bottom,
+  animation,
+  rotation = 0,
 }) => {
   const theme = useTheme();
-  
+
   return (
     <Box
       sx={{
-        position: 'absolute',
+        position: "absolute",
         width: size,
         height: size,
         top,
@@ -84,16 +81,17 @@ const BackgroundLeaf: React.FC<BackgroundLeafProps> = ({
         animation: `${animation} 8s infinite ease-in-out`,
         zIndex: 0,
         opacity: 0.7,
-        pointerEvents: 'none', // Make sure it doesn't interfere with clicks
+        pointerEvents: "none",
       }}
     >
-      <IconLeaf 
-        size={size} 
-        style={{ 
-          color: theme.palette.mode === 'dark' 
-            ? alpha(theme.palette.primary.main, 0.3) 
-            : alpha(theme.palette.primary.main, 0.2) 
-        }} 
+      <IconLeaf
+        size={size}
+        style={{
+          color:
+            theme.palette.mode === "dark"
+              ? alpha(theme.palette.primary.main, 0.3)
+              : alpha(theme.palette.primary.main, 0.2),
+        }}
       />
     </Box>
   );
@@ -107,19 +105,16 @@ const Register2 = () => {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      // Ensure session persists across tabs/reloads
       await setPersistence(auth, browserLocalPersistence);
 
       // Sign in with Google
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // Check if user already exists in Firestore
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
 
       if (!userDoc.exists()) {
-        // Create user record in Firestore
         await setDoc(userDocRef, {
           uid: user.uid,
           name: user.displayName || "New User",
@@ -163,14 +158,42 @@ const Register2 = () => {
           },
         }}
       >
-        {/* Background decorative elements */}
-        <BackgroundLeaf size={80} top="10%" right="15%" animation={floatAnimation2} rotation={-5} />
-        <BackgroundLeaf size={120} top="70%" right="8%" animation={floatAnimation3} rotation={15} />
-        <BackgroundLeaf size={100} top="30%" left="5%" animation={floatAnimation1} rotation={20} />
-        <BackgroundLeaf size={70} bottom="20%" left="12%" animation={floatAnimation2} rotation={-10} />
-        <BackgroundLeaf size={90} bottom="40%" right="20%" animation={floatAnimation1} rotation={25} />
-        
-        {/* Content grid */}
+        <BackgroundLeaf
+          size={80}
+          top="10%"
+          right="15%"
+          animation={floatAnimation2}
+          rotation={-5}
+        />
+        <BackgroundLeaf
+          size={120}
+          top="70%"
+          right="8%"
+          animation={floatAnimation3}
+          rotation={15}
+        />
+        <BackgroundLeaf
+          size={100}
+          top="30%"
+          left="5%"
+          animation={floatAnimation1}
+          rotation={20}
+        />
+        <BackgroundLeaf
+          size={70}
+          bottom="20%"
+          left="12%"
+          animation={floatAnimation2}
+          rotation={-10}
+        />
+        <BackgroundLeaf
+          size={90}
+          bottom="40%"
+          right="20%"
+          animation={floatAnimation1}
+          rotation={25}
+        />
+
         <Grid
           container
           spacing={0}
@@ -189,10 +212,10 @@ const Register2 = () => {
           >
             <Card
               elevation={9}
-              sx={{ 
-                p: 4, 
-                zIndex: 1, 
-                width: "100%", 
+              sx={{
+                p: 4,
+                zIndex: 1,
+                width: "100%",
                 maxWidth: "500px",
                 borderRadius: "16px",
                 boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
@@ -206,10 +229,16 @@ const Register2 = () => {
                   right: 0,
                   height: "6px",
                   background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                }
+                },
               }}
             >
-              <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" mb={4}>
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                mb={4}
+              >
                 <Avatar
                   sx={{
                     width: 80,
@@ -237,7 +266,7 @@ const Register2 = () => {
                   Nourished
                 </Typography>
               </Box>
-              
+
               <AuthRegister
                 subtext={
                   <Typography
@@ -250,7 +279,12 @@ const Register2 = () => {
                   </Typography>
                 }
                 subtitle={
-                  <Stack direction="row" justifyContent="center" spacing={1} mt={3}>
+                  <Stack
+                    direction="row"
+                    justifyContent="center"
+                    spacing={1}
+                    mt={3}
+                  >
                     <Typography
                       color="textSecondary"
                       variant="body1"
@@ -275,7 +309,7 @@ const Register2 = () => {
                   </Stack>
                 }
               />
-              
+
               <Box mt={3} textAlign="center">
                 <Button
                   variant="outlined"
