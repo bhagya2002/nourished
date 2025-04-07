@@ -6,7 +6,7 @@ const assert = require("assert");
 
 describe("userService Tests", function () {
   afterEach(() => {
-    sinon.restore(); // Restore original methods after each test
+    sinon.restore();
   });
 
   describe("getUserInfo", function () {
@@ -24,7 +24,7 @@ describe("userService Tests", function () {
         },
       };
 
-      // Stub db.queryDatabaseSingle to return expectedUserData
+
       sinon.stub(db, "queryDatabaseSingle").returns(expectedUserData);
 
       const result = await userService.getUserInfo("user123");
@@ -34,13 +34,13 @@ describe("userService Tests", function () {
 
   describe("addFriendConnection", function () {
     it("should return true when both users are updated successfully", async function () {
-      // Stub db.updateFieldArray to return true for both calls
+
       const dbStub = sinon.stub(db, "updateFieldArray").resolves(true);
 
       const result = await userService.addFriendConnection("userA", "userB");
       assert.strictEqual(result, true);
 
-      // Ensure db.updateFieldArray was called correctly
+
       sinon.assert.calledWithExactly(
         dbStub.firstCall,
         "users",
@@ -85,14 +85,14 @@ describe("userService Tests", function () {
         { friends: ["user4", "user7", "user5"] },
       ];
 
-      // Stub database calls
+
       sinon
         .stub(db, "queryDatabaseSingle")
         .resolves({ data: { friends: userFriendsIds } });
       sinon.stub(db, "queryMultiple").resolves({ data: userFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, ["user4", "user5"]); // Highest frequency users
+      assert.deepStrictEqual(recommendations, ["user4", "user5"]);
     });
 
     it("should return an empty array if the user has no friends", async function () {
@@ -115,7 +115,7 @@ describe("userService Tests", function () {
       sinon.stub(db, "queryMultiple").resolves({ data: userFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, ["user3", "user4"]); // Excludes "user1"
+      assert.deepStrictEqual(recommendations, ["user3", "user4"]);
     });
   });
 

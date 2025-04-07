@@ -26,7 +26,7 @@ module.exports.queryDatabaseSingle = async function queryDatabaseSingle(
     })
     .catch((error) => {
       logger.error(error);
-      return { success: false, message: error }; // TODO: More robust error handling
+      return { success: false, message: error };
     });
 };
 
@@ -55,7 +55,7 @@ module.exports.queryMultiple = async function queryMultiple(
     })
     .catch((error) => {
       logger.error(error);
-      return { success: false, message: error }; // TODO: More robust error handling
+      return { success: false, message: error };
     });
 };
 

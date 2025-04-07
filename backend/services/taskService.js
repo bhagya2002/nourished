@@ -1,18 +1,18 @@
 const db = require("../firebase/firestore");
 
-// Improved cache implementation with shorter TTLs for real-time updates
+
 const cacheStore = {
-  tasks: {}, // Cache for user tasks
-  history: {}, // Cache for task history
+  tasks: {},
+  history: {},
 };
 
-// Shorter cache TTLs for more responsive UI
+
 const CACHE_TTL = {
-  TASKS: 10 * 1000, // 10 seconds for tasks
-  HISTORY: 30 * 1000, // 30 seconds for history
+  TASKS: 10 * 1000,
+  HISTORY: 30 * 1000,
 };
 
-// Clear all caches for a user to ensure fresh data
+
 function clearUserCaches(uid) {
   if (uid) {
     console.log(`Clearing all caches for user ${uid}`);
@@ -29,21 +29,21 @@ function clearUserCaches(uid) {
   }
 }
 
-// Helper function to get cache key for history
+
 function getHistoryCacheKey(uid, startDate, endDate) {
   return `${uid}:${startDate || ""}:${endDate || ""}`;
 }
 
 module.exports.createTask = async function createTask(uid, task, goalId) {
   try {
-    // Set the uid on the task
+
     task.uid = uid;
-    // Create a new task document in the "tasks" collection
+
     const taskResult = await db.addSingleDoc("tasks", task);
     if (!taskResult.success) {
       return { success: false, error: taskResult.error };
     }
-    // Update the user's document in the "users" collection by adding the new task id to the tasks array
+
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -54,7 +54,7 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
       return { success: false, error: updateResult.error };
     }
     if (goalId) {
-      // Update fields in the goal document
+
       const updateGoalResult = await db.updateFieldArray(
         "goals",
         goalId,
@@ -76,7 +76,7 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
         (new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24),
       );
       let totalTasks = 0;
-      // Calculate total tasks incompleted based on goal deadline and frequency
+
       switch (task.frequency) {
         case "Daily":
           totalTasks = Math.ceil(daysLeft / 1);
@@ -97,7 +97,7 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
       await db.incrementField("goals", goalId, "totalTasks", totalTasks);
     }
 
-    // Clear caches for this user to ensure fresh data
+
     clearUserCaches(uid);
 
     return { success: true, data: { id: taskResult.id } };
@@ -114,7 +114,7 @@ module.exports.editTask = async function editTask(
 ) {
   const result = await db.queryDatabaseSingle(uid, "users");
   if (result.success) {
-    // Update the parent goal document fields
+
     if (fieldToChange === "frequency") {
       const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
       if (!taskResult.success) {
@@ -128,9 +128,9 @@ module.exports.editTask = async function editTask(
         }
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
-            (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
         );
-        // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
+
         if (taskResult.data.completedAt) {
           const completedAt = new Date(taskResult.data.completedAt);
           const today = new Date();
@@ -191,7 +191,7 @@ module.exports.editTask = async function editTask(
       newValue,
     );
 
-    // Clear caches for this user to ensure fresh data
+
     clearUserCaches(uid);
 
     return updateResult;
@@ -201,7 +201,7 @@ module.exports.editTask = async function editTask(
 module.exports.getUserTasks = async function getUserTasks(uid) {
   console.time("getUserTasks");
   try {
-    // Check if we have a cached version
+
     const cacheKey = `tasks_${uid}`;
     if (
       cacheStore.tasks[cacheKey] &&
@@ -211,7 +211,7 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
       return cacheStore.tasks[cacheKey].data;
     }
 
-    // Use queryDatabase helper function instead of direct db access
+
     const tasksResult = await db.queryDatabase(uid, "tasks", "uid");
 
     if (!tasksResult.success) {
@@ -225,7 +225,7 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
     if (!tasksResult.data || tasksResult.data.length === 0) {
       console.timeEnd("getUserTasks");
 
-      // Cache empty result
+
       cacheStore.tasks[cacheKey] = {
         data: { success: true, data: [] },
         expiry: Date.now() + CACHE_TTL.TASKS,
@@ -233,10 +233,10 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
       return { success: true, data: [] };
     }
 
-    // Process the tasks (they are already in the right format from queryDatabase)
+
     const tasks = tasksResult.data;
 
-    // Sort by createdAt (newest first)
+
     tasks.sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -245,7 +245,7 @@ module.exports.getUserTasks = async function getUserTasks(uid) {
 
     const result = { success: true, data: tasks };
 
-    // Cache with shorter TTL for more responsive UI
+
     cacheStore.tasks[cacheKey] = {
       data: result,
       expiry: Date.now() + CACHE_TTL.TASKS,
@@ -272,7 +272,7 @@ module.exports.getGoalTasks = async function getGoalTasks(goalId) {
 };
 
 module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
-  // Update goal document on totalTasks field
+
   if (goalId) {
     const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
     if (!taskResult.success) {
@@ -292,7 +292,7 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
     let daysLeft = Math.ceil(
       (new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24),
     );
-    // if taskResult.data.completedAt ("2025-03-12T20:45:54.133Z") is today ("2025-03-12"), we need to subtract 1 from daysLeft
+
     if (taskResult.data.completedAt) {
       const completedAt = new Date(taskResult.data.completedAt);
       const today = new Date();
@@ -343,7 +343,7 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
   }
   const deleteResult = await db.deleteSingleDoc("tasks", taskId);
 
-  // Clear all caches for this user to ensure fresh data
+
   clearUserCaches(uid);
 
   return deleteResult;
@@ -359,10 +359,10 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
       return { success: false, error: "Task ID is required" };
     }
 
-    // Verify the task exists and belongs to the user
+
     const task = await db.queryDatabaseSingle(taskId, "tasks");
 
-    // Better error handling for task not found
+
     if (!task.success) {
       console.error(`Task query failed: ${JSON.stringify(task)}`);
       return {
@@ -376,7 +376,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
       return { success: false, error: "Task not found" };
     }
 
-    // Verify task ownership (security check)
+
     if (task.data.uid !== uid) {
       console.error(
         `Task ownership mismatch. Task UID: ${task.data.uid}, User UID: ${uid}`,
@@ -387,7 +387,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
       };
     }
 
-    // Update the completion status with improved error handling
+
     console.log(`Updating task ${taskId} completion status to ${completed}`);
     const update1 = await db.updateField(
       "tasks",
@@ -408,7 +408,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
       };
     }
 
-    // If marked as complete, set completedAt timestamp
+
     try {
       if (completed) {
         console.log(`Setting completedAt timestamp for task ${taskId}`);
@@ -431,7 +431,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           console.error(
             `Failed to update completedAt: ${JSON.stringify(update2.error || "Unknown error")}`,
           );
-          // We succeeded with the main update, so return success even if timestamp update fails
+
           return { success: true };
         }
         if (
@@ -447,15 +447,15 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
             console.error(
               `Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`,
             );
-            // We succeeded with the main update, so return success even if goal update fails
+
             return { success: true };
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
-            // Update fields in the goal document
+
             const update3 = await db.incrementField(
               "goals",
               task.data.goalId,
@@ -466,13 +466,13 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
               console.error(
                 `Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`,
               );
-              // We succeeded with the main update, so return success even if goal update fails
+
               return { success: true };
             }
           }
         }
       } else {
-        // If marked as incomplete, remove completedAt
+
         console.log(`Clearing completedAt timestamp for task ${taskId}`);
         const update2 = await db.updateField(
           "tasks",
@@ -484,15 +484,15 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           console.error(
             `Failed to clear completedAt: ${JSON.stringify(update2.error || "Unknown error")}`,
           );
-          // We succeeded with the main update, so return success even if timestamp update fails
+
           return { success: true };
         }
 
-        // When task is marked as incomplete, remove associated happiness ratings
+
         try {
           console.log(`Removing happiness ratings for task ${taskId}`);
 
-          // Find happiness ratings associated with this task
+
           const happinessResult = await db.queryDatabase(
             taskId,
             "happiness",
@@ -508,9 +508,9 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
               `Found ${happinessResult.data.length} happiness ratings to remove for task ${taskId}`,
             );
 
-            // Delete each happiness rating
+
             for (const happiness of happinessResult.data) {
-              // First remove the happiness ID from the user's happiness array
+
               await db.removeFromFieldArray(
                 "users",
                 uid,
@@ -518,7 +518,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
                 happiness.id,
               );
 
-              // Then delete the happiness document
+
               await db.deleteSingleDoc("happiness", happiness.id);
 
               console.log(
@@ -530,7 +530,7 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
           }
         } catch (happinessError) {
           console.error(`Error removing happiness ratings: ${happinessError}`);
-          // Continue with task update even if happiness removal fails
+
         }
 
         if (
@@ -546,15 +546,15 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
             console.error(
               `Failed to query goal: ${JSON.stringify(goalResult.error || "Unknown error")}`,
             );
-            // We succeeded with the main update, so return success even if goal update fails
+
             return { success: true };
           }
           const daysLeft = Math.ceil(
             (new Date(goalResult.data.deadline) - new Date()) /
-              (1000 * 60 * 60 * 24),
+            (1000 * 60 * 60 * 24),
           );
           if (daysLeft > 0) {
-            // Update fields in the goal document
+
             const update3 = await db.incrementField(
               "goals",
               task.data.goalId,
@@ -565,20 +565,20 @@ module.exports.toggleTaskCompletion = async function toggleTaskCompletion(
               console.error(
                 `Failed to update goal completedTasks: ${JSON.stringify(update3.error || "Unknown error")}`,
               );
-              // We succeeded with the main update, so return success even if goal update fails
+
               return { success: true };
             }
           }
         }
       }
 
-      // Clear all caches for this user to ensure fresh data everywhere
+
       clearUserCaches(uid);
 
       return { success: true };
     } catch (timestampErr) {
       console.error(`Error updating timestamp: ${timestampErr}`);
-      // Main update succeeded, so still return success
+
       return { success: true };
     }
   } catch (err) {
@@ -602,7 +602,7 @@ module.exports.getTaskHistory = async function getTaskHistory(
   try {
     const cacheKey = getHistoryCacheKey(uid, startDate, endDate);
 
-    // Check if we have a valid cache entry for this query
+
     if (
       !lastDoc &&
       cacheStore.history[cacheKey] &&
@@ -610,7 +610,7 @@ module.exports.getTaskHistory = async function getTaskHistory(
     ) {
       console.log(`Using cached task history for ${cacheKey}`);
 
-      // Apply pagination if lastDoc provided
+
       const cachedResults = cacheStore.history[cacheKey].data;
 
       return {
@@ -619,16 +619,16 @@ module.exports.getTaskHistory = async function getTaskHistory(
       };
     }
 
-    // No valid cache entry, proceed with database query
+
     console.log(`Fetching task history from database for ${cacheKey}`);
 
-    // Verify user exists
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return { success: false, error: "User not found" };
     }
 
-    // Get all tasks for the user
+
     const tasksResult = await this.getUserTasks(uid);
     if (!tasksResult.success) {
       return {
@@ -637,12 +637,12 @@ module.exports.getTaskHistory = async function getTaskHistory(
       };
     }
 
-    // Filter for completed tasks with completedAt field
+
     let completedTasks = tasksResult.data.filter(
       (task) => task.completed && task.completedAt,
     );
 
-    // Apply date filtering if provided
+
     if (startDate) {
       const startDateTime = new Date(startDate).getTime();
       completedTasks = completedTasks.filter(
@@ -651,7 +651,7 @@ module.exports.getTaskHistory = async function getTaskHistory(
     }
 
     if (endDate) {
-      // Add one day to include the end date fully
+
       const endDateTime = new Date(endDate);
       endDateTime.setDate(endDateTime.getDate() + 1);
       completedTasks = completedTasks.filter(
@@ -659,19 +659,19 @@ module.exports.getTaskHistory = async function getTaskHistory(
       );
     }
 
-    // Sort by completedAt (newest first)
+
     completedTasks.sort(
       (a, b) =>
         new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
     );
 
-    // Create full result set for caching
+
     const fullResults = {
       completions: completedTasks,
       streaks: calculateStreaks(completedTasks),
     };
 
-    // Cache the full results (not paginated) with shorter TTL
+
     if (!lastDoc) {
       cacheStore.history[cacheKey] = {
         timestamp: Date.now(),
@@ -679,13 +679,13 @@ module.exports.getTaskHistory = async function getTaskHistory(
       };
     }
 
-    // Apply pagination
+
     const pageSize = 10;
     let paginatedTasks = completedTasks;
     let nextLastDoc = null;
 
     if (lastDoc) {
-      // Find the index of the last document
+
       const lastIndex = completedTasks.findIndex((task) => task.id === lastDoc);
       if (lastIndex !== -1 && lastIndex + 1 < completedTasks.length) {
         paginatedTasks = completedTasks.slice(
@@ -693,7 +693,7 @@ module.exports.getTaskHistory = async function getTaskHistory(
           lastIndex + 1 + pageSize,
         );
 
-        // Set next lastDoc for pagination
+
         if (lastIndex + 1 + pageSize < completedTasks.length) {
           nextLastDoc = paginatedTasks[paginatedTasks.length - 1].id;
         }
@@ -701,14 +701,14 @@ module.exports.getTaskHistory = async function getTaskHistory(
         paginatedTasks = [];
       }
     } else {
-      // First page
+
       paginatedTasks = completedTasks.slice(0, pageSize);
       if (pageSize < completedTasks.length) {
         nextLastDoc = paginatedTasks[paginatedTasks.length - 1].id;
       }
     }
 
-    // Prepare paginated response
+
     const paginatedResults = {
       completions: paginatedTasks,
       lastDoc: nextLastDoc,
@@ -729,7 +729,7 @@ module.exports.getTaskHistory = async function getTaskHistory(
   }
 };
 
-// Helper function to calculate streaks and consistency
+
 function calculateStreaks(completedTasks) {
   if (!completedTasks || completedTasks.length === 0) {
     return {
@@ -741,7 +741,7 @@ function calculateStreaks(completedTasks) {
     };
   }
 
-  // Sort by date (most recent first) for streak calculation
+
   const sortedByDate = [...completedTasks].sort(
     (a, b) =>
       new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
@@ -752,11 +752,11 @@ function calculateStreaks(completedTasks) {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  // Calculate current streak
+
   let currentStreak = 0;
   let lastDate = null;
 
-  // Check if there's a completion today
+
   const mostRecentDate = new Date(sortedByDate[0].completedAt);
   const mostRecentDay = new Date(
     mostRecentDate.getFullYear(),
@@ -764,41 +764,41 @@ function calculateStreaks(completedTasks) {
     mostRecentDate.getDate(),
   );
 
-  // If most recent completion is from before yesterday, streak is 0
+
   if (mostRecentDay < yesterday) {
     currentStreak = 0;
   } else {
-    // Count consecutive days with completions
+
     const dates = new Set();
     sortedByDate.forEach((task) => {
       const date = new Date(task.completedAt);
       dates.add(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`);
     });
 
-    // Convert to array of Date objects
+
     const dateArray = Array.from(dates).map((dateString) => {
       const [year, month, day] = dateString.split("-").map(Number);
       return new Date(year, month, day);
     });
 
-    // Sort dates in descending order (newest first)
+
     dateArray.sort((a, b) => b.getTime() - a.getTime());
 
-    // Count current streak
+
     currentStreak = 0;
     for (let i = 0; i < dateArray.length; i++) {
       const date = dateArray[i];
 
       if (i === 0) {
-        // First date in streak must be today or yesterday
+
         if (date >= yesterday) {
           currentStreak = 1;
           lastDate = date;
         } else {
-          break; // No current streak
+          break;
         }
       } else {
-        // Check if this date is consecutive with last date
+
         const expectedDate = new Date(lastDate);
         expectedDate.setDate(expectedDate.getDate() - 1);
 
@@ -810,18 +810,18 @@ function calculateStreaks(completedTasks) {
           currentStreak++;
           lastDate = date;
         } else {
-          break; // End of streak
+          break;
         }
       }
     }
   }
 
-  // Calculate longest streak
+
   let longestStreak = 0;
   let currentRunStreak = 1;
   let lastCompletionDate = null;
 
-  // Group by date
+
   const completionsByDate = {};
   for (const task of completedTasks) {
     const date = new Date(task.completedAt);
@@ -833,10 +833,10 @@ function calculateStreaks(completedTasks) {
     completionsByDate[dateKey].push(task);
   }
 
-  // Sort dates
+
   const sortedDates = Object.keys(completionsByDate).sort();
 
-  // Calculate longest streak
+
   for (let i = 0; i < sortedDates.length; i++) {
     const dateKey = sortedDates[i];
     const [year, month, day] = dateKey.split("-").map(Number);
@@ -848,7 +848,7 @@ function calculateStreaks(completedTasks) {
     } else {
       const dayDiff = Math.round(
         (currentDate.getTime() - lastCompletionDate.getTime()) /
-          (1000 * 3600 * 24),
+        (1000 * 3600 * 24),
       );
 
       if (dayDiff === 1) {
@@ -864,12 +864,12 @@ function calculateStreaks(completedTasks) {
     }
   }
 
-  // Check if the last run is the longest
+
   if (currentRunStreak > longestStreak) {
     longestStreak = currentRunStreak;
   }
 
-  // Count completions in last 7 and 30 days
+
   const sevenDaysAgo = new Date(now);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -908,7 +908,7 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
   date,
 ) {
   try {
-    // Validate inputs
+
     if (!uid || !taskId) {
       return { success: false, error: "User ID and Task ID are required" };
     }
@@ -920,7 +920,7 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
       };
     }
 
-    // Ensure the task exists and belongs to the user
+
     const task = await db.queryDatabaseSingle(taskId, "tasks");
     if (!task.success || !task.data) {
       return { success: false, error: "Task not found" };
@@ -933,12 +933,12 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
       };
     }
 
-    // Verify the task is completed
+
     if (!task.data.completed) {
       return { success: false, error: "Cannot rate an incomplete task" };
     }
 
-    // Check for duplicate rating (same task, same day)
+
     const existingRatings = await db.queryDatabase(uid, "happiness", "uid");
 
     if (
@@ -946,16 +946,16 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
       existingRatings.data &&
       existingRatings.data.length > 0
     ) {
-      const today = new Date(date).toISOString().split("T")[0]; // Get YYYY-MM-DD part
+      const today = new Date(date).toISOString().split("T")[0];
 
       const duplicateRating = existingRatings.data.find((rating) => {
-        // Same task and same day
+
         const ratingDate = new Date(rating.date).toISOString().split("T")[0];
         return rating.taskId === taskId && ratingDate === today;
       });
 
       if (duplicateRating) {
-        // Update existing rating instead of creating a new one
+
         const updateResult = await db.updateField(
           "happiness",
           duplicateRating.id,
@@ -975,7 +975,7 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
       }
     }
 
-    // Create a new happiness rating document
+
     const happinessData = {
       uid,
       taskId,
@@ -985,14 +985,14 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
       createdAt: new Date().toISOString(),
     };
 
-    // Add to happiness collection
+
     const addResult = await db.addSingleDoc("happiness", happinessData);
 
     if (!addResult.success) {
       return { success: false, error: "Failed to save happiness rating" };
     }
 
-    // Add the rating ID to the user's happiness array
+
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -1001,7 +1001,7 @@ module.exports.submitHappinessRating = async function submitHappinessRating(
     );
 
     if (!updateResult.success) {
-      // Clean up the orphaned happiness document
+
       await db.deleteSingleDoc("happiness", addResult.id);
       return {
         success: false,
@@ -1032,13 +1032,13 @@ module.exports.getHappinessData = async function getHappinessData(
   endDate,
 ) {
   try {
-    // Validate user
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return { success: false, error: "User not found" };
     }
 
-    // Get all happiness ratings for the user
+
     const happinessResult = await db.queryDatabase(uid, "happiness", "uid");
 
     if (!happinessResult.success) {
@@ -1050,7 +1050,7 @@ module.exports.getHappinessData = async function getHappinessData(
 
     let happinessData = happinessResult.data || [];
 
-    // Apply date filtering if provided
+
     if (startDate) {
       const startDateTime = new Date(startDate).getTime();
       happinessData = happinessData.filter(
@@ -1059,7 +1059,7 @@ module.exports.getHappinessData = async function getHappinessData(
     }
 
     if (endDate) {
-      // Add one day to include the end date fully
+
       const endDateTime = new Date(endDate);
       endDateTime.setDate(endDateTime.getDate() + 1);
 
@@ -1068,12 +1068,12 @@ module.exports.getHappinessData = async function getHappinessData(
       );
     }
 
-    // Sort by date (newest first)
+
     happinessData.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     );
 
-    // Calculate average happiness
+
     let averageHappiness = 0;
     if (happinessData.length > 0) {
       const sum = happinessData.reduce((acc, item) => acc + item.rating, 0);
@@ -1103,7 +1103,7 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
 
     let plantHealthPromise = decrementPlantHealth();
 
-    // Get all completed tasks with frequencies
+
     const completedTasksResult = await db.queryDatabaseCustom("tasks", [
       ["completed", "==", true],
       ["frequency", "in", ["Daily", "Weekly", "Monthly"]],
@@ -1122,16 +1122,16 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
 
     const decrementByUID = new Map();
 
-    // Determine which tasks need to be reset
+
     for (const task of completedTasksResult.data) {
-      if (!task.completedAt) continue; // Skip if no completion date
+      if (!task.completedAt) continue;
 
       const completedDate = new Date(task.completedAt);
       let shouldReset = false;
 
       switch (task.frequency) {
         case "Daily":
-          // Reset if completed before today
+
           shouldReset =
             completedDate.getDate() !== now.getDate() ||
             completedDate.getMonth() !== now.getMonth() ||
@@ -1139,14 +1139,14 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
           break;
 
         case "Weekly":
-          // Reset if completed more than 7 days ago
+
           const oneWeekAgo = new Date(now);
           oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
           shouldReset = completedDate < oneWeekAgo;
           break;
 
         case "Monthly":
-          // Reset if completed in a previous month
+
           shouldReset =
             completedDate.getMonth() !== now.getMonth() ||
             completedDate.getFullYear() !== now.getFullYear();
@@ -1166,11 +1166,11 @@ module.exports.resetRecurringTasks = async function resetRecurringTasks() {
       }
     }
 
-    // Reset tasks that need to be reset
+
     const resetResults = [];
     for (const taskId of tasksToReset) {
       try {
-        // Reset to incomplete and clear completedAt
+
         const updateResult = await db.updateField(
           "tasks",
           taskId,
@@ -1219,7 +1219,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
   goalId,
 ) {
   try {
-    // First, verify the task exists and belongs to this user
+
     const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
     if (!taskResult.success) {
       return { success: false, error: "Task not found" };
@@ -1232,7 +1232,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
       };
     }
 
-    // Check if task is already associated with a goal
+
     if (taskResult.data.goalId) {
       return {
         success: false,
@@ -1240,7 +1240,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
       };
     }
 
-    // Verify the goal exists and belongs to this user
+
     const goalResult = await db.queryDatabaseSingle(goalId, "goals");
     if (!goalResult.success) {
       return { success: false, error: "Goal not found" };
@@ -1253,7 +1253,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
       };
     }
 
-    // Update the task with the goalId
+
     const updateTaskResult = await db.updateField(
       "tasks",
       taskId,
@@ -1264,7 +1264,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
       return { success: false, error: "Failed to update task" };
     }
 
-    // Add the task to the goal's taskIds array
+
     const updateGoalResult = await db.updateFieldArray(
       "goals",
       goalId,
@@ -1272,12 +1272,12 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
       taskId,
     );
     if (!updateGoalResult.success) {
-      // Revert the task update if the goal update fails
+
       await db.updateField("tasks", taskId, "goalId", null);
       return { success: false, error: "Failed to update goal" };
     }
 
-    // Update goal's totalTasks count based on task frequency
+
     const task = taskResult.data;
     const goal = goalResult.data;
     const daysLeft = Math.ceil(
@@ -1285,7 +1285,7 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
     );
 
     let totalTasks = 0;
-    // Calculate total tasks based on frequency
+
     switch (task.frequency) {
       case "Daily":
         totalTasks = Math.ceil(daysLeft / 1);
@@ -1301,10 +1301,10 @@ module.exports.associateTaskWithGoal = async function associateTaskWithGoal(
         break;
     }
 
-    // Increment the goal's totalTasks
+
     await db.incrementField("goals", goalId, "totalTasks", totalTasks);
 
-    // Clear caches for this user to ensure fresh data
+
     clearUserCaches(uid);
 
     return { success: true, data: { taskId, goalId } };
@@ -1325,7 +1325,7 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
   taskId,
 ) {
   try {
-    // First, verify the task exists and belongs to this user
+
     const taskResult = await db.queryDatabaseSingle(taskId, "tasks");
     if (!taskResult.success) {
       return { success: false, error: "Task not found" };
@@ -1338,20 +1338,20 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
       };
     }
 
-    // Check if task is associated with a goal
+
     if (!taskResult.data.goalId) {
       return { success: false, error: "Task is not associated with any goal" };
     }
 
     const goalId = taskResult.data.goalId;
 
-    // Verify the goal exists
+
     const goalResult = await db.queryDatabaseSingle(goalId, "goals");
     if (!goalResult.success) {
       return { success: false, error: "Goal not found" };
     }
 
-    // Check if the user owns the goal
+
     if (goalResult.data.uid !== uid) {
       return {
         success: false,
@@ -1359,7 +1359,7 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
       };
     }
 
-    // Update the task to remove the goalId
+
     const updateTaskResult = await db.updateField(
       "tasks",
       taskId,
@@ -1370,7 +1370,7 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
       return { success: false, error: "Failed to update task" };
     }
 
-    // Remove the task from the goal's taskIds array
+
     const updateGoalResult = await db.removeFromFieldArray(
       "goals",
       goalId,
@@ -1378,12 +1378,12 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
       taskId,
     );
     if (!updateGoalResult.success) {
-      // Revert the task update if the goal update fails
+
       await db.updateField("tasks", taskId, "goalId", goalId);
       return { success: false, error: "Failed to update goal" };
     }
 
-    // Update goal's totalTasks count based on task frequency
+
     const task = taskResult.data;
     const goal = goalResult.data;
     const daysLeft = Math.ceil(
@@ -1391,7 +1391,7 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
     );
 
     let totalTasks = 0;
-    // Calculate total tasks based on frequency
+
     switch (task.frequency) {
       case "Daily":
         totalTasks = Math.ceil(daysLeft / 1);
@@ -1407,15 +1407,15 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
         break;
     }
 
-    // Decrement the goal's totalTasks
+
     await db.incrementField("goals", goalId, "totalTasks", -totalTasks);
 
-    // If the task was completed and counted toward completedTasks, decrement that too
+
     if (task.completed) {
       await db.incrementField("goals", goalId, "completedTasks", -1);
     }
 
-    // Clear caches for this user to ensure fresh data
+
     clearUserCaches(uid);
 
     return { success: true, data: { taskId, goalId } };
@@ -1433,21 +1433,21 @@ module.exports.unassociateTaskFromGoal = async function unassociateTaskFromGoal(
 
 async function decrementPlantHealth() {
   try {
-    // Fetch all documents from the collection
+
     const collectionRef = db.getCollectionRef("users");
     const snapshot = await collectionRef.get();
-    const batch = db.batch(); // Start a batch for multiple writes
+    const batch = db.batch();
 
     snapshot.forEach((doc) => {
-      // Get current field value (assuming the field is called 'count')
-      const currentPlantHealth = doc.data().plantHealth || 1; // Default to 0 if field is missing
+
+      const currentPlantHealth = doc.data().plantHealth || 1;
       if (currentPlantHealth > 1) {
         const docRef = collectionRef.doc(doc.id);
         batch.update(docRef, { plantHealth: currentPlantHealth - 1 });
       }
     });
 
-    // Commit the batch to apply all updates
+
     await db.commitBatch(batch);
   } catch (error) {
     console.error("Error decrementing field:", error);

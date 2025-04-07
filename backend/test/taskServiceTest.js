@@ -6,7 +6,7 @@ const { beforeEach } = require("mocha");
 
 describe("taskService Tests", function () {
   afterEach(() => {
-    sinon.restore(); // Restore stubs after each test
+    sinon.restore();
   });
 
   describe("createTask", function () {
@@ -86,11 +86,11 @@ describe("taskService Tests", function () {
       sinon
         .stub(db, "queryDatabaseSingle")
         .onFirstCall()
-        .resolves({ success: true }) // Check user exists
+        .resolves({ success: true })
         .onSecondCall()
-        .resolves({ success: true, data: { goalId, frequency: "Daily" } }) // Task data
+        .resolves({ success: true, data: { goalId, frequency: "Daily" } })
         .onThirdCall()
-        .resolves({ success: true, data: { deadline: "2025-03-25" } }); // Goal data
+        .resolves({ success: true, data: { deadline: "2025-03-25" } });
 
       sinon.stub(db, "updateField").resolves({ success: true });
       sinon.stub(db, "incrementField").resolves({ success: true });
@@ -128,9 +128,9 @@ describe("taskService Tests", function () {
       sinon
         .stub(db, "queryDatabaseSingle")
         .onFirstCall()
-        .resolves({ success: true }) // User exists
+        .resolves({ success: true })
         .onSecondCall()
-        .resolves({ success: false, error: "Task not found" }); // Task lookup fails
+        .resolves({ success: false, error: "Task not found" });
 
       const result = await taskService.editTask(
         uid,
@@ -151,14 +151,14 @@ describe("taskService Tests", function () {
       sinon
         .stub(db, "queryDatabaseSingle")
         .onFirstCall()
-        .resolves({ success: true }) // User exists
+        .resolves({ success: true })
         .onSecondCall()
         .resolves({
           success: true,
           data: { goalId: "goal789", frequency: "Daily" },
-        }) // Task data
+        })
         .onThirdCall()
-        .resolves({ success: false, error: "Goal not found" }); // Goal lookup fails
+        .resolves({ success: false, error: "Goal not found" });
 
       const result = await taskService.editTask(
         uid,
@@ -179,7 +179,7 @@ describe("taskService Tests", function () {
         tasks: {
           tasks_user123: {
             data: { success: true, data: [] },
-            expiry: Date.now() + 5000, // Cache is still valid
+            expiry: Date.now() + 5000,
           },
         },
       };
@@ -265,7 +265,7 @@ describe("taskService Tests", function () {
       sinon
         .stub(db, "queryDatabaseSingle")
         .onFirstCall()
-        .resolves({ success: false, error: "Task not found" }); // Task lookup fails
+        .resolves({ success: false, error: "Task not found" });
 
       const result = await taskService.deleteTask(uid, taskId, "badval");
       assert.deepStrictEqual(result, {
@@ -282,9 +282,9 @@ describe("taskService Tests", function () {
       sinon
         .stub(db, "queryDatabaseSingle")
         .onFirstCall()
-        .resolves({ success: true, data: { frequency: "Daily" } }) // Task data
+        .resolves({ success: true, data: { frequency: "Daily" } })
         .onSecondCall()
-        .resolves({ success: false, error: "Goal not found" }); // Goal lookup fails
+        .resolves({ success: false, error: "Goal not found" });
 
       const result = await taskService.deleteTask(uid, taskId, goalId);
       assert.deepStrictEqual(result, {
@@ -540,12 +540,12 @@ describe("taskService Tests", function () {
         sinon
           .stub(db, "queryDatabaseSingle")
           .onFirstCall()
-          .resolves({ success: true, data: { uid: "user123" } }) // Task lookup
+          .resolves({ success: true, data: { uid: "user123" } })
           .onSecondCall()
           .resolves({
             success: true,
             data: { uid: "user123", deadline: "2025-04-10" },
-          }); // Goal lookup
+          });
         sinon.stub(db, "updateField").resolves({ success: true });
         sinon.stub(db, "updateFieldArray").resolves({ success: true });
         sinon.stub(db, "incrementField").resolves({ success: true });
@@ -599,9 +599,9 @@ describe("taskService Tests", function () {
         sinon
           .stub(db, "queryDatabaseSingle")
           .onFirstCall()
-          .resolves({ success: true, data: { uid: "user123", goalId: null } }) // Task lookup
+          .resolves({ success: true, data: { uid: "user123", goalId: null } })
           .onSecondCall()
-          .resolves({ success: false, error: "Goal not found" }); // Goal lookup
+          .resolves({ success: false, error: "Goal not found" });
 
         const result = await taskService.associateTaskWithGoal(
           "user123",
@@ -640,12 +640,12 @@ describe("taskService Tests", function () {
           .resolves({
             success: true,
             data: { uid: "user123", goalId: "goal789", frequency: "Daily" },
-          }) // Task lookup
+          })
           .onSecondCall()
           .resolves({
             success: true,
             data: { uid: "user123", deadline: "2025-04-10" },
-          }); // Goal lookup
+          });
         sinon.stub(db, "updateField").resolves({ success: true });
         sinon.stub(db, "removeFromFieldArray").resolves({ success: true });
         sinon.stub(db, "incrementField").resolves({ success: true });
@@ -699,9 +699,9 @@ describe("taskService Tests", function () {
           .resolves({
             success: true,
             data: { uid: "user123", goalId: "goal789" },
-          }) // Task lookup
+          })
           .onSecondCall()
-          .resolves({ success: false, error: "Goal not found" }); // Goal lookup
+          .resolves({ success: false, error: "Goal not found" });
 
         const result = await taskService.unassociateTaskFromGoal(
           "user123",

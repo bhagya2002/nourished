@@ -10,7 +10,7 @@ const db = require("../firebase/firestore");
  */
 async function submitMood(uid, rating, note, date) {
   try {
-    // Validate inputs
+
     if (
       (!rating && rating !== 0) ||
       rating < 0 ||
@@ -31,7 +31,7 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-    // Check if there's already a mood entry for this date/user
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -40,23 +40,23 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-    // Get existing mood IDs for the user
+
     const moodIds = userResult.data.moods || [];
     if (moodIds.length > 0) {
-      // Get the mood entries to check for same-day entries
+
       const moodsResult = await db.queryMultiple(moodIds, "moods");
       if (moodsResult.success && moodsResult.data.length > 0) {
-        // Get the date part of the current date (YYYY-MM-DD)
+
         const currentDateStr = parsedDate.toISOString().split("T")[0];
 
-        // Look for any entries on the same day - using a more robust comparison
+
         const existingMoodOnSameDay = moodsResult.data.find((mood) => {
           const moodDate = new Date(mood.date);
           const moodDateStr = moodDate.toISOString().split("T")[0];
           return moodDateStr === currentDateStr;
         });
 
-        // If an entry exists for today, update it instead of creating a new one
+
         if (existingMoodOnSameDay) {
           console.log(
             `Found existing mood for date ${currentDateStr}, updating instead of creating new one`,
@@ -71,7 +71,7 @@ async function submitMood(uid, rating, note, date) {
       }
     }
 
-    // Create a mood entry document
+
     const moodData = {
       uid,
       rating,
@@ -80,7 +80,7 @@ async function submitMood(uid, rating, note, date) {
       createdAt: new Date().toISOString(),
     };
 
-    // Add to moods collection
+
     const addResult = await db.addSingleDoc("moods", moodData);
 
     if (!addResult.success) {
@@ -90,7 +90,7 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-    // Add the mood ID to the user's moods array
+
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -99,7 +99,7 @@ async function submitMood(uid, rating, note, date) {
     );
 
     if (!updateResult.success) {
-      // Clean up the orphaned mood document
+
       await db.deleteSingleDoc("moods", addResult.id);
       return {
         success: false,
@@ -127,7 +127,7 @@ async function submitMood(uid, rating, note, date) {
  */
 async function getUserMoodEntries(uid) {
   try {
-    // First get the user's mood IDs
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -144,7 +144,7 @@ async function getUserMoodEntries(uid) {
       };
     }
 
-    // Then get the actual mood entries
+
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -153,7 +153,7 @@ async function getUserMoodEntries(uid) {
       };
     }
 
-    // Sort by date (newest first)
+
     const sortedMoods = moodsResult.data.sort(
       (a, b) => new Date(b.date) - new Date(a.date),
     );
@@ -179,7 +179,7 @@ async function getUserMoodEntries(uid) {
  */
 async function deleteMood(uid, date) {
   try {
-    // First get the user document to find the mood ID
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -188,7 +188,7 @@ async function deleteMood(uid, date) {
       };
     }
 
-    // Get all mood entries for the user
+
     const moodIds = userResult.data.moods || [];
     if (moodIds.length === 0) {
       return {
@@ -197,7 +197,7 @@ async function deleteMood(uid, date) {
       };
     }
 
-    // Get mood entries to find the one with matching date
+
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -206,9 +206,9 @@ async function deleteMood(uid, date) {
       };
     }
 
-    // Find the mood entry that matches the date (might need to normalize date formats)
+
     const targetMood = moodsResult.data.find((mood) => {
-      // Compare dates (ignoring time if needed)
+
       const moodDate = new Date(mood.date).toISOString().split("T")[0];
       const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
@@ -221,7 +221,7 @@ async function deleteMood(uid, date) {
       };
     }
 
-    // Delete the mood document
+
     const deleteResult = await db.deleteSingleDoc("moods", targetMood.id);
     if (!deleteResult.success) {
       return {
@@ -230,7 +230,7 @@ async function deleteMood(uid, date) {
       };
     }
 
-    // Remove the mood ID from the user's moods array
+
     const updateResult = await db.removeFromFieldArray(
       "users",
       uid,
@@ -267,7 +267,7 @@ async function deleteMood(uid, date) {
  */
 async function updateMood(uid, date, note, rating) {
   try {
-    // First get the user document to find the mood ID
+
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -276,7 +276,7 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-    // Get all mood entries for the user
+
     const moodIds = userResult.data.moods || [];
     if (moodIds.length === 0) {
       return {
@@ -285,7 +285,7 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-    // Get mood entries to find the one with matching date
+
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -294,9 +294,9 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-    // Find the mood entry that matches the date (might need to normalize date formats)
+
     const targetMood = moodsResult.data.find((mood) => {
-      // Compare dates (ignoring time if needed)
+
       const moodDate = new Date(mood.date).toISOString().split("T")[0];
       const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
@@ -309,17 +309,17 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-    // Prepare update data
+
     const updateData = {
       updatedAt: new Date().toISOString(),
     };
 
-    // Only update note if provided
+
     if (note !== undefined) {
       updateData.note = note || "";
     }
 
-    // Only update rating if provided and valid
+
     if (rating !== undefined) {
       if (
         (rating === 0 || rating) &&
@@ -336,7 +336,7 @@ async function updateMood(uid, date, note, rating) {
       }
     }
 
-    // Update the mood document with the new data
+
     const updateResult = await db.updateSingleDoc(
       "moods",
       targetMood.id,

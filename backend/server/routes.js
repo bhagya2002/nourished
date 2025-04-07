@@ -118,7 +118,7 @@ function addGetUserProfile(app) {
         req.body.userId,
       );
 
-      // Check if users are friends
+
       const currentUserResult = await userService.getUserInfo(authResult.uid);
       const isFriend =
         currentUserResult.success &&
@@ -239,7 +239,7 @@ function addCreateTask(app) {
           });
         }
       } else {
-        // Debug header bypass
+
         authResult.uid = req.body.token;
       }
 
@@ -357,14 +357,14 @@ function addEditTask(app) {
 function addToggleTaskCompletion(app) {
   app.post("/toggleTaskCompletion", async (req, res) => {
     try {
-      // Validate required fields
+
       if (!req.body.taskId) {
         return res
           .status(400)
           .json({ success: false, error: "Task ID is required" });
       }
 
-      // Ensure completed status is provided
+
       if (req.body.completed === undefined) {
         return res
           .status(400)
@@ -398,8 +398,8 @@ function addToggleTaskCompletion(app) {
         console.log("Toggle task completion result:", result);
 
         if (result.success) {
-          // Get fresh task data and include it in the response for immediate UI update
-          // This avoids stale data in the UI without requiring additional API calls
+
+
           const freshTaskDataPromise = taskService.getUserTasks(authResult.uid);
           const taskHistoryPromise = taskService.getTaskHistory(authResult.uid);
 
@@ -417,15 +417,15 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                    completions:
-                      freshTaskHistory.data.completions?.slice(0, 5) || [],
-                    streaks: freshTaskHistory.data.streaks,
-                  }
+                  completions:
+                    freshTaskHistory.data.completions?.slice(0, 5) || [],
+                  streaks: freshTaskHistory.data.streaks,
+                }
                 : null,
             },
           });
         } else {
-          // Always return JSON format
+
           return res.status(500).json({
             success: false,
             error: result.error || "Failed to update task completion",
@@ -433,7 +433,7 @@ function addToggleTaskCompletion(app) {
         }
       } catch (serviceErr) {
         console.error("Service error in toggleTaskCompletion:", serviceErr);
-        // Ensure we send a properly formatted JSON response
+
         return res.status(500).json({
           success: false,
           error:
@@ -444,7 +444,7 @@ function addToggleTaskCompletion(app) {
       }
     } catch (err) {
       console.error("Error in toggleTaskCompletion endpoint:", err);
-      // Ensure all errors are converted to JSON responses
+
       return res.status(500).json({
         success: false,
         error:
@@ -753,7 +753,7 @@ function addSubmitHappinessRating(app) {
         });
       }
 
-      // Validate inputs
+
       const { taskId, rating, date } = req.body;
 
       if (!taskId) {
@@ -778,7 +778,7 @@ function addSubmitHappinessRating(app) {
         });
       }
 
-      // Submit the happiness rating
+
       const result = await taskService.submitHappinessRating(
         authResult.uid,
         taskId,
@@ -892,10 +892,10 @@ function addGetHappinessData(app) {
         });
       }
 
-      // Optional date filtering parameters
+
       const { startDate, endDate } = req.body;
 
-      // Get happiness data
+
       const result = await taskService.getHappinessData(
         authResult.uid,
         startDate,
@@ -942,7 +942,7 @@ function addCreatePost(app) {
           });
         }
       } else {
-        // Debug header bypass
+
         authResult.uid = req.body.token;
       }
 
@@ -1696,7 +1696,7 @@ function addGetUserInvites(app) {
 function addResetRecurringTasks(app) {
   app.post("/resetRecurringTasks", async (req, res) => {
     try {
-      // Admin authentication check
+
       let authResult = {};
       if (!req.headers.debug) {
         authResult = await authService.authenticateToken(req.body.token);
@@ -1712,7 +1712,7 @@ function addResetRecurringTasks(app) {
 
       console.log(`Manual trigger of task reset by user: ${authResult.uid}`);
 
-      // Call the reset function
+
       const result = await taskService.resetRecurringTasks();
 
       if (result.success) {
@@ -1756,7 +1756,7 @@ function addGetAITip(app) {
         authResult.uid = req.body.token;
       }
 
-      // Use the new getWellnessTip function instead of AITips
+
       const result = await aiService.getWellnessTip(authResult.uid);
       console.log("Wellness tip result:", result);
 
@@ -1978,7 +1978,7 @@ function addGetFollowing(app) {
   });
 }
 
-// Add function to delete a mood entry
+
 function addDeleteMood(app) {
   app.post("/deleteMood", async (req, res) => {
     try {
@@ -1990,7 +1990,7 @@ function addDeleteMood(app) {
         });
       }
 
-      // Validate date parameter
+
       const { date } = req.body;
       if (!date) {
         return res.status(400).json({
@@ -1999,7 +1999,7 @@ function addDeleteMood(app) {
         });
       }
 
-      // Call the service to delete the mood entry
+
       const result = await moodService.deleteMood(authResult.uid, date);
 
       if (!result.success) {
@@ -2023,7 +2023,7 @@ function addDeleteMood(app) {
   });
 }
 
-// Add function to update a mood entry
+
 function addUpdateMood(app) {
   app.post("/updateMood", async (req, res) => {
     try {
@@ -2035,7 +2035,7 @@ function addUpdateMood(app) {
         });
       }
 
-      // Validate inputs
+
       const { date, note, rating } = req.body;
       if (!date) {
         return res.status(400).json({
@@ -2044,7 +2044,7 @@ function addUpdateMood(app) {
         });
       }
 
-      // Call the service to update the mood entry
+
       const result = await moodService.updateMood(
         authResult.uid,
         date,
@@ -2084,7 +2084,7 @@ function addAssociateTaskWithGoal(app) {
         });
       }
 
-      // Validate inputs
+
       const { taskId, goalId } = req.body;
       if (!taskId || !goalId) {
         return res.status(400).json({
@@ -2093,7 +2093,7 @@ function addAssociateTaskWithGoal(app) {
         });
       }
 
-      // Call the service function to associate the task with the goal
+
       const result = await taskService.associateTaskWithGoal(
         authResult.uid,
         taskId,
@@ -2132,7 +2132,7 @@ function addUnassociateTaskFromGoal(app) {
         });
       }
 
-      // Validate inputs
+
       const { taskId } = req.body;
       if (!taskId) {
         return res.status(400).json({
@@ -2141,7 +2141,7 @@ function addUnassociateTaskFromGoal(app) {
         });
       }
 
-      // Call the service function to unassociate the task from the goal
+
       const result = await taskService.unassociateTaskFromGoal(
         authResult.uid,
         taskId,
@@ -2171,7 +2171,7 @@ function addUnassociateTaskFromGoal(app) {
 module.exports = function injectRoutes(app) {
   addHeartbeatRoute(app);
 
-  // Users
+
   addGetUserInfo(app);
   addFriendConnection(app);
   addGetFriendRecommendation(app);
@@ -2179,7 +2179,7 @@ module.exports = function injectRoutes(app) {
   addGetFriends(app);
   addSearchUser(app);
 
-  // Tasks
+
   addCreateTask(app);
   addDeleteTask(app);
   addEditTask(app);
@@ -2190,35 +2190,35 @@ module.exports = function injectRoutes(app) {
   addAssociateTaskWithGoal(app);
   addUnassociateTaskFromGoal(app);
 
-  // Goals
+
   addCreateGoal(app);
   addDeleteGoal(app);
   addEditGoal(app);
   addGetUserGoals(app);
 
-  // Happiness
+
   addSubmitHappinessRating(app);
   addGetHappinessData(app);
 
-  // Mood
+
   addSubmitMood(app);
   addGetMoodData(app);
   addDeleteMood(app);
   addUpdateMood(app);
 
-  // Posts
+
   addCreatePost(app);
   addGetUserWithFriendPosts(app);
   addEditPost(app);
   addDeletePost(app);
   addLikePost(app);
 
-  // Comments
+
   addGetCommentsOnPost(app);
   addCommentOnPost(app);
   addDeleteCommentOnPost(app);
 
-  // Challenges
+
   addCreateChallenge(app);
   addDeleteChallenge(app);
   addAddUserToChallenge(app);
@@ -2227,20 +2227,20 @@ module.exports = function injectRoutes(app) {
   addGetChallengeInfo(app);
   addGetChallenges(app);
 
-  // Invites
+
   addCreateInvite(app);
   addAcceptInvite(app);
   addDeclineInvite(app);
   addGetUserInvites(app);
 
-  // Reset Recurring Tasks
+
   addResetRecurringTasks(app);
 
-  // AI Recommendations
+
   addGetAITip(app);
   addGetAITaskRecommendation(app);
 
-  // Followers
+
   addFollowUser(app);
   addUnfollowUser(app);
   addGetFollowers(app);

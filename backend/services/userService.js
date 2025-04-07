@@ -12,7 +12,7 @@ module.exports.getFriends = async function getFriends(uid) {
   const user = userResult.data;
   const friends = user.friends;
 
-  // replace friend ids with friend data
+
   const friendData = await db.queryMultiple(friends, "users");
   if (!friendData.success)
     return { success: false, message: friendData.message };
@@ -31,7 +31,7 @@ module.exports.followUser = async function followUser(follower, followee) {
     if (!userRes.success) return userRes;
     const user = userRes.data;
 
-    // if followee is already the follower of the user, add to friends list
+
     if (user.followers?.includes(followee)) {
       const followerUpdateRes = await db.updateFieldArray(
         "users",
@@ -77,7 +77,7 @@ module.exports.unfollowUser = async function unfollowUser(follower, followee) {
     if (!userRes.success) return userRes;
     const user = userRes.data;
 
-    // if followee is already the friend of the user, remove from friends list
+
     if (user.friends?.includes(followee)) {
       const followerUpdateRes = await db.removeFromFieldArray(
         "users",
@@ -169,7 +169,7 @@ module.exports.getFriendRecommendations =
     return { success: true, data: mostFrequentFriendsDocs };
   };
 
-// Search for users by name or email
+
 module.exports.searchUser = async function searchUser(data) {
   try {
     const nameOrEmail = data.keyword.trim();
@@ -187,12 +187,12 @@ module.exports.searchUser = async function searchUser(data) {
       return { success: false, message: "Error searching for user" };
     }
 
-    // Combine both results and remove duplicates based on user id
+
     const combined = [...userNameRes.data, ...userEmailRes.data];
     const uniqueUsersMap = new Map();
 
     for (const user of combined) {
-      uniqueUsersMap.set(user.id, user); // will overwrite duplicate ids
+      uniqueUsersMap.set(user.id, user);
     }
 
     const users = Array.from(uniqueUsersMap.values());

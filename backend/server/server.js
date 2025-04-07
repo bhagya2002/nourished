@@ -71,7 +71,7 @@ function setupTaskResetScheduler() {
   runResetJob();
 }
 
-// Only start the server and scheduler for local development
+
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Local backend listening on port ${port}`);
@@ -81,5 +81,5 @@ if (process.env.NODE_ENV !== "production") {
   console.log("Serverless environment: Express routes registered");
 }
 
-// Export app for Vercel deployment
+
 module.exports = app;

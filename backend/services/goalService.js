@@ -3,14 +3,14 @@ const challengeService = require("./challengeService");
 
 module.exports.createGoal = async function createGoal(uid, goal, invitees) {
   try {
-    // Set the uid on the goal
+
     goal.uid = uid;
-    // Create a new goal document in the "goals" collection
+
     const result = await db.addSingleDoc("goals", goal);
     if (!result.success) {
       return { success: false, error: result.error };
     }
-    // Update the user's document in the "users" collection by adding the new goal id to the goals array
+
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -20,7 +20,7 @@ module.exports.createGoal = async function createGoal(uid, goal, invitees) {
     if (!updateResult.success) {
       return { success: false, error: updateResult.error };
     }
-    // Update the challenge's related
+
     if (goal.isChallenge && goal.isChallenge === true) {
       const newChallengeResult = await challengeService.createChallenge(uid, {
         goalId: result.id,
@@ -71,7 +71,7 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
       return challengeRes;
     }
 
-    // Set the goalId of the goal's tasks to null after deleting the goal
+
     const resetTasksGoalIdPromises = [];
     for (const taskId of goalRes.data.taskIds) {
       const resetTaskGoalIdRes = await db.updateField(
@@ -87,7 +87,7 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
       return { success: false, error: "Failed to reset task goalId" };
     }
 
-    // If user is deleting the challenge that is not belong to him
+
     if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
       const deleteUserFromChallPromises = [];
       for (const challenge of challengeRes.data) {
@@ -123,7 +123,7 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
       return deleteGoalRes;
     }
 
-    // Delete relavant challenge if it exists
+
     const challengeDeletePromises = [];
     if (challengeRes.data.length > 0) {
       for (const challenge of challengeRes.data) {

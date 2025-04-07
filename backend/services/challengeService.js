@@ -46,7 +46,7 @@ module.exports.createChallenge = async function createChallenge(userId, data) {
           return targetResult;
         }
         const targetTitle = targetResult.data.title;
-        // create invites for invitees
+
         const challengeInvitePromises = [];
         for (const invitee of invitees) {
           const inviteRes = await inviteService.createInvite(userId, {
