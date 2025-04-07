@@ -1,3 +1,12 @@
+/**
+ * FR1 - Request.Registration - The system shall provide an interface for new users to
+  register using an email address, password, or Google Authentication. It
+  shall validate the email address for uniqueness and ensure it adheres to
+  proper email formatting standards. If the registration succeeds, the system
+  shall securely store user information in the database and log the user into
+  the application.
+*/
+
 "use client";
 
 import React, { useState } from "react";

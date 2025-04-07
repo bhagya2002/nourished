@@ -1,3 +1,13 @@
+/**
+ * FR2 - Request.Login - The system shall allow users to enter their email and
+  password. It shall validate the provided credentials against the stored
+  records. If the credentials match, the user will gain access to the system;
+  otherwise, an error message will be displayed.
+ * FR4 - Login.Status - The system shall maintain a logged-in session for 24 hours by
+  storing session data securely using local storage. It shall prompt the user to
+  log in again after the session expires.
+*/
+
 "use client";
 import React, { useState } from "react";
 import {

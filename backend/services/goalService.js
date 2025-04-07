@@ -20,6 +20,11 @@ module.exports.createGoal = async function createGoal(uid, goal, invitees) {
       return { success: false, error: updateResult.error };
     }
 
+    /**
+     * FR21 - Friend.Challenges - The system shall enable users to create and participate
+      in group challenges, tracking collective progress and displaying updates to
+      all participants.
+    */
     if (goal.isChallenge && goal.isChallenge === true) {
       const newChallengeResult = await challengeService.createChallenge(uid, {
         goalId: result.id,
@@ -85,6 +90,11 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
       return { success: false, error: "Failed to reset task goalId" };
     }
 
+    /**
+     * FR21 - Friend.Challenges - The system shall enable users to create and participate
+      in group challenges, tracking collective progress and displaying updates to
+      all participants.
+    */
     if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
       const deleteUserFromChallPromises = [];
       for (const challenge of challengeRes.data) {

@@ -1,3 +1,9 @@
+/**
+ * FR20 - Friend.Invite - The system shall allow users to invite friends to join the
+  platform. Invitations shall be sent securely using usernames or email
+  addresses.
+*/
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,

@@ -291,6 +291,11 @@ const AccountPage = () => {
           </form>
         </Grid>
 
+        {/**
+         * FR3 - Change.Password - The system shall allow users to securely change their
+          password by verifying their current password. It shall hash and store the
+          new password in the database after validation.
+        */}
         <Grid item xs={12} md={6}>
           <Stack spacing={3}>
             <form onSubmit={handlePasswordUpdate}>

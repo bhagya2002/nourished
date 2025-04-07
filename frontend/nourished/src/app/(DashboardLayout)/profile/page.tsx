@@ -245,6 +245,10 @@ const ProfilePage = () => {
           setAllActivity(allActivityData);
           setRecentActivity(allActivityData.slice(0, 5));
 
+          /**
+           * FR23 - Social.Web: The system shall enable users to access their friends' profiles
+            and view lists of followers and followees.
+          */
           const userDoc = await getDoc(doc(db, "users", user.uid));
           const userData = userDoc.data();
 
@@ -295,26 +299,28 @@ const ProfilePage = () => {
   const handlePrivacyToggle = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newPrivacyValue = event.target.checked;
-    setIsPrivate(newPrivacyValue);
+    if (user) {
+      const newPrivacyValue = event.target.checked;
+      setIsPrivate(newPrivacyValue);
 
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        isPrivate: newPrivacyValue,
-      });
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          isPrivate: newPrivacyValue,
+        });
 
-      setUserData((prev) =>
-        prev
-          ? {
-              ...prev,
-              isPrivate: newPrivacyValue,
-            }
-          : null
-      );
-    } catch (error) {
-      console.error("Error updating privacy setting:", error);
-      setIsPrivate(!newPrivacyValue);
+        setUserData((prev) =>
+          prev
+            ? {
+                ...prev,
+                isPrivate: newPrivacyValue,
+              }
+            : null
+        );
+      } catch (error) {
+        console.error("Error updating privacy setting:", error);
+        setIsPrivate(!newPrivacyValue);
+      }
     }
   };
 
@@ -501,6 +507,10 @@ const ProfilePage = () => {
                 >
                   <Tab label="Overview" sx={{ minHeight: 48 }} />
                   <Tab label="Activity" sx={{ minHeight: 48 }} />
+                  {/**
+                   * FR23 - Social.Web: The system shall enable users to access their friends' profiles
+                    and view lists of followers and followees.
+                  */}
                   <Tab label="Friends" sx={{ minHeight: 48 }} />
                   <Tab label="Connections" sx={{ minHeight: 48 }} />
                 </Tabs>
@@ -629,6 +639,10 @@ const ProfilePage = () => {
               </DashboardCard>
             </TabPanel>
 
+            {/**
+             * FR23 - Social.Web: The system shall enable users to access their friends' profiles
+              and view lists of followers and followees.
+            */}
             <TabPanel value={tabValue} index={2}>
               <DashboardCard title="Friends">
                 <List>
@@ -663,6 +677,10 @@ const ProfilePage = () => {
               </DashboardCard>
             </TabPanel>
 
+            {/**
+             * FR23 - Social.Web: The system shall enable users to access their friends' profiles
+              and view lists of followers and followees.
+            */}
             <TabPanel value={tabValue} index={3}>
               <DashboardCard>
                 <FollowList followers={followers} followees={followees} />

@@ -2153,21 +2153,65 @@ module.exports = function injectRoutes(app) {
   addGetFriends(app);
   addSearchUser(app);
 
+  /**
+   * FR6 - Task.Creation - The system shall allow users to create wellness tasks by
+    providing a title, description, and frequency (e.g., daily, weekly). It shall
+    validate the inputs and save the task details to the database.
+  */
   addCreateTask(app);
+  /**
+   * FR8 - Task.Delete - The system shall allow users to delete wellness tasks. It shall
+    display a confirmation prompt to prevent accidental deletion and remove
+    the task from the database upon confirmation.
+  */
   addDeleteTask(app);
+  /**
+   * FR7 - Task.Edit - The system shall allow users to edit existing tasks by modifying
+    the title, description, or frequency. The changes shall be validated and
+    updated in the database upon user confirmation.
+  */
   addEditTask(app);
   addToggleTaskCompletion(app);
   addGetUserTasks(app);
   addGetGoalTasks(app);
+  /**
+   * FR9 - Task.History - The system shall track and maintain a record of task
+    completion history for each user. Users shall be able to view their task
+    history through the user interface.
+  */
   addGetTaskHistory(app);
   addAssociateTaskWithGoal(app);
   addUnassociateTaskFromGoal(app);
 
+  /**
+   * FR21 - Friend.Challenges - The system shall enable users to create and participate
+    in group challenges, tracking collective progress and displaying updates to
+    all participants.
+  */
+  /**
+   * FR11 - Goal.Creation - The system shall allow users to create personal goals by
+    providing a title, description, and deadline. It shall validate the inputs and
+    save the goal to the database for tracking.
+  */
   addCreateGoal(app);
+  /**
+   * FR13 - Goal.Delete - The system shall allow users to delete personal goals. A
+    confirmation prompt shall be displayed before the goal is removed from the
+    database.
+  */
   addDeleteGoal(app);
+  /**
+   * FR12 - Goal.Edit - The system shall enable users to edit existing goals. It shall
+    validate the modifications and update the goal details in the database.
+  */
   addEditGoal(app);
   addGetUserGoals(app);
 
+  /** 
+   * FR10 - Task.Happiness - The system shall prompt users daily to rate their happiness
+    on a scale. The ratings shall be validated, stored in the database, and used
+    for generating insights.
+  */
   addSubmitHappinessRating(app);
   addGetHappinessData(app);
 
@@ -2176,12 +2220,22 @@ module.exports = function injectRoutes(app) {
   addDeleteMood(app);
   addUpdateMood(app);
 
+  /**
+   * FR22 - Community.Feed - The system shall provide a community feed where users
+    can share completed goals, motivational updates, or optional journal
+    entries. Shared content shall adhere to the user’s privacy settings.
+  */
   addCreatePost(app);
   addGetUserWithFriendPosts(app);
   addEditPost(app);
   addDeletePost(app);
   addLikePost(app);
 
+  /**
+   * FR22 - Community.Feed - The system shall provide a community feed where users
+    can share completed goals, motivational updates, or optional journal
+    entries. Shared content shall adhere to the user’s privacy settings.
+  */
   addGetCommentsOnPost(app);
   addCommentOnPost(app);
   addDeleteCommentOnPost(app);
@@ -2194,6 +2248,11 @@ module.exports = function injectRoutes(app) {
   addGetChallengeInfo(app);
   addGetChallenges(app);
 
+  /**
+   * FR20 - Friend.Invite - The system shall allow users to invite friends to join the
+    platform. Invitations shall be sent securely using usernames or email
+    addresses.
+  */
   addCreateInvite(app);
   addAcceptInvite(app);
   addDeclineInvite(app);
@@ -2201,11 +2260,28 @@ module.exports = function injectRoutes(app) {
 
   addResetRecurringTasks(app);
 
+  /**
+   * FR19 - AI.DailyTips - The system shall generate personalized daily tips for users,
+    based on their wellness trends and past activity data, to encourage
+    continued engagement and improvement.
+  */
   addGetAITip(app);
+  /**
+   * FR18 - AI.Suggest - The system shall analyze the user’s completed tasks and
+    happiness ratings to identify patterns. It shall provide task suggestions that
+    align with activities contributing to higher happiness scores.
+  */
   addGetAITaskRecommendation(app);
 
   addFollowUser(app);
   addUnfollowUser(app);
+  /**
+   * FR23 - Social.Web: The system shall enable users to access their friends' profiles
+    and view lists of followers and followees.
+   * FR20 - Friend.Invite - The system shall allow users to invite friends to join the
+    platform. Invitations shall be sent securely using usernames or email
+    addresses.
+  */
   addGetFollowers(app);
   addGetFollowing(app);
 };

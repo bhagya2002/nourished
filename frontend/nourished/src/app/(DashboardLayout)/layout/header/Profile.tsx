@@ -103,6 +103,11 @@ const Profile = () => {
             My Profile
           </MenuItem>
           <Divider />
+          {/**
+           * FR20 - Friend.Invite - The system shall allow users to invite friends to join the
+            platform. Invitations shall be sent securely using usernames or email
+            addresses.
+          */}
           <MenuItem
             sx={{ py: 1.5 }}
             onClick={() => {
@@ -115,6 +120,10 @@ const Profile = () => {
             </ListItemIcon>
             Search Friends
           </MenuItem>
+          {/**
+           * FR5 - Request.Logout - The system shall allow users to log out securely at any time
+            and redirect the user to the login screen.
+          */}
           <MenuItem
             sx={{ py: 1.5 }}
             onClick={() => {

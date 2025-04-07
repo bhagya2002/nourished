@@ -67,6 +67,10 @@ const Menuitems = [
     icon: IconUser,
     href: "/profile",
   },
+  /**
+   * FR5 - Request.Logout - The system shall allow users to log out securely at any time
+    and redirect the user to the login screen.
+  */
   {
     id: uniqueId(),
     title: "Logout",

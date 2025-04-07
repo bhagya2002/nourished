@@ -65,6 +65,10 @@ const SidebarItems = ({ toggleMobileSidebar }: SidebarItemsProps) => {
                 pathDirect={pathDirect}
                 onClick={async (e) => {
                   if (toggleMobileSidebar) toggleMobileSidebar(e);
+                  /**
+                   * FR5 - Request.Logout - The system shall allow users to log out securely at any time
+                    and redirect the user to the login screen.
+                  */
                   if (item.title === "Logout") {
                     try {
                       await signOut(auth);

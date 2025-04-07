@@ -1245,6 +1245,11 @@ export default function TasksPage() {
         <Grid container spacing={3}>
           {filteredTasks.map((task) => (
             <Grid item xs={12} sm={6} md={4} key={task.id}>
+              {/**
+               * FR8 - Task.Delete - The system shall allow users to delete wellness tasks. It shall
+                display a confirmation prompt to prevent accidental deletion and remove
+                the task from the database upon confirmation.
+              */}
               <TaskCard
                 task={task}
                 onComplete={handleComplete}
@@ -1365,6 +1370,11 @@ export default function TasksPage() {
         </Snackbar>
 
         {/* Dialogs */}
+        {/**
+         * FR6 - Task.Creation - The system shall allow users to create wellness tasks by
+          providing a title, description, and frequency (e.g., daily, weekly). It shall
+          validate the inputs and save the task details to the database.
+        */}
         <TaskCreateDialog
           open={createDialogOpen}
           onClose={() => setCreateDialogOpen(false)}
@@ -1374,6 +1384,11 @@ export default function TasksPage() {
           token={token}
         />
 
+        {/**
+         * FR7 - Task.Edit - The system shall allow users to edit existing tasks by modifying
+          the title, description, or frequency. The changes shall be validated and
+          updated in the database upon user confirmation.
+        */}
         <TaskEditDialog
           open={editDialogOpen}
           onClose={() => {
@@ -1387,6 +1402,11 @@ export default function TasksPage() {
           userTasks={tasks}
         />
 
+        {/** 
+         * FR10 - Task.Happiness - The system shall prompt users daily to rate their happiness
+          on a scale. The ratings shall be validated, stored in the database, and used
+          for generating insights.
+        */}
         <HappinessDialog
           open={happinessDialogOpen}
           taskId={ratingTaskId}

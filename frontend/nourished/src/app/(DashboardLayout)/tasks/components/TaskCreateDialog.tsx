@@ -1,3 +1,9 @@
+/**
+ * FR6 - Task.Creation - The system shall allow users to create wellness tasks by
+  providing a title, description, and frequency (e.g., daily, weekly). It shall
+  validate the inputs and save the task details to the database.
+*/
+
 "use client";
 import React, { useState, useRef, useCallback } from "react";
 import {
@@ -186,6 +192,11 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     onClose();
   };
 
+  /**
+   * FR18 - AI.Suggest - The system shall analyze the user’s completed tasks and
+    happiness ratings to identify patterns. It shall provide task suggestions that
+    align with activities contributing to higher happiness scores.
+  */
   const handleAiButtonClick = (event: React.MouseEvent<HTMLElement>) => {
     if (showAiSuggestion) {
       setShowAiSuggestion(false);

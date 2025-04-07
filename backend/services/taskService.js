@@ -66,6 +66,12 @@ module.exports.createTask = async function createTask(uid, task, goalId) {
         return goalResult;
       }
       const goal = goalResult.data;
+
+      /**
+       * FR14 - Goal.Progress - The system shall visually represent the user’s progress
+        toward achieving their goals using progress indicators, such as bars or
+        percentage displays.
+      */
       const daysLeft = Math.ceil(
         (new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24),
       );
@@ -118,6 +124,12 @@ module.exports.editTask = async function editTask(
         if (!goalResult.success) {
           return goalResult;
         }
+
+        /**
+         * FR14 - Goal.Progress - The system shall visually represent the user’s progress
+          toward achieving their goals using progress indicators, such as bars or
+          percentage displays.
+        */
         let daysLeft = Math.ceil(
           (new Date(goalResult.data.deadline) - new Date()) /
             (1000 * 60 * 60 * 24),
@@ -273,6 +285,12 @@ module.exports.deleteTask = async function deleteTask(uid, taskId, goalId) {
       taskId,
     );
     if (!goalDelTaskIdRes.success) return goalDelTaskIdRes;
+
+    /**
+     * FR14 - Goal.Progress - The system shall visually represent the user’s progress
+      toward achieving their goals using progress indicators, such as bars or
+      percentage displays.
+    */
     let daysLeft = Math.ceil(
       (new Date(goalResult.data.deadline) - new Date()) / (1000 * 60 * 60 * 24),
     );

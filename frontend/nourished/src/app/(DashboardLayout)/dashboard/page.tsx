@@ -1,3 +1,12 @@
+/**
+ * FR15 - Dashboard.Summary - The system shall provide a dashboard summarizing
+  the user’s wellness activities, including task completion, goal progress, and
+  happiness ratings. The data shall be displayed in an intuitive format.
+ * FR16 - Dashboard.Visuals - The dashboard shall include graphs, charts, and streak
+  counters to visually represent the user’s progress, enabling better insights
+  and engagement.
+*/
+
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -421,6 +430,11 @@ const Dashboard = () => {
     setTipDialogOpen(true);
   };
 
+  /**
+   * FR19 - AI.DailyTips - The system shall generate personalized daily tips for users,
+    based on their wellness trends and past activity data, to encourage
+    continued engagement and improvement.
+  */
   const fetchDailyTip = async () => {
     if (!token) {
       return {
@@ -624,6 +638,12 @@ const Dashboard = () => {
       {/* Rest of the dashboard content */}
       <Grid container spacing={3}>
         {/* First Row: Plant Visualization and Wellness Overview */}
+        {/* 
+        * FR17 - Plant.Growth - The system shall gamify the user’s wellness journey by
+          visually representing their progress as the growth of a virtual plant. The
+          growth shall reflect completed tasks, maintained streaks, and achieved
+          goals.
+        */}
         <Grid item xs={12} md={6}>
           {userProfile === null ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>

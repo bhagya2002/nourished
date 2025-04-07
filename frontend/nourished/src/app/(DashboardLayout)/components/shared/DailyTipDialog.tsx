@@ -1,3 +1,9 @@
+/**
+ * FR19 - AI.DailyTips - The system shall generate personalized daily tips for users,
+  based on their wellness trends and past activity data, to encourage
+  continued engagement and improvement.
+*/
+
 "use client";
 import { useState, useEffect } from "react";
 import {

@@ -54,6 +54,11 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
       return sum + (goal.completedTasks || 0);
     }, 0);
 
+    /**
+     * FR14 - Goal.Progress - The system shall visually represent the user’s progress
+      toward achieving their goals using progress indicators, such as bars or
+      percentage displays.
+    */
     let completionRate = 0;
     if (totalTasks > 0) {
       completionRate = Math.round((completedTasks / totalTasks) * 100);

@@ -153,6 +153,11 @@ const GoalCard: React.FC<GoalCardProps> = ({
         <CardContent sx={{ p: 3 }}>
           {/* Progress bar */}
           <Box sx={{ position: "relative", mb: 3 }}>
+            {/* 
+            * FR14 - Goal.Progress - The system shall visually represent the user’s progress
+              toward achieving their goals using progress indicators, such as bars or
+              percentage displays.
+            */}
             <LinearProgress
               variant="determinate"
               value={taskStats.percentage}

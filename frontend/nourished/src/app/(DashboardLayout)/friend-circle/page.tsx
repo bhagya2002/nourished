@@ -1,3 +1,9 @@
+/**
+ * FR22 - Community.Feed - The system shall provide a community feed where users
+  can share completed goals, motivational updates, or optional journal
+  entries. Shared content shall adhere to the user’s privacy settings.
+*/
+
 "use client";
 
 import React, { useEffect, useState } from "react";

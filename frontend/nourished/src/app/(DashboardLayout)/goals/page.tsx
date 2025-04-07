@@ -1062,6 +1062,14 @@ export default function GoalsPage() {
               <EmptyState onCreateGoal={handleAddGoalClick} />
             ) : (
               <Stack spacing={3} sx={{ p: 1 }}>
+                {/**
+                 * FR8 - Task.Delete - The system shall allow users to delete wellness tasks. It shall
+                  display a confirmation prompt to prevent accidental deletion and remove
+                  the task from the database upon confirmation.
+                 * FR13 - Goal.Delete - The system shall allow users to delete personal goals. A
+                  confirmation prompt shall be displayed before the goal is removed from the
+                  database.
+                */}
                 {goals.map((goal, index) => (
                   <GoalCard
                     isOwner={
@@ -1169,6 +1177,13 @@ export default function GoalsPage() {
 
         {/* add/edit goal form dialog */}
         {user && (
+          /**
+           * FR11 - Goal.Creation - The system shall allow users to create personal goals by
+            providing a title, description, and deadline. It shall validate the inputs and
+            save the goal to the database for tracking.
+           * FR12 - Goal.Edit - The system shall enable users to edit existing goals. It shall
+            validate the modifications and update the goal details in the database.
+          */
           <Dialog open={goalModalOpen} onClose={handleClose}>
             <DialogTitle>
               {isEditing
@@ -1239,6 +1254,11 @@ export default function GoalsPage() {
               />
 
               {/* Goal type toggle (goal or challenge) */}
+              {/**
+               * FR21 - Friend.Challenges - The system shall enable users to create and participate
+                in group challenges, tracking collective progress and displaying updates to
+                all participants.
+              */}
               <ToggleButtonGroup
                 disabled={isEditing}
                 sx={{ mt: 2, mb: 1 }}
@@ -1329,6 +1349,11 @@ export default function GoalsPage() {
 
         {/* add/edit task form dialog */}
         <Box>
+          {/**
+           * FR6 - Task.Creation - The system shall allow users to create wellness tasks by
+            providing a title, description, and frequency (e.g., daily, weekly). It shall
+            validate the inputs and save the task details to the database.
+          */}
           <TaskCreateDialog
             open={taskCreateModalOpen}
             onClose={() => setTaskCreateModalOpen(false)}
@@ -1347,6 +1372,11 @@ export default function GoalsPage() {
             goals[expandingGoalIndex] !== undefined &&
             Array.isArray(goals[expandingGoalIndex].tasks) &&
             goals[expandingGoalIndex].tasks[taskEditingIndex] !== undefined && (
+              /**
+               * FR7 - Task.Edit - The system shall allow users to edit existing tasks by modifying
+                the title, description, or frequency. The changes shall be validated and
+                updated in the database upon user confirmation.
+              */
               <TaskEditDialog
                 open={taskEditModalOpen}
                 onClose={() => {
@@ -1371,6 +1401,11 @@ export default function GoalsPage() {
               />
             )}
         </Box>
+        {/** 
+         * FR10 - Task.Happiness - The system shall prompt users daily to rate their happiness
+          on a scale. The ratings shall be validated, stored in the database, and used
+          for generating insights.
+        */}
         <HappinessDialog
           open={happinessDialogOpen}
           taskId={ratingTaskId || ""}
