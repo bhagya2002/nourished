@@ -81,7 +81,7 @@ const BackgroundLeaf: React.FC<BackgroundLeafProps> = ({
         animation: `${animation} 8s infinite ease-in-out`,
         zIndex: 0,
         opacity: 0.7,
-        pointerEvents: "none", // Make sure it doesn't interfere with clicks
+        pointerEvents: "none",
       }}
     >
       <IconLeaf

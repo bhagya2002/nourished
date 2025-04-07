@@ -26,16 +26,13 @@ interface GoalSummaryProps {
 const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
   const theme = useTheme();
 
-  // Calculate goal statistics
   const stats = useMemo(() => {
     const total = goals.length;
 
-    // Calculate goals with completed tasks
     const completedGoals = goals.filter(
       (goal) => goal.totalTasks > 0 && goal.completedTasks === goal.totalTasks
     ).length;
 
-    // Goals in progress (have tasks but not all completed)
     const inProgressGoals = goals.filter(
       (goal) =>
         goal.totalTasks > 0 &&
@@ -43,15 +40,12 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
         goal.completedTasks < goal.totalTasks
     ).length;
 
-    // Goals not started (have tasks but none completed)
     const notStartedGoals = goals.filter(
       (goal) => goal.totalTasks > 0 && goal.completedTasks === 0
     ).length;
 
-    // Goals with no tasks
     const plannedGoals = goals.filter((goal) => goal.totalTasks === 0).length;
 
-    // Overall completion rate - fixed calculation
     const totalTasks = goals.reduce((sum, goal) => {
       return sum + (goal.totalTasks || 0);
     }, 0);
@@ -60,13 +54,11 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
       return sum + (goal.completedTasks || 0);
     }, 0);
 
-    // Calculate completion rate, ensure we don't divide by zero
     let completionRate = 0;
     if (totalTasks > 0) {
       completionRate = Math.round((completedTasks / totalTasks) * 100);
     }
 
-    // Enhanced debug logs to help identify issues
     console.log("Goal progress calculation:", {
       goals: goals.map((g) => ({
         id: g.id,
@@ -81,7 +73,6 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
       completionRate,
     });
 
-    // Upcoming deadlines (within next 7 days)
     const now = new Date();
     const nextWeek = new Date(now);
     nextWeek.setDate(now.getDate() + 7);
@@ -104,7 +95,6 @@ const GoalSummary: React.FC<GoalSummaryProps> = ({ goals }) => {
     };
   }, [goals]);
 
-  // Skip rendering if no goals
   if (stats.total === 0) return null;
 
   return (

@@ -12,7 +12,6 @@ module.exports.getFriends = async function getFriends(uid) {
   const user = userResult.data;
   const friends = user.friends;
 
-
   const friendData = await db.queryMultiple(friends, "users");
   if (!friendData.success)
     return { success: false, message: friendData.message };
@@ -30,7 +29,6 @@ module.exports.followUser = async function followUser(follower, followee) {
     const userRes = await db.queryDatabaseSingle(follower, "users");
     if (!userRes.success) return userRes;
     const user = userRes.data;
-
 
     if (user.followers?.includes(followee)) {
       const followerUpdateRes = await db.updateFieldArray(
@@ -76,7 +74,6 @@ module.exports.unfollowUser = async function unfollowUser(follower, followee) {
     const userRes = await db.queryDatabaseSingle(follower, "users");
     if (!userRes.success) return userRes;
     const user = userRes.data;
-
 
     if (user.friends?.includes(followee)) {
       const followerUpdateRes = await db.removeFromFieldArray(
@@ -169,7 +166,6 @@ module.exports.getFriendRecommendations =
     return { success: true, data: mostFrequentFriendsDocs };
   };
 
-
 module.exports.searchUser = async function searchUser(data) {
   try {
     const nameOrEmail = data.keyword.trim();
@@ -186,7 +182,6 @@ module.exports.searchUser = async function searchUser(data) {
     if (!userNameRes.success || !userEmailRes.success) {
       return { success: false, message: "Error searching for user" };
     }
-
 
     const combined = [...userNameRes.data, ...userEmailRes.data];
     const uniqueUsersMap = new Map();

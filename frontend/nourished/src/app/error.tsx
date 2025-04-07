@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { Box, Button, Container, Typography } from '@mui/material';
-import { motion } from 'framer-motion';
+import { useEffect } from "react";
+import { Box, Button, Container, Typography } from "@mui/material";
+import { motion } from "framer-motion";
 
 export default function Error({
   error,
@@ -12,7 +12,6 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
     console.error(error);
   }, [error]);
 
@@ -20,12 +19,12 @@ export default function Error({
     <Container>
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          textAlign: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          textAlign: "center",
           gap: 3,
         }}
       >
@@ -45,7 +44,7 @@ export default function Error({
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Typography variant="body1" color="text.secondary" paragraph>
-            {error.message || 'An unexpected error occurred. Please try again.'}
+            {error.message || "An unexpected error occurred. Please try again."}
           </Typography>
         </motion.div>
 
@@ -62,7 +61,7 @@ export default function Error({
               px: 4,
               py: 1,
               borderRadius: 2,
-              textTransform: 'none',
+              textTransform: "none",
             }}
           >
             Try again
@@ -71,4 +70,4 @@ export default function Error({
       </Box>
     </Container>
   );
-} 
+}

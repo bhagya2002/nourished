@@ -10,9 +10,9 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import { useAuth } from "@/context/AuthContext"; // Import Auth Context
+import { useAuth } from "@/context/AuthContext";
 import PageContainer from "@/app/(DashboardLayout)/components/container/PageContainer";
-// components
+
 import TaskOverview from "@/app/(DashboardLayout)/components/dashboard/TaskOverview";
 import TaskCompletionTrends from "@/app/(DashboardLayout)/components/dashboard/TaskCompletionTrends";
 import HappinessTrends from "@/app/(DashboardLayout)/components/dashboard/HappinessTrends";
@@ -31,7 +31,6 @@ import DailyTipDialog from "../components/shared/DailyTipDialog";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
-// Helper function to format dates
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
@@ -40,15 +39,6 @@ const formatDate = (dateString: string) => {
     day: "numeric",
   });
 };
-
-// // Helper function to format time
-// const formatTime = (dateString: string) => {
-//   const date = new Date(dateString);
-//   return date.toLocaleTimeString('en-US', {
-//     hour: '2-digit',
-//     minute: '2-digit',
-//   });
-// };
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -69,31 +59,24 @@ const Dashboard = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [tipDialogOpen, setTipDialogOpen] = useState(false);
 
-  // Function to get user's first name
   const getFirstName = () => {
-    // Try to get name from user profile first
     if (userProfile?.firstName) {
       return userProfile.firstName;
     }
 
     if (userProfile?.name) {
-      // Split on spaces and get first part if we have full name
       const nameParts = userProfile.name.trim().split(/\s+/);
       return nameParts[0];
     }
 
-    // Fallback to display name from Firebase Auth
     if (user?.displayName) {
-      // Split on spaces and get first part
       const nameParts = user.displayName.trim().split(/\s+/);
       return nameParts[0];
     }
 
-    // Final fallback
     return "there";
   };
 
-  // Fetch user profile
   const fetchUserProfile = async () => {
     if (!token || !user?.uid) return;
 
@@ -103,7 +86,7 @@ const Dashboard = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token,
-          userId: user.uid, // Using the current user's ID to get their own profile
+          userId: user.uid,
         }),
       });
 
@@ -140,9 +123,8 @@ const Dashboard = () => {
 
     try {
       try {
-        // Add timeout to prevent long-hanging requests
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
           method: "POST",
@@ -199,7 +181,6 @@ const Dashboard = () => {
     }
   };
 
-  // Update fetchRecentCompletions to store streak data
   const fetchRecentCompletions = async () => {
     if (!token) return;
 
@@ -261,7 +242,6 @@ const Dashboard = () => {
         throw new Error(data.error || "Failed to load task history data");
       }
 
-      // Store both completions and streak data
       setCompletedTasks(data.data.completions || []);
       setStreakData(data.data.streaks || null);
     } catch (error) {
@@ -276,7 +256,6 @@ const Dashboard = () => {
     }
   };
 
-  // Function to fetch happiness data
   const fetchHappinessData = async () => {
     if (!token) return;
 
@@ -284,11 +263,9 @@ const Dashboard = () => {
     setHappinessError(null);
 
     try {
-      // Add timeout to prevent long-hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      // Call the getHappinessData endpoint
       const makeRequest = async (currentToken: string) => {
         const response = await fetch(`${API_BASE_URL}/getHappinessData`, {
           method: "POST",
@@ -300,7 +277,6 @@ const Dashboard = () => {
         if (!response.ok) {
           const responseText = await response.text();
 
-          // Handle token expiration
           if (
             response.status === 401 &&
             (responseText.includes("token has expired") ||
@@ -370,7 +346,6 @@ const Dashboard = () => {
     }
   };
 
-  // New function to fetch goals
   const fetchGoals = async () => {
     if (!token) return;
 
@@ -378,9 +353,8 @@ const Dashboard = () => {
     setGoalsError(null);
 
     try {
-      // Add timeout to prevent long-hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
         method: "POST",
@@ -400,11 +374,9 @@ const Dashboard = () => {
       const goalsData = await response.json();
 
       if (goalsData && goalsData.success && Array.isArray(goalsData.data)) {
-        // For each goal, fetch its tasks
         const goalsWithTasks = await Promise.all(
           goalsData.data.map(async (goal: any) => {
             try {
-              // Only fetch tasks if the goal has taskIds
               if (goal.taskIds && goal.taskIds.length > 0) {
                 const taskResponse = await fetch(
                   `${API_BASE_URL}/getGoalTasks`,
@@ -422,7 +394,7 @@ const Dashboard = () => {
                   }
                 }
               }
-              // If no tasks or fetch failed, return goal without tasks
+
               return { ...goal, tasks: [] };
             } catch (error) {
               console.error(`Error fetching tasks for goal ${goal.id}:`, error);
@@ -445,12 +417,10 @@ const Dashboard = () => {
     }
   };
 
-  // Handle opening the daily tip dialog
   const handleOpenTipDialog = () => {
     setTipDialogOpen(true);
   };
 
-  // Fetch the AI daily tip
   const fetchDailyTip = async () => {
     if (!token) {
       return {
@@ -511,7 +481,6 @@ const Dashboard = () => {
     );
   }
 
-  // Show task loading state
   if (isLoadingTasks) {
     return (
       <PageContainer title="Dashboard" description="Your personal dashboard">
@@ -546,7 +515,6 @@ const Dashboard = () => {
     );
   }
 
-  // Show error state
   if (taskError) {
     return (
       <PageContainer title="Dashboard" description="Your personal dashboard">

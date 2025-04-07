@@ -107,7 +107,6 @@ const Register2 = () => {
     try {
       await setPersistence(auth, browserLocalPersistence);
 
-      // Sign in with Google
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 

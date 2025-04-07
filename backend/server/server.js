@@ -71,7 +71,6 @@ function setupTaskResetScheduler() {
   runResetJob();
 }
 
-
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Local backend listening on port ${port}`);
@@ -80,6 +79,5 @@ if (process.env.NODE_ENV !== "production") {
 } else {
   console.log("Serverless environment: Express routes registered");
 }
-
 
 module.exports = app;

@@ -16,7 +16,6 @@ import {
   Box,
 } from "@mui/material";
 
-// Define props interface
 interface AssociateTaskWithGoalDialogProps {
   open: boolean;
   onClose: () => void;
@@ -41,7 +40,6 @@ const AssociateTaskWithGoalDialog: React.FC<
     }
   }, [open, task]);
 
-  // Handle association
   const handleAssociate = async () => {
     if (!selectedGoalId) {
       setError("Please select a goal");

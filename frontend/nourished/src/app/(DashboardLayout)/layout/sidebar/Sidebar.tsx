@@ -27,18 +27,16 @@ const MSidebar = ({
   const sidebarWidth = "270px";
   const collapsedWidth = "0px";
 
-  // Custom CSS for scrollbar
   const scrollbarStyles = {
     "&::-webkit-scrollbar": {
-      width: "5px", // Thinner scrollbar
+      width: "5px",
     },
     "&::-webkit-scrollbar-thumb": {
-      backgroundColor: "rgba(0, 0, 0, 0.1)", // More subtle color
+      backgroundColor: "rgba(0, 0, 0, 0.1)",
       borderRadius: "10px",
     },
   };
 
-  // Modern logo component
   const Logo = () => (
     <Box
       sx={{

@@ -3,7 +3,6 @@ const challengeService = require("./challengeService");
 
 module.exports.createGoal = async function createGoal(uid, goal, invitees) {
   try {
-
     goal.uid = uid;
 
     const result = await db.addSingleDoc("goals", goal);
@@ -71,7 +70,6 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
       return challengeRes;
     }
 
-
     const resetTasksGoalIdPromises = [];
     for (const taskId of goalRes.data.taskIds) {
       const resetTaskGoalIdRes = await db.updateField(
@@ -86,7 +84,6 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
     if (!allResetTasksGoalIdRes.every((res) => res.success)) {
       return { success: false, error: "Failed to reset task goalId" };
     }
-
 
     if (goalRes.data.uid !== uid && challengeRes.data.length > 0) {
       const deleteUserFromChallPromises = [];
@@ -122,7 +119,6 @@ module.exports.deleteGoal = async function deleteGoal(uid, goalId) {
     if (!deleteGoalRes.success) {
       return deleteGoalRes;
     }
-
 
     const challengeDeletePromises = [];
     if (challengeRes.data.length > 0) {

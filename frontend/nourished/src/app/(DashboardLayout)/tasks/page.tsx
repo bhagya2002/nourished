@@ -93,7 +93,7 @@ const Celebration: React.FC<CelebrationProps> = ({
                 }}
                 transition={{
                   duration: 2.5 + Math.random() * 1.5,
-                  ease: [0.23, 1, 0.32, 1], // Use cubic bezier for more dynamic movement
+                  ease: [0.23, 1, 0.32, 1],
                   delay: Math.random() * 0.5,
                 }}
                 sx={{
@@ -276,21 +276,17 @@ export default function TasksPage() {
 
     const filtered = tasksWithGoalTitles.filter((task) => {
       if (selectedTab === 0) {
-        // All tasks
         return showCompleted ? true : !task.completed;
       } else if (selectedTab === 1) {
-        // Daily tasks
         return (
           task.frequency === "Daily" && (showCompleted ? true : !task.completed)
         );
       } else if (selectedTab === 2) {
-        // Weekly tasks
         return (
           task.frequency === "Weekly" &&
           (showCompleted ? true : !task.completed)
         );
       } else {
-        // Monthly tasks
         return (
           task.frequency === "Monthly" &&
           (showCompleted ? true : !task.completed)
@@ -319,7 +315,7 @@ export default function TasksPage() {
       const makeRequest = async (currentToken: string) => {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
 
           const response = await fetch(`${API_BASE_URL}/getUserTasks`, {
             method: "POST",
@@ -447,17 +443,14 @@ export default function TasksPage() {
         throw new Error(data.error || "Failed to fetch goals");
       }
 
-      // Set the goals state
       setGoals(data.data || []);
     } catch (error) {
       console.error("Error fetching goals:", error);
-      // We don't need to show an error notification for this
     } finally {
       setIsLoadingGoals(false);
     }
   };
 
-  // Create a new task
   const handleCreate = async ({
     title,
     description,
@@ -470,19 +463,16 @@ export default function TasksPage() {
     goalId?: string;
   }) => {
     try {
-      console.log("Creating task:", { title, description, frequency }); // Debug log
+      console.log("Creating task:", { title, description, frequency });
 
-      // Clear previous notification if any
       setNotification({ open: false, message: "", severity: "success" });
 
-      // Show loading notification
       setNotification({
         open: true,
         message: "Creating task...",
         severity: "info",
       });
 
-      // Create task API call
       const taskData = {
         title,
         description,
@@ -490,13 +480,11 @@ export default function TasksPage() {
         createdAt: new Date().toISOString(),
       };
 
-      // Build request body
       const requestBody: any = {
         token,
         task: taskData,
       };
 
-      // If there's a goalId, add it to the request
       if (goalId) {
         requestBody.task.goalId = goalId;
         requestBody.goalId = goalId;
@@ -511,16 +499,13 @@ export default function TasksPage() {
         });
       };
 
-      // First attempt with the current token
       let response = await makeRequest(token!);
       let data;
 
-      // Check if we got a token expiration error
       if (response.status === 401) {
         const responseText = await response.text();
         console.log("Auth error response:", responseText);
 
-        // If token has expired, try refreshing and retrying once
         if (
           responseText.includes("token has expired") ||
           responseText.includes("auth/id-token-expired")
@@ -535,19 +520,15 @@ export default function TasksPage() {
         }
       }
 
-      // Get the response data
       data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(data.error || "Failed to create task");
       }
 
-      // Add the new task to local state instead of refreshing
-      const newTask = data.data; // Assuming the API returns the created task
+      const newTask = data.data;
 
-      // Ensure newTask has required properties before adding to state
       if (newTask && newTask.id) {
-        // Create a structured task object to ensure all required fields exist
         const validTask = {
           id: newTask.id,
           title: newTask.title || title,
@@ -564,7 +545,7 @@ export default function TasksPage() {
           "Created task returned from API does not have expected properties",
           newTask
         );
-        // Add a local placeholder task with generated ID in case API doesn't return proper data
+
         const placeholderTask = {
           id: `local-${Date.now()}`,
           title,
@@ -576,14 +557,12 @@ export default function TasksPage() {
         setTasks([...tasks, placeholderTask]);
       }
 
-      // Show success notification
       setNotification({
         open: true,
         message: "Task created successfully!",
         severity: "success",
       });
 
-      // No need to refresh the page
       return data;
     } catch (error: any) {
       console.error("Error creating task:", error);
@@ -595,19 +574,15 @@ export default function TasksPage() {
     }
   };
 
-  // Delete task
   const handleDelete = async (taskId: string) => {
     try {
       if (!taskId) return;
 
-      // Optimistically update UI
       const taskToDelete = tasks.find((t) => t.id === taskId);
       const taskName = taskToDelete?.title || "Task";
 
-      // Optimistically remove from UI
       setTasks(tasks.filter((task) => task.id !== taskId));
 
-      // Show notification
       setNotification({
         open: true,
         message: `Deleting "${taskName}"...`,
@@ -629,7 +604,6 @@ export default function TasksPage() {
 
       let response = await makeRequest(token!);
 
-      // Check for token expiration
       if (response.status === 401) {
         const responseText = await response.text();
 
@@ -647,30 +621,24 @@ export default function TasksPage() {
         }
       }
 
-      // Process the response
       if (response.ok) {
-        // Success! Show success notification
         setNotification({
           open: true,
           message: `"${taskName}" deleted successfully`,
           severity: "success",
         });
 
-        // No need to refresh, we've already updated optimistically
         return;
       }
 
-      // If we get here, something went wrong
       const data = await response.json().catch(() => ({}));
 
-      // Show error and revert the optimistic update
       setNotification({
         open: true,
         message: data.error || "Failed to delete task",
         severity: "error",
       });
 
-      // Revert the optimistic update
       setTasks((prev) => [...prev, taskToDelete]);
     } catch (error: any) {
       console.error("Error deleting task:", error);
@@ -682,7 +650,6 @@ export default function TasksPage() {
     }
   };
 
-  // Save changes from edit
   const handleSaveEdit = async (updatedData: {
     title: string;
     description: string;
@@ -706,7 +673,6 @@ export default function TasksPage() {
         updatedData
       );
 
-      // Validate input
       if (!updatedData.title || updatedData.title.trim() === "") {
         setNotification({
           open: true,
@@ -716,17 +682,14 @@ export default function TasksPage() {
         return;
       }
 
-      // Show loading notification
       setNotification({
         open: true,
         message: "Updating task...",
         severity: "info",
       });
 
-      // Save original state in case we need to revert
       const originalTask = { ...currentEditTask };
 
-      // Optimistically update the UI immediately
       setTasks(
         tasks.map((task) =>
           task.id === currentEditTask.id ? { ...task, ...updatedData } : task
@@ -735,7 +698,6 @@ export default function TasksPage() {
 
       const taskId = currentEditTask.id;
 
-      // Update each field separately for robustness
       const updateField = async (field: string, value: string) => {
         const makeRequest = async (currentToken: string) => {
           return await fetch(`${API_BASE_URL}/editTask`, {
@@ -752,14 +714,11 @@ export default function TasksPage() {
           });
         };
 
-        // First attempt with current token
         let response = await makeRequest(token!);
 
-        // Check if we got a token expiration error
         if (response.status === 401) {
           const responseText = await response.text();
 
-          // If token has expired, try refreshing and retrying once
           if (
             responseText.includes("token has expired") ||
             responseText.includes("auth/id-token-expired")
@@ -775,17 +734,14 @@ export default function TasksPage() {
         }
 
         if (!response.ok) {
-          // Try to get more detailed error information
           let errorDetail = "";
           try {
             const errorResponse = await response.json();
             errorDetail = errorResponse.error || "";
           } catch (e) {
-            // If we can't parse JSON, try to get plain text
             try {
               errorDetail = await response.text();
             } catch (textError) {
-              // If even that fails, just use the status
               errorDetail = `Status ${response.status}`;
             }
           }
@@ -799,7 +755,6 @@ export default function TasksPage() {
         return response;
       };
 
-      // Update all fields in parallel for efficiency
       console.log("Sending task update requests...");
       const results = await Promise.all([
         updateField("title", updatedData.title),
@@ -809,18 +764,14 @@ export default function TasksPage() {
 
       console.log("Task update results:", results);
 
-      // All updates were successful
       setNotification({
         open: true,
         message: "Task updated successfully!",
         severity: "success",
       });
-
-      // No need to refresh
     } catch (error) {
       console.error("Error updating task:", error);
 
-      // Revert optimistic update in case of error
       if (currentEditTask) {
         setTasks(
           tasks.map((task) =>
@@ -829,7 +780,6 @@ export default function TasksPage() {
         );
       }
 
-      // Show error notification
       setNotification({
         open: true,
         message:
@@ -839,9 +789,7 @@ export default function TasksPage() {
     }
   };
 
-  // Toggle Task Completion (complete/incomplete)
   const handleComplete = async (taskId: string) => {
-    // Make sure we're not already processing another request
     if (isLoading) return;
 
     try {
@@ -850,17 +798,14 @@ export default function TasksPage() {
         return;
       }
 
-      // Find the current task
       const currentTask = tasks.find((task) => task.id === taskId);
       if (!currentTask) {
         console.warn("Task not found in local state");
         return;
       }
 
-      // New completed state (toggle current state)
       const newCompletedState = !currentTask.completed;
 
-      // Show notification during toggle - this acts as a loading indicator
       setNotification({
         open: true,
         message: newCompletedState
@@ -869,16 +814,11 @@ export default function TasksPage() {
         severity: newCompletedState ? "success" : "info",
       });
 
-      // Show celebration animation if task is being completed
-      if (newCompletedState) {
-        // No need for any animation timeout, just continue with the happiness dialog logic
-      }
+      // if (newCompletedState) {
+      //   pass;
+      // }
 
-      // For completed tasks, use a staggered approach:
-      // 1. First mark as complete optimistically but don't remove yet
-      // 2. After animation finishes, then update the filtered view (if needed)
       if (newCompletedState && !showCompleted) {
-        // First, just update the completed status in the tasks array
         setTasks(
           tasks.map((task) =>
             task.id === taskId
@@ -887,13 +827,10 @@ export default function TasksPage() {
           )
         );
 
-        // After a delay, also update filtered tasks to remove it with animation
         setTimeout(() => {
           setFilteredTasks(filteredTasks.filter((task) => task.id !== taskId));
-        }, 3000); // Delay the removal to allow animation to play (increased from 1500ms)
+        }, 3000);
       } else {
-        // For non-completed tasks or when showing completed tasks,
-        // just update the state normally
         setTasks(
           tasks.map((task) =>
             task.id === taskId
@@ -903,9 +840,8 @@ export default function TasksPage() {
         );
       }
 
-      // Simple timeout handling to prevent UI freezing
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       console.log(
         `Sending toggle request for task ${taskId} to ${
@@ -927,14 +863,11 @@ export default function TasksPage() {
           });
         };
 
-        // First attempt with current token
         let response = await makeRequest(token!);
 
-        // Check if we got a token expiration error
         if (response.status === 401) {
           const responseText = await response.text();
 
-          // If token has expired, try refreshing and retrying once
           if (
             responseText.includes("token has expired") ||
             responseText.includes("auth/id-token-expired")
@@ -951,9 +884,7 @@ export default function TasksPage() {
 
         clearTimeout(timeoutId);
 
-        // First check if the request was successful based on status code
         if (response.ok) {
-          // Success! Show success notification
           setNotification({
             open: true,
             message: newCompletedState
@@ -962,7 +893,6 @@ export default function TasksPage() {
             severity: "success",
           });
 
-          // If marked as complete, open the happiness rating dialog
           if (newCompletedState) {
             setRatingTaskId(taskId);
             setRatingTaskTitle(currentTask.title);
@@ -973,17 +903,15 @@ export default function TasksPage() {
           return;
         }
 
-        // If we get here, response was not OK
         const errorMessage = "Failed to update task completion";
 
-        // Try to get a more specific error message if possible
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
           try {
             const freshToken = await refreshToken();
             if (freshToken) {
               const result = await makeRequest(freshToken);
-              // Convert response to JSON to access properties
+
               const resultData = await result.json().catch(() => ({}));
               if (!resultData.success) {
                 throw new Error(
@@ -996,7 +924,7 @@ export default function TasksPage() {
             }
           } catch (refreshError) {
             console.error("Error refreshing token:", refreshError);
-            // Revert the optimistic update
+
             setTasks(
               tasks.map((task) =>
                 task.id === taskId
@@ -1013,7 +941,6 @@ export default function TasksPage() {
             throw refreshError;
           }
         } else {
-          // Revert the optimistic update for other errors
           setTasks(
             tasks.map((task) =>
               task.id === taskId
@@ -1031,7 +958,6 @@ export default function TasksPage() {
       } catch (err) {
         console.error("Error toggling task completion:", err);
 
-        // Revert the optimistic update
         setTasks(
           tasks.map((task) =>
             task.id === taskId
@@ -1048,11 +974,9 @@ export default function TasksPage() {
       }
     } catch (err) {
       console.error("Error toggling task completion:", err);
-      // Already handled in the inner catch blocks
     }
   };
 
-  // Open Dialogs
   const handleOpenCreateDialog = () => {
     setCreateDialogOpen(true);
   };
@@ -1062,10 +986,8 @@ export default function TasksPage() {
     setEditDialogOpen(true);
   };
 
-  // Add handleSubmitHappiness handler
   const handleSubmitHappiness = async (taskId: string, rating: number) => {
     try {
-      // Show notification
       setNotification({
         open: true,
         message: "Submitting happiness rating...",
@@ -1085,14 +1007,11 @@ export default function TasksPage() {
         });
       };
 
-      // First attempt with current token
       let response = await makeRequest(token!);
 
-      // Check if we got a token expiration error
       if (response.status === 401) {
         const responseText = await response.text();
 
-        // If token has expired, try refreshing and retrying once
         if (
           responseText.includes("token has expired") ||
           responseText.includes("auth/id-token-expired")
@@ -1111,7 +1030,6 @@ export default function TasksPage() {
         throw new Error("Failed to submit happiness rating");
       }
 
-      // Show success notification
       setNotification({
         open: true,
         message: "Happiness rating submitted. Thank you!",
@@ -1130,7 +1048,6 @@ export default function TasksPage() {
     }
   };
 
-  // Handle associating a task with a goal
   const handleAssociateTask = async (taskId: string, goalId: string) => {
     try {
       setNotification({
@@ -1139,7 +1056,6 @@ export default function TasksPage() {
         severity: "info",
       });
 
-      // Force refresh the token before submitting
       let currentToken = token || "";
       if (refreshToken) {
         console.log("Forcing token refresh before associating task with goal");
@@ -1174,9 +1090,8 @@ export default function TasksPage() {
         throw new Error(data.error || "Failed to associate task with goal");
       }
 
-      // Refresh tasks to show updates
       await fetchTasks();
-      // Also refresh goals to keep them in sync
+
       await fetchGoals();
 
       setNotification({
@@ -1198,7 +1113,6 @@ export default function TasksPage() {
     }
   };
 
-  // Handle unassociating a task from a goal
   const handleUnassociateTask = async (taskId: string) => {
     try {
       setNotification({
@@ -1207,7 +1121,6 @@ export default function TasksPage() {
         severity: "info",
       });
 
-      // Force refresh the token before submitting
       let currentToken = token || "";
       if (refreshToken) {
         console.log(
@@ -1243,9 +1156,8 @@ export default function TasksPage() {
         throw new Error(data.error || "Failed to remove task from goal");
       }
 
-      // Refresh tasks to show updates
       await fetchTasks();
-      // Also refresh goals to keep them in sync
+
       await fetchGoals();
 
       setNotification({
@@ -1267,7 +1179,6 @@ export default function TasksPage() {
     }
   };
 
-  // Handle opening the associate dialog
   const handleOpenAssociateDialog = (task: any) => {
     setTaskToAssociate(task);
     setAssociateDialogOpen(true);

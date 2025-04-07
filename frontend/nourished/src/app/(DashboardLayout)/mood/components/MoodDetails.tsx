@@ -27,14 +27,12 @@ import {
   IconMoodNervous,
 } from "@tabler/icons-react";
 
-// Define the Mood Entry type
 interface MoodEntry {
   date: string;
   rating: number;
   note?: string;
 }
 
-// Define the component props
 interface MoodDetailsProps {
   open: boolean;
   onClose: () => void;
@@ -43,7 +41,6 @@ interface MoodDetailsProps {
   onUpdate: (date: string, note: string, rating?: number) => Promise<void>;
 }
 
-// Mood options with ratings, icons, and colors
 const moodOptions = [
   {
     value: 5,
@@ -103,7 +100,6 @@ const MoodDetails: React.FC<MoodDetailsProps> = ({
   const [note, setNote] = useState("");
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
 
-  // Reset state when entry changes
   useEffect(() => {
     if (entry) {
       setNote(entry.note || "");
@@ -117,7 +113,7 @@ const MoodDetails: React.FC<MoodDetailsProps> = ({
   const getMoodInfo = (rating: number) => {
     const moodInfo = moodOptions.find((option) => option.value === rating);
     if (!moodInfo) {
-      return moodOptions[3]; // Default to Neutral
+      return moodOptions[3];
     }
     return moodInfo;
   };
@@ -171,7 +167,6 @@ const MoodDetails: React.FC<MoodDetailsProps> = ({
     setSelectedRating(rating);
   };
 
-  // If no entry is selected, don't render anything
   if (!entry) return null;
 
   const moodInfo = getMoodInfo(entry.rating);

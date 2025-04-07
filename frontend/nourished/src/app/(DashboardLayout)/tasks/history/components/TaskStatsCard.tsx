@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Box,
   Typography,
@@ -7,15 +7,15 @@ import {
   useTheme,
   alpha,
   SvgIconProps,
-} from '@mui/material';
-import { motion } from 'framer-motion';
+} from "@mui/material";
+import { motion } from "framer-motion";
 
 interface TaskStatsCardProps {
   title: string;
   value: string | number;
   description?: string;
   icon: React.ComponentType<SvgIconProps>;
-  color: 'primary' | 'secondary' | 'success' | 'info' | 'warning';
+  color: "primary" | "secondary" | "success" | "info" | "warning";
   delay?: number;
 }
 
@@ -28,27 +28,26 @@ const TaskStatsCard: React.FC<TaskStatsCardProps> = ({
   delay = 0,
 }) => {
   const theme = useTheme();
-  
-  // Get color from theme based on the prop
+
   const getColorFromTheme = (colorName: string) => {
     switch (colorName) {
-      case 'primary':
+      case "primary":
         return theme.palette.primary;
-      case 'secondary':
+      case "secondary":
         return theme.palette.secondary;
-      case 'success':
+      case "success":
         return theme.palette.success;
-      case 'info':
+      case "info":
         return theme.palette.info;
-      case 'warning':
+      case "warning":
         return theme.palette.warning;
       default:
         return theme.palette.primary;
     }
   };
-  
+
   const themeColor = getColorFromTheme(color);
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -58,92 +57,92 @@ const TaskStatsCard: React.FC<TaskStatsCardProps> = ({
       <Paper
         elevation={0}
         sx={{
-          borderRadius: '16px',
-          overflow: 'hidden',
-          height: '100%',
-          position: 'relative',
-          transition: 'all 0.3s',
+          borderRadius: "16px",
+          overflow: "hidden",
+          height: "100%",
+          position: "relative",
+          transition: "all 0.3s",
           border: `1px solid ${alpha(themeColor.main, 0.1)}`,
-          '&:hover': {
-            transform: 'translateY(-5px)',
+          "&:hover": {
+            transform: "translateY(-5px)",
             boxShadow: `0 8px 24px ${alpha(themeColor.main, 0.15)}`,
           },
         }}
       >
         {/* Background gradient decoration */}
-        <Box 
+        <Box
           sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             right: 0,
-            width: '150px',
-            height: '100%',
+            width: "150px",
+            height: "100%",
             opacity: 0.05,
             background: `linear-gradient(to right, transparent, ${themeColor.main})`,
-            borderRadius: '0 16px 16px 0',
+            borderRadius: "0 16px 16px 0",
           }}
         />
-        
-        <Box 
+
+        <Box
           sx={{
-            position: 'relative', 
+            position: "relative",
             p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
           }}
         >
           {/* Icon with circle background */}
-          <Box 
+          <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "48px",
+              height: "48px",
+              borderRadius: "50%",
               background: alpha(themeColor.main, 0.1),
               color: themeColor.main,
               mb: 2,
             }}
           >
-            <Icon sx={{ fontSize: '24px' }} />
+            <Icon sx={{ fontSize: "24px" }} />
           </Box>
-          
+
           {/* Card title */}
-          <Typography 
-            variant="subtitle1" 
+          <Typography
+            variant="subtitle1"
             component="div"
             sx={{
-              color: 'text.secondary',
+              color: "text.secondary",
               fontWeight: 500,
               mb: 1,
             }}
           >
             {title}
           </Typography>
-          
+
           {/* Value - large and prominent */}
-          <Typography 
-            variant="h3" 
+          <Typography
+            variant="h3"
             component="div"
             sx={{
               fontWeight: 700,
-              letterSpacing: '-0.5px',
+              letterSpacing: "-0.5px",
               mb: 0.5,
               color: themeColor.main,
             }}
           >
             {value}
           </Typography>
-          
+
           {/* Optional description */}
           {description && (
-            <Typography 
+            <Typography
               variant="body2"
               sx={{
-                color: 'text.secondary',
-                mt: 'auto',
+                color: "text.secondary",
+                mt: "auto",
               }}
             >
               {description}
@@ -155,4 +154,4 @@ const TaskStatsCard: React.FC<TaskStatsCardProps> = ({
   );
 };
 
-export default TaskStatsCard; 
+export default TaskStatsCard;

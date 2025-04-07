@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const idToken = await firebaseUser.getIdToken();
         setUser(firebaseUser);
         setToken(idToken);
-        localStorage.setItem("authToken", idToken); // optional
+        localStorage.setItem("authToken", idToken);
         console.log("User is authenticated:", firebaseUser.email);
       } else {
         setUser(null);
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Token changed, updating...");
           const newToken = await firebaseUser.getIdToken();
           setToken(newToken);
-          localStorage.setItem("authToken", newToken); // optional
+          localStorage.setItem("authToken", newToken);
         } catch (error) {
           console.error("Failed to get new token:", error);
         }

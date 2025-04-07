@@ -10,7 +10,6 @@ const db = require("../firebase/firestore");
  */
 async function submitMood(uid, rating, note, date) {
   try {
-
     if (
       (!rating && rating !== 0) ||
       rating < 0 ||
@@ -31,7 +30,6 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -40,22 +38,17 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-
     const moodIds = userResult.data.moods || [];
     if (moodIds.length > 0) {
-
       const moodsResult = await db.queryMultiple(moodIds, "moods");
       if (moodsResult.success && moodsResult.data.length > 0) {
-
         const currentDateStr = parsedDate.toISOString().split("T")[0];
-
 
         const existingMoodOnSameDay = moodsResult.data.find((mood) => {
           const moodDate = new Date(mood.date);
           const moodDateStr = moodDate.toISOString().split("T")[0];
           return moodDateStr === currentDateStr;
         });
-
 
         if (existingMoodOnSameDay) {
           console.log(
@@ -71,7 +64,6 @@ async function submitMood(uid, rating, note, date) {
       }
     }
 
-
     const moodData = {
       uid,
       rating,
@@ -79,7 +71,6 @@ async function submitMood(uid, rating, note, date) {
       date: parsedDate.toISOString(),
       createdAt: new Date().toISOString(),
     };
-
 
     const addResult = await db.addSingleDoc("moods", moodData);
 
@@ -90,7 +81,6 @@ async function submitMood(uid, rating, note, date) {
       };
     }
 
-
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -99,7 +89,6 @@ async function submitMood(uid, rating, note, date) {
     );
 
     if (!updateResult.success) {
-
       await db.deleteSingleDoc("moods", addResult.id);
       return {
         success: false,
@@ -127,7 +116,6 @@ async function submitMood(uid, rating, note, date) {
  */
 async function getUserMoodEntries(uid) {
   try {
-
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -144,7 +132,6 @@ async function getUserMoodEntries(uid) {
       };
     }
 
-
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -152,7 +139,6 @@ async function getUserMoodEntries(uid) {
         error: "Failed to fetch mood entries",
       };
     }
-
 
     const sortedMoods = moodsResult.data.sort(
       (a, b) => new Date(b.date) - new Date(a.date),
@@ -179,7 +165,6 @@ async function getUserMoodEntries(uid) {
  */
 async function deleteMood(uid, date) {
   try {
-
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -187,7 +172,6 @@ async function deleteMood(uid, date) {
         error: "User not found",
       };
     }
-
 
     const moodIds = userResult.data.moods || [];
     if (moodIds.length === 0) {
@@ -197,7 +181,6 @@ async function deleteMood(uid, date) {
       };
     }
 
-
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -206,9 +189,7 @@ async function deleteMood(uid, date) {
       };
     }
 
-
     const targetMood = moodsResult.data.find((mood) => {
-
       const moodDate = new Date(mood.date).toISOString().split("T")[0];
       const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
@@ -221,7 +202,6 @@ async function deleteMood(uid, date) {
       };
     }
 
-
     const deleteResult = await db.deleteSingleDoc("moods", targetMood.id);
     if (!deleteResult.success) {
       return {
@@ -229,7 +209,6 @@ async function deleteMood(uid, date) {
         error: "Failed to delete mood entry",
       };
     }
-
 
     const updateResult = await db.removeFromFieldArray(
       "users",
@@ -267,7 +246,6 @@ async function deleteMood(uid, date) {
  */
 async function updateMood(uid, date, note, rating) {
   try {
-
     const userResult = await db.queryDatabaseSingle(uid, "users");
     if (!userResult.success) {
       return {
@@ -275,7 +253,6 @@ async function updateMood(uid, date, note, rating) {
         error: "User not found",
       };
     }
-
 
     const moodIds = userResult.data.moods || [];
     if (moodIds.length === 0) {
@@ -285,7 +262,6 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-
     const moodsResult = await db.queryMultiple(moodIds, "moods");
     if (!moodsResult.success) {
       return {
@@ -294,9 +270,7 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-
     const targetMood = moodsResult.data.find((mood) => {
-
       const moodDate = new Date(mood.date).toISOString().split("T")[0];
       const targetDate = new Date(date).toISOString().split("T")[0];
       return moodDate === targetDate;
@@ -309,16 +283,13 @@ async function updateMood(uid, date, note, rating) {
       };
     }
 
-
     const updateData = {
       updatedAt: new Date().toISOString(),
     };
 
-
     if (note !== undefined) {
       updateData.note = note || "";
     }
-
 
     if (rating !== undefined) {
       if (
@@ -335,7 +306,6 @@ async function updateMood(uid, date, note, rating) {
         };
       }
     }
-
 
     const updateResult = await db.updateSingleDoc(
       "moods",

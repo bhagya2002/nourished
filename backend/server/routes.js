@@ -118,7 +118,6 @@ function addGetUserProfile(app) {
         req.body.userId,
       );
 
-
       const currentUserResult = await userService.getUserInfo(authResult.uid);
       const isFriend =
         currentUserResult.success &&
@@ -239,7 +238,6 @@ function addCreateTask(app) {
           });
         }
       } else {
-
         authResult.uid = req.body.token;
       }
 
@@ -357,13 +355,11 @@ function addEditTask(app) {
 function addToggleTaskCompletion(app) {
   app.post("/toggleTaskCompletion", async (req, res) => {
     try {
-
       if (!req.body.taskId) {
         return res
           .status(400)
           .json({ success: false, error: "Task ID is required" });
       }
-
 
       if (req.body.completed === undefined) {
         return res
@@ -398,8 +394,6 @@ function addToggleTaskCompletion(app) {
         console.log("Toggle task completion result:", result);
 
         if (result.success) {
-
-
           const freshTaskDataPromise = taskService.getUserTasks(authResult.uid);
           const taskHistoryPromise = taskService.getTaskHistory(authResult.uid);
 
@@ -417,15 +411,14 @@ function addToggleTaskCompletion(app) {
               tasks: freshTaskData.success ? freshTaskData.data : [],
               recentActivity: freshTaskHistory.success
                 ? {
-                  completions:
-                    freshTaskHistory.data.completions?.slice(0, 5) || [],
-                  streaks: freshTaskHistory.data.streaks,
-                }
+                    completions:
+                      freshTaskHistory.data.completions?.slice(0, 5) || [],
+                    streaks: freshTaskHistory.data.streaks,
+                  }
                 : null,
             },
           });
         } else {
-
           return res.status(500).json({
             success: false,
             error: result.error || "Failed to update task completion",
@@ -753,7 +746,6 @@ function addSubmitHappinessRating(app) {
         });
       }
 
-
       const { taskId, rating, date } = req.body;
 
       if (!taskId) {
@@ -777,7 +769,6 @@ function addSubmitHappinessRating(app) {
           error: "Invalid date format",
         });
       }
-
 
       const result = await taskService.submitHappinessRating(
         authResult.uid,
@@ -892,9 +883,7 @@ function addGetHappinessData(app) {
         });
       }
 
-
       const { startDate, endDate } = req.body;
-
 
       const result = await taskService.getHappinessData(
         authResult.uid,
@@ -942,7 +931,6 @@ function addCreatePost(app) {
           });
         }
       } else {
-
         authResult.uid = req.body.token;
       }
 
@@ -1696,7 +1684,6 @@ function addGetUserInvites(app) {
 function addResetRecurringTasks(app) {
   app.post("/resetRecurringTasks", async (req, res) => {
     try {
-
       let authResult = {};
       if (!req.headers.debug) {
         authResult = await authService.authenticateToken(req.body.token);
@@ -1711,7 +1698,6 @@ function addResetRecurringTasks(app) {
       }
 
       console.log(`Manual trigger of task reset by user: ${authResult.uid}`);
-
 
       const result = await taskService.resetRecurringTasks();
 
@@ -1755,7 +1741,6 @@ function addGetAITip(app) {
       } else {
         authResult.uid = req.body.token;
       }
-
 
       const result = await aiService.getWellnessTip(authResult.uid);
       console.log("Wellness tip result:", result);
@@ -1978,7 +1963,6 @@ function addGetFollowing(app) {
   });
 }
 
-
 function addDeleteMood(app) {
   app.post("/deleteMood", async (req, res) => {
     try {
@@ -1990,7 +1974,6 @@ function addDeleteMood(app) {
         });
       }
 
-
       const { date } = req.body;
       if (!date) {
         return res.status(400).json({
@@ -1998,7 +1981,6 @@ function addDeleteMood(app) {
           error: "Date is required",
         });
       }
-
 
       const result = await moodService.deleteMood(authResult.uid, date);
 
@@ -2023,7 +2005,6 @@ function addDeleteMood(app) {
   });
 }
 
-
 function addUpdateMood(app) {
   app.post("/updateMood", async (req, res) => {
     try {
@@ -2035,7 +2016,6 @@ function addUpdateMood(app) {
         });
       }
 
-
       const { date, note, rating } = req.body;
       if (!date) {
         return res.status(400).json({
@@ -2043,7 +2023,6 @@ function addUpdateMood(app) {
           error: "Date is required",
         });
       }
-
 
       const result = await moodService.updateMood(
         authResult.uid,
@@ -2084,7 +2063,6 @@ function addAssociateTaskWithGoal(app) {
         });
       }
 
-
       const { taskId, goalId } = req.body;
       if (!taskId || !goalId) {
         return res.status(400).json({
@@ -2092,7 +2070,6 @@ function addAssociateTaskWithGoal(app) {
           error: "Task ID and Goal ID are required",
         });
       }
-
 
       const result = await taskService.associateTaskWithGoal(
         authResult.uid,
@@ -2132,7 +2109,6 @@ function addUnassociateTaskFromGoal(app) {
         });
       }
 
-
       const { taskId } = req.body;
       if (!taskId) {
         return res.status(400).json({
@@ -2140,7 +2116,6 @@ function addUnassociateTaskFromGoal(app) {
           error: "Task ID is required",
         });
       }
-
 
       const result = await taskService.unassociateTaskFromGoal(
         authResult.uid,
@@ -2171,14 +2146,12 @@ function addUnassociateTaskFromGoal(app) {
 module.exports = function injectRoutes(app) {
   addHeartbeatRoute(app);
 
-
   addGetUserInfo(app);
   addFriendConnection(app);
   addGetFriendRecommendation(app);
   addGetUserProfile(app);
   addGetFriends(app);
   addSearchUser(app);
-
 
   addCreateTask(app);
   addDeleteTask(app);
@@ -2190,22 +2163,18 @@ module.exports = function injectRoutes(app) {
   addAssociateTaskWithGoal(app);
   addUnassociateTaskFromGoal(app);
 
-
   addCreateGoal(app);
   addDeleteGoal(app);
   addEditGoal(app);
   addGetUserGoals(app);
 
-
   addSubmitHappinessRating(app);
   addGetHappinessData(app);
-
 
   addSubmitMood(app);
   addGetMoodData(app);
   addDeleteMood(app);
   addUpdateMood(app);
-
 
   addCreatePost(app);
   addGetUserWithFriendPosts(app);
@@ -2213,11 +2182,9 @@ module.exports = function injectRoutes(app) {
   addDeletePost(app);
   addLikePost(app);
 
-
   addGetCommentsOnPost(app);
   addCommentOnPost(app);
   addDeleteCommentOnPost(app);
-
 
   addCreateChallenge(app);
   addDeleteChallenge(app);
@@ -2227,19 +2194,15 @@ module.exports = function injectRoutes(app) {
   addGetChallengeInfo(app);
   addGetChallenges(app);
 
-
   addCreateInvite(app);
   addAcceptInvite(app);
   addDeclineInvite(app);
   addGetUserInvites(app);
 
-
   addResetRecurringTasks(app);
-
 
   addGetAITip(app);
   addGetAITaskRecommendation(app);
-
 
   addFollowUser(app);
   addUnfollowUser(app);

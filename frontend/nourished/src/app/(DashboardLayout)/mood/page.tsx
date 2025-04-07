@@ -21,18 +21,15 @@ import MoodStats from "./components/MoodStats";
 import MoodDetails from "./components/MoodDetails";
 import { motion } from "framer-motion";
 
-// Define the API URL
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
-// Define Mood Entry type
 interface MoodEntry {
   date: string;
   rating: number;
   note?: string;
 }
 
-// Animation variants
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: (custom: number) => ({
@@ -63,7 +60,6 @@ export default function MoodPage() {
   const router = useRouter();
   const { user, token, loading: authLoading, refreshToken } = useAuth();
 
-  // State variables
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,24 +77,20 @@ export default function MoodPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/authentication/login");
     }
   }, [authLoading, user, router]);
 
-  // Fetch mood data on mount
   useEffect(() => {
     if (user && token) {
       fetchMoodData();
     }
   }, [user, token]);
 
-  // Set page as loaded after initial data fetch
   useEffect(() => {
     if (!isLoading && !authLoading) {
-      // Small delay to ensure smooth animation
       const timer = setTimeout(() => {
         setPageLoaded(true);
       }, 100);
@@ -106,7 +98,6 @@ export default function MoodPage() {
     }
   }, [isLoading, authLoading]);
 
-  // Handle timeframe change
   const handleTimeframeChange = (
     event: React.MouseEvent<HTMLElement>,
     newTimeframe: "week" | "month" | "year" | null
@@ -116,7 +107,6 @@ export default function MoodPage() {
     }
   };
 
-  // Fetch mood data from the backend
   const fetchMoodData = async () => {
     if (!user) return;
 
@@ -124,7 +114,6 @@ export default function MoodPage() {
     setError(null);
 
     try {
-      // Force refresh the token before fetching data
       let currentToken = token;
       if (refreshToken) {
         console.log("Forcing token refresh before fetching mood data");
@@ -153,7 +142,6 @@ export default function MoodPage() {
         throw new Error(data.error || "Failed to fetch mood data");
       }
 
-      // Transform API data to our format
       const transformedData: MoodEntry[] = (data.data?.ratings || []).map(
         (item: any) => ({
           date: item.date,
@@ -180,7 +168,6 @@ export default function MoodPage() {
     }
   };
 
-  // Submit new mood entry
   const handleSubmitMood = async (rating: number, note: string) => {
     if (!user) {
       setNotification({
@@ -192,7 +179,6 @@ export default function MoodPage() {
     }
 
     try {
-      // Force refresh the token before submitting
       let currentToken = token;
       if (refreshToken) {
         console.log("Forcing token refresh before submitting mood");
@@ -202,8 +188,7 @@ export default function MoodPage() {
         }
       }
 
-      // Check if there's already a mood entry for today using a more robust approach
-      const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      const today = new Date().toISOString().split("T")[0];
 
       const existingTodayMood = moodEntries.find((entry) => {
         const entryDate = new Date(entry.date);
@@ -211,7 +196,6 @@ export default function MoodPage() {
         return entryDateStr === today;
       });
 
-      // If a mood exists for today, update it instead of creating a new one
       if (existingTodayMood) {
         console.log(
           "Found existing mood for today, updating instead of creating new one"
@@ -219,7 +203,6 @@ export default function MoodPage() {
         return await handleUpdateMood(existingTodayMood.date, note, rating);
       }
 
-      // Otherwise create a new mood entry
       setNotification({
         open: true,
         message: "Saving your mood...",
@@ -250,7 +233,6 @@ export default function MoodPage() {
         throw new Error(data.error || "Failed to submit mood");
       }
 
-      // Refresh the mood data from server instead of just adding locally
       await fetchMoodData();
 
       setNotification({
@@ -270,7 +252,6 @@ export default function MoodPage() {
     }
   };
 
-  // Delete mood entry
   const handleDeleteMood = async (date: string) => {
     if (!user) {
       setNotification({
@@ -288,7 +269,6 @@ export default function MoodPage() {
         severity: "info",
       });
 
-      // Force refresh the token before submitting
       let currentToken = token;
       if (refreshToken) {
         console.log("Forcing token refresh before deleting mood");
@@ -320,7 +300,6 @@ export default function MoodPage() {
         throw new Error(data.error || "Failed to delete mood entry");
       }
 
-      // Update local state by removing the deleted entry
       setMoodEntries(moodEntries.filter((entry) => entry.date !== date));
 
       setNotification({
@@ -340,11 +319,10 @@ export default function MoodPage() {
         severity: "error",
       });
 
-      throw error; // Re-throw for the component to handle
+      throw error;
     }
   };
 
-  // Update mood entry (note)
   const handleUpdateMood = async (
     date: string,
     note: string,
@@ -366,7 +344,6 @@ export default function MoodPage() {
         severity: "info",
       });
 
-      // Force refresh the token before submitting
       let currentToken = token;
       if (refreshToken) {
         console.log("Forcing token refresh before updating mood");
@@ -400,7 +377,6 @@ export default function MoodPage() {
         throw new Error(data.error || "Failed to update mood entry");
       }
 
-      // Refresh data from server instead of updating local state
       await fetchMoodData();
 
       setNotification({
@@ -420,11 +396,10 @@ export default function MoodPage() {
         severity: "error",
       });
 
-      throw error; // Re-throw for the component to handle
+      throw error;
     }
   };
 
-  // Handle calendar day click
   const handleDayClick = (date: string, entry?: MoodEntry) => {
     if (entry) {
       setSelectedEntry(entry);
@@ -432,12 +407,10 @@ export default function MoodPage() {
     }
   };
 
-  // Close notification
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
   };
 
-  // If loading authentication, show loading
   if (authLoading) {
     return (
       <PageContainer title="Mood Tracker" description="Track your daily mood">

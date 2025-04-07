@@ -1,17 +1,9 @@
-//
-// Notifications dropdown
-//
-const notifications = [];
+// const notifications = [];
 
-//
-// Profile dropdown
-//
-const profile = [];
+// const profile = [];
 
-// apps dropdown
+// const appsLink = [];
 
-const appsLink = [];
+// const pageLinks = [];
 
-const pageLinks = [];
-
-export { notifications, profile, pageLinks, appsLink };
+// export { notifications, profile, pageLinks, appsLink };

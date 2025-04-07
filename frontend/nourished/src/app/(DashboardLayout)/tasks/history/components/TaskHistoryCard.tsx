@@ -1,5 +1,5 @@
-'use client';
-import React from 'react';
+"use client";
+import React from "react";
 import {
   Box,
   Typography,
@@ -9,27 +9,25 @@ import {
   Chip,
   Tooltip,
   styled,
-} from '@mui/material';
-import { motion } from 'framer-motion';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+} from "@mui/material";
+import { motion } from "framer-motion";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import RepeatIcon from "@mui/icons-material/Repeat";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-// Styled components
 const StyledPaper = styled(Paper)(({ theme }) => ({
-  borderRadius: '16px',
-  overflow: 'hidden',
+  borderRadius: "16px",
+  overflow: "hidden",
   padding: 0,
-  position: 'relative',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&:hover': {
-    transform: 'translateY(-4px)',
+  position: "relative",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  "&:hover": {
+    transform: "translateY(-4px)",
     boxShadow: theme.shadows[4],
   },
 }));
 
-// Interface for completed task props
 interface TaskHistoryCardProps {
   task: {
     id: string;
@@ -40,29 +38,26 @@ interface TaskHistoryCardProps {
   };
 }
 
-// Helper function to format date
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 };
 
-// Helper function to format time
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
   const theme = useTheme();
-  
-  // Create a random accent color based on task ID to add visual variety
+
   const getAccentColor = (id: string) => {
     const colors = [
       theme.palette.primary.main,
@@ -70,18 +65,17 @@ const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
       theme.palette.success.main,
       theme.palette.info.main,
     ];
-    
-    // Use a hash of the ID to consistently get the same color for the same task
-    const hash = id.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
+
+    const hash = id.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
       return a & a;
     }, 0);
-    
+
     return colors[Math.abs(hash) % colors.length];
   };
-  
+
   const accentColor = getAccentColor(task.id);
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -90,84 +84,87 @@ const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
     >
       <StyledPaper elevation={1}>
         {/* Colored accent bar at the top */}
-        <Box 
-          sx={{ 
-            height: '6px', 
-            width: '100%', 
-            background: `linear-gradient(90deg, ${accentColor}, ${alpha(accentColor, 0.7)})`,
-          }} 
+        <Box
+          sx={{
+            height: "6px",
+            width: "100%",
+            background: `linear-gradient(90deg, ${accentColor}, ${alpha(
+              accentColor,
+              0.7
+            )})`,
+          }}
         />
-        
+
         <Box p={3}>
           {/* Task title and completion badge */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'flex-start',
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
               mb: 1,
             }}
           >
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 fontWeight: 600,
-                color: 'text.primary',
+                color: "text.primary",
                 flex: 1,
               }}
             >
               {task.title}
             </Typography>
-            
+
             <Chip
-              icon={<CheckCircleIcon style={{ fontSize: '16px' }} />}
+              icon={<CheckCircleIcon style={{ fontSize: "16px" }} />}
               label="Completed"
               size="small"
               color="success"
               sx={{
                 fontWeight: 500,
-                fontSize: '0.75rem',
-                height: '24px',
-                borderRadius: '12px',
+                fontSize: "0.75rem",
+                height: "24px",
+                borderRadius: "12px",
                 ml: 2,
                 background: alpha(theme.palette.success.main, 0.1),
                 color: theme.palette.success.main,
                 border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
-                '& .MuiChip-icon': {
+                "& .MuiChip-icon": {
                   color: theme.palette.success.main,
                 },
               }}
             />
           </Box>
-          
+
           {/* Task description */}
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             color="text.secondary"
-            sx={{ 
+            sx={{
               mb: 2,
               lineHeight: 1.6,
             }}
           >
             {task.description}
           </Typography>
-          
+
           {/* Task metadata */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap',
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
               gap: 2,
               mt: 2,
             }}
           >
             {/* Completion date */}
             <Tooltip title="Completion date" arrow placement="top">
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: 'text.secondary',
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "text.secondary",
                 }}
               >
                 <CalendarTodayIcon sx={{ fontSize: 16, mr: 0.75 }} />
@@ -176,14 +173,14 @@ const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
                 </Typography>
               </Box>
             </Tooltip>
-            
+
             {/* Completion time */}
             <Tooltip title="Completion time" arrow placement="top">
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: 'text.secondary',
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  color: "text.secondary",
                 }}
               >
                 <AccessTimeIcon sx={{ fontSize: 16, mr: 0.75 }} />
@@ -192,21 +189,19 @@ const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
                 </Typography>
               </Box>
             </Tooltip>
-            
+
             {/* Task frequency (if available) */}
             {task.frequency && (
               <Tooltip title="Task frequency" arrow placement="top">
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    color: 'text.secondary',
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    color: "text.secondary",
                   }}
                 >
                   <RepeatIcon sx={{ fontSize: 16, mr: 0.75 }} />
-                  <Typography variant="caption">
-                    {task.frequency}
-                  </Typography>
+                  <Typography variant="caption">{task.frequency}</Typography>
                 </Box>
               </Tooltip>
             )}
@@ -217,4 +212,4 @@ const TaskHistoryCard: React.FC<TaskHistoryCardProps> = ({ task }) => {
   );
 };
 
-export default TaskHistoryCard; 
+export default TaskHistoryCard;

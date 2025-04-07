@@ -19,7 +19,6 @@ import {
   IconMoodNervous,
 } from "@tabler/icons-react";
 
-// Dynamically import ApexCharts to prevent SSR issues
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface MoodEntry {
@@ -39,11 +38,9 @@ const MoodStats: React.FC<MoodStatsProps> = ({
 }) => {
   const theme = useTheme();
 
-  // Filter entries based on timeframe
   const filteredMoodEntries = useMemo(() => {
     if (moodEntries.length === 0) return [];
 
-    // Determine date range based on timeframe
     const today = new Date();
     const startDate = new Date();
 
@@ -55,13 +52,11 @@ const MoodStats: React.FC<MoodStatsProps> = ({
       startDate.setFullYear(today.getFullYear() - 1);
     }
 
-    // Filter entries within the timeframe
     const timeframeEntries = moodEntries.filter((entry) => {
       const entryDate = new Date(entry.date);
       return entryDate >= startDate && entryDate <= today;
     });
 
-    // Deduplicate entries by date (keeping only the latest for each day)
     const uniqueDayMap = new Map();
 
     timeframeEntries.forEach((entry) => {
@@ -78,9 +73,8 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     return Array.from(uniqueDayMap.values());
   }, [moodEntries, timeframe]);
 
-  // Get mood distribution
   const moodDistribution = useMemo(() => {
-    const distribution = [0, 0, 0, 0, 0, 0]; // For ratings 0-5
+    const distribution = [0, 0, 0, 0, 0, 0];
 
     if (filteredMoodEntries.length === 0) return distribution;
 
@@ -91,7 +85,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     return distribution;
   }, [filteredMoodEntries]);
 
-  // Get average mood rating
   const averageMood = useMemo(() => {
     if (filteredMoodEntries.length === 0) return 0;
 
@@ -102,7 +95,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     return parseFloat((sum / filteredMoodEntries.length).toFixed(1));
   }, [filteredMoodEntries]);
 
-  // Get most common mood
   const mostCommonMood = useMemo(() => {
     if (filteredMoodEntries.length === 0) return null;
 
@@ -118,7 +110,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     return maxIndex;
   }, [moodDistribution, filteredMoodEntries]);
 
-  // Get mood icons and colors
   const getMoodInfo = (rating: number) => {
     switch (rating) {
       case 5:
@@ -138,7 +129,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     }
   };
 
-  // Prepare chart data
   const chartData = useMemo(() => {
     if (filteredMoodEntries.length === 0) {
       return {
@@ -147,12 +137,10 @@ const MoodStats: React.FC<MoodStatsProps> = ({
       };
     }
 
-    // Sort data by date
     const sortedData = [...filteredMoodEntries].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // Group by date and average ratings
     const dateMap = new Map();
 
     sortedData.forEach((item) => {
@@ -168,7 +156,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
       }
     });
 
-    // Calculate averages and prepare data for chart
     const dates: string[] = [];
     const ratings: number[] = [];
 
@@ -183,7 +170,6 @@ const MoodStats: React.FC<MoodStatsProps> = ({
     return { dates, ratings };
   }, [filteredMoodEntries]);
 
-  // Chart options
   const chartOptions: any = {
     chart: {
       type: "line",

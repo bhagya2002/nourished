@@ -9,14 +9,14 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
     const editGoalTitle = `Edit Goal${randomId}`;
 
 
-    // ---- Log In ----
+
     await test.step('Login', async () => {
         await page.goto('/');
 
-        // Time to load the page
+
         await page.waitForTimeout(3000);
 
-        // Check if the login form is visible
+
         await expect(page.getByText('Wellness Made Simple')).toBeVisible();
         await expect(page.getByLabel('Email Address')).toBeVisible();
         await expect(page.getByLabel('Password')).toBeVisible();
@@ -30,7 +30,7 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.url()).toContain('/dashboard');
     });
 
-    // ---- Create Goals ----
+
     await test.step('Create Goals', async () => {
         await page.getByRole('link', { name: 'Goals (Challenges)' }).click();
         await page.waitForURL('**/goals');
@@ -45,24 +45,24 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
 
-        // Input Random Task Details
+
         await page.getByRole('textbox', { name: 'Title' }).fill(goalTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Create Description');
 
-        // Get today's date in YYYY-MM-DD format
+
         const today = new Date();
-        today.setDate(today.getDate() + 5); // Add 5 days
+        today.setDate(today.getDate() + 5);
 
         const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
         const dd = String(today.getDate()).padStart(2, '0');
 
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-        // Make sure the input is visible
+
         await expect(page.getByRole('textbox', { name: 'Deadline' })).toBeVisible();
 
-        // Fill the input with today's date
+
         await page.getByRole('textbox', { name: 'Deadline' }).fill(formattedDate);
 
         await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
@@ -77,13 +77,13 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByRole('button').filter({ hasText: /^$/ }).nth(2).first()).toBeVisible();
     });
 
-    // ---- Edit Goals ----
+
     await test.step('Edit Goals', async () => {
         await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible();
         await page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first().click();
         await page.getByText('Edit', { exact: true }).first().click();
 
-        // Input Random Task Details
+
         await page.getByRole('textbox', { name: 'Title' }).fill(editGoalTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Edit Description');
 
@@ -94,7 +94,7 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByText('Edit Description').first()).toBeVisible();
     });
 
-    // ---- Delete Goals ----
+
     await test.step('Delete Goals', async () => {
         await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible()
         await page.waitForTimeout(1000);
@@ -109,7 +109,7 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
         await page.getByRole('button', { name: 'Delete' }).click();
 
-        // await expect(page.getByRole('heading', { name: 'Set Your Goals' })).toBeVisible();
-        // await expect(page.getByText('Create goals to track your')).toBeVisible();
+
+
     });
 });

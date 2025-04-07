@@ -63,23 +63,17 @@ const GoalCard: React.FC<GoalCardProps> = ({
 }) => {
   const theme = useTheme();
 
-  // State for the more actions menu
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Calculate task statistics
   const taskStats = useMemo(() => {
-    // Use the goal's own totalTasks and completedTasks properties
-    // instead of recalculating from the tasks array
     const { totalTasks, completedTasks } = goal;
 
-    // Make sure they're numbers
     const total = typeof totalTasks === "number" ? totalTasks : 0;
     const completed = typeof completedTasks === "number" ? completedTasks : 0;
 
-    // Calculate percentage, ensure we don't divide by zero
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return {
@@ -89,7 +83,6 @@ const GoalCard: React.FC<GoalCardProps> = ({
     };
   }, [goal.totalTasks, goal.completedTasks]);
 
-  // Format date for display
   const formatDeadline = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -99,7 +92,6 @@ const GoalCard: React.FC<GoalCardProps> = ({
     });
   };
 
-  // Calculate days remaining until deadline
   const getDaysRemaining = (deadline: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -109,29 +101,24 @@ const GoalCard: React.FC<GoalCardProps> = ({
     return diffDays;
   };
 
-  // Determine deadline status
   const daysRemaining = getDaysRemaining(goal.deadline);
   const isUrgent = daysRemaining <= 3 && daysRemaining >= 0;
   const isOverdue = daysRemaining < 0;
 
-  // Handle menu open
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
-  // Handle menu close
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
-  // Handle edit click
   const handleEditClick = () => {
     handleMenuClose();
     onEdit();
   };
 
-  // Handle delete click
   const handleDeleteClick = () => {
     handleMenuClose();
     onDelete();
@@ -235,8 +222,9 @@ const GoalCard: React.FC<GoalCardProps> = ({
             />
             <Chip
               icon={<CheckCircleIcon />}
-              label={`${goal.tasks.filter((t) => t.completed).length}/${goal.tasks.length
-                } tasks`}
+              label={`${goal.tasks.filter((t) => t.completed).length}/${
+                goal.tasks.length
+              } tasks`}
               color="primary"
               size="small"
               variant="outlined"

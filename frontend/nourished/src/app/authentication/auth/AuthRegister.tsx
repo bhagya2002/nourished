@@ -43,7 +43,6 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
@@ -90,7 +89,7 @@ const AuthRegister: React.FC<AuthRegisterProps> = ({
         tasks: [],
         goals: [],
         friends: [],
-        plantHealth: 2,
+        plantHealth: 3,
       });
 
       setSuccess("Registration successful! Redirecting...");

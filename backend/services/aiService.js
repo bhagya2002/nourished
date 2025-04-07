@@ -63,7 +63,6 @@ module.exports.AITips = async function AITips(uid) {
     return { success: true, message: cacheCheck };
   }
 
-
   return module.exports.getWellnessTip(uid);
 };
 
@@ -77,7 +76,6 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(
 ) {
   try {
     console.log("getTaskRecommendation called for uid:", uid);
-
 
     const cacheCheck = getCachedResult(uid, 1);
     if (cacheCheck) {
@@ -112,7 +110,6 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(
     const suggestion = response.choices[0].message.content;
 
     try {
-
       const parsedSuggestion = JSON.parse(suggestion);
 
       taskRecommendationByUID.set(uid, {
@@ -148,19 +145,16 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
   try {
     console.log("getWellnessTip called for uid:", uid);
 
-
     const cacheCheck = getCachedResult(uid, 0);
     if (cacheCheck) {
       return { success: true, message: cacheCheck };
     }
-
 
     const happinessData = await taskService.getHappinessData(uid);
     const taskHistory = await taskService.getTaskHistory(uid);
 
     let userData = {};
     let hasSufficientData = false;
-
 
     if (
       happinessData.success &&
@@ -182,9 +176,7 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
       hasSufficientData = true;
     }
 
-
     const userDataString = JSON.stringify(userData);
-
 
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -204,7 +196,6 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
     const tipContent = response.choices[0].message.content;
 
     try {
-
       const parsedTip = JSON.parse(tipContent);
 
       tipByUID.set(uid, { date: new Date(), data: parsedTip });
@@ -215,12 +206,10 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
     } catch (e) {
       console.error("Failed to parse AI tip response as JSON");
 
-
       const fallbackTip = {
         title: "Daily Wellness Tip",
         description: tipContent.replace(/```json|```/g, "").trim(),
       };
-
 
       tipByUID.set(uid, { date: new Date(), data: fallbackTip });
 
@@ -248,7 +237,6 @@ module.exports.AITaskRecommendation = async function AITaskRecommendation(uid) {
   if (cacheCheck) {
     return { success: true, message: cacheCheck };
   }
-
 
   return module.exports.getTaskRecommendation(uid);
 };

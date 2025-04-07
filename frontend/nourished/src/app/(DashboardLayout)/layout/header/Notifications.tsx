@@ -79,7 +79,7 @@ const Notifications = () => {
         }),
       });
       if (!acceptInviteResponse.ok) throw new Error("Failed to accept invite");
-      // Success, remove the invite from the list
+
       setNotifications((prevInvites) =>
         prevInvites.filter((invite) => invite.id !== inviteId)
       );
@@ -113,7 +113,7 @@ const Notifications = () => {
       );
       if (!declineInviteResponse.ok)
         throw new Error("Failed to decline invite");
-      // Success, remove the invite from the list
+
       setNotifications((prevInvites) =>
         prevInvites.filter((invite) => invite.id !== inviteId)
       );
@@ -122,14 +122,12 @@ const Notifications = () => {
     }
   };
 
-  // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
-  // Fetches notifications while initializing the page
   useEffect(() => {
     if (user && token) {
       fetchInvites();

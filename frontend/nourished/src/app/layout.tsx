@@ -15,7 +15,6 @@ if (typeof window !== "undefined") {
     ) {
       return;
     }
-    // originalError.apply(console, args);
   };
 }
 
@@ -24,7 +23,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Ensure all required properties are passed
   const missingProperty = {};
 
   return (

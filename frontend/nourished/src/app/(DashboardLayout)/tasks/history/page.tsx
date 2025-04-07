@@ -169,7 +169,6 @@ export default function TaskHistoryPage() {
       const completionsData = data.data || {};
       const newData = completionsData.completions || [];
 
-      // Set pagination state
       if (completionsData.lastDoc) {
         setLastDoc(completionsData.lastDoc);
       } else {

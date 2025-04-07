@@ -91,7 +91,7 @@ const ProfilePage = () => {
     joinedDate?: string;
     location?: string;
     isPrivate?: boolean;
-    // bio?: string;
+
     stats?: {
       tasksCompleted: number;
       currentStreak: number;
@@ -192,7 +192,7 @@ const ProfilePage = () => {
               friends: data.friends || [],
               joinedDate: data.createdAt || new Date().toISOString(),
               isPrivate: data.isPrivate || false,
-              // bio: data.bio || 'No bio yet',
+
               stats: {
                 tasksCompleted: tasks.length,
                 currentStreak: currentStreak,
@@ -203,7 +203,6 @@ const ProfilePage = () => {
 
             setIsPrivate(data.isPrivate || false);
 
-            // Fetch friends data
             if (data.friends && data.friends.length > 0) {
               const friendsData = await Promise.all(
                 data.friends.map(async (friendId: string) => {

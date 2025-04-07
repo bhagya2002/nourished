@@ -22,7 +22,6 @@ import {
   IconMoodNervous,
 } from "@tabler/icons-react";
 
-// Mood options with ratings, icons, and colors
 const moodOptions = [
   {
     value: 5,
@@ -79,18 +78,15 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNote, setShowNote] = useState(false);
 
-  // Handle mood selection
   const handleSelectMood = (rating: number) => {
     setSelectedMood(rating);
-    // Show note field when mood is selected
+
     setShowNote(true);
   };
 
-  // Handle submit
   const handleSubmit = async () => {
     if (selectedMood === null) return;
 
-    // Validate rating
     if (
       selectedMood < 0 ||
       selectedMood > 5 ||
@@ -103,7 +99,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ onSubmit }) => {
     setIsSubmitting(true);
     try {
       await onSubmit(selectedMood, note);
-      // Reset after successful submission
+
       setSelectedMood(null);
       setNote("");
       setShowNote(false);

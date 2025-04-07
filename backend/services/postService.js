@@ -2,7 +2,6 @@ const db = require("../firebase/firestore");
 
 module.exports.createPost = async function createPost(uid, post) {
   try {
-
     post.uid = uid;
     if (!post.name || post.name.trim() === "") {
       const userResult = await db.queryDatabaseSingle(uid, "users");
@@ -73,7 +72,6 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
 
     const postFetchPromises = [];
 
-
     for (const singleUid of uniqueUIds) {
       const getPostsRes = await this.getUserPosts(singleUid);
       if (!getPostsRes.success) {
@@ -82,12 +80,9 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
       postFetchPromises.push(getPostsRes.data);
     }
 
-
     const posts = await Promise.all(postFetchPromises);
 
-
     const flattenedPosts = posts.reduce((acc, val) => acc.concat(val), []);
-
 
     flattenedPosts.sort((a, b) => b.date - a.date);
 
@@ -104,12 +99,10 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
       return userResult;
     }
 
-
     const postsResult = await db.queryMultiple(userResult.data.posts, "posts");
     if (!postsResult.success) {
       return postsResult;
     }
-
 
     const goalFetchPromises = postsResult.data.map((post) => {
       if (post.goalId) {
@@ -119,9 +112,7 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
       }
     });
 
-
     const goals = await Promise.all(goalFetchPromises);
-
 
     const postsWithGoals = postsResult.data.map((post, index) => {
       if (goals[index] && goals[index].success) {

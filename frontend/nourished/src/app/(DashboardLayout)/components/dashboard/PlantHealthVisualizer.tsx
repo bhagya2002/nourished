@@ -22,7 +22,6 @@ export default function PlantHealthVisualizer({
     setIsSplineLoaded(true);
     setIsLoading(false);
 
-    // Trigger the start event after a short delay
     setTimeout(() => {
       console.log("▶️ Triggering Start event");
       spline.emitEvent("Start");
@@ -37,10 +36,8 @@ export default function PlantHealthVisualizer({
 
     console.log(`🔹 Attempting to trigger key ${key}`);
 
-    // Emit keyPress event to the Spline scene
     splineRef.current.emitEvent("keyPress", key);
 
-    // Dispatch a KeyboardEvent to simulate a key press
     const keyCode = 48 + parseInt(key, 10);
     const keyEvent = new KeyboardEvent("keydown", {
       key: key,
@@ -53,7 +50,6 @@ export default function PlantHealthVisualizer({
     document.dispatchEvent(keyEvent);
   };
 
-  // When the plantHealth prop changes (and Spline is loaded), trigger the animation change.
   useEffect(() => {
     if (
       isSplineLoaded &&

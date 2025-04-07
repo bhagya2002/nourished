@@ -29,7 +29,6 @@ interface TaskSummaryProps {
 const TaskSummary: React.FC<TaskSummaryProps> = ({ tasks }) => {
   const theme = useTheme();
 
-  // Calculate task statistics
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((task) => task.completed).length;
@@ -37,7 +36,6 @@ const TaskSummary: React.FC<TaskSummaryProps> = ({ tasks }) => {
     const completionRate =
       total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Count by frequency
     const dailyTasks = tasks.filter(
       (task) => task.frequency === "Daily"
     ).length;

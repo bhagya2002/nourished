@@ -24,7 +24,6 @@ describe("userService Tests", function () {
         },
       };
 
-
       sinon.stub(db, "queryDatabaseSingle").returns(expectedUserData);
 
       const result = await userService.getUserInfo("user123");
@@ -34,12 +33,10 @@ describe("userService Tests", function () {
 
   describe("addFriendConnection", function () {
     it("should return true when both users are updated successfully", async function () {
-
       const dbStub = sinon.stub(db, "updateFieldArray").resolves(true);
 
       const result = await userService.addFriendConnection("userA", "userB");
       assert.strictEqual(result, true);
-
 
       sinon.assert.calledWithExactly(
         dbStub.firstCall,
@@ -89,15 +86,21 @@ describe("userService Tests", function () {
         { id: "user5", name: "User Five" },
       ];
 
-      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
-      sinon.stub(db, "queryMultiple")
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ data: { friends: userFriendsIds } });
+      sinon
+        .stub(db, "queryMultiple")
         .onFirstCall()
         .resolves({ data: userFriends })
         .onSecondCall()
         .resolves({ success: true, data: mostFrequentFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, { success: true, data: mostFrequentFriends });
+      assert.deepStrictEqual(recommendations, {
+        success: true,
+        data: mostFrequentFriends,
+      });
     });
 
     it("should exclude the user themselves from recommendations", async function () {
@@ -109,15 +112,21 @@ describe("userService Tests", function () {
         { id: "user4", name: "User Four" },
       ];
 
-      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
-      sinon.stub(db, "queryMultiple")
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ data: { friends: userFriendsIds } });
+      sinon
+        .stub(db, "queryMultiple")
         .onFirstCall()
         .resolves({ data: userFriends })
         .onSecondCall()
         .resolves({ success: true, data: mostFrequentFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, { success: true, data: mostFrequentFriends });
+      assert.deepStrictEqual(recommendations, {
+        success: true,
+        data: mostFrequentFriends,
+      });
     });
 
     it("should return an error if querying most frequent friends fails", async function () {
@@ -125,15 +134,21 @@ describe("userService Tests", function () {
       const userFriendsIds = ["user2"];
       const userFriends = [{ friends: ["user3", "user4"] }];
 
-      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
-      sinon.stub(db, "queryMultiple")
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ data: { friends: userFriendsIds } });
+      sinon
+        .stub(db, "queryMultiple")
         .onFirstCall()
         .resolves({ data: userFriends })
         .onSecondCall()
         .resolves({ success: false, message: "Query failed" });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, { success: false, message: "Query failed" });
+      assert.deepStrictEqual(recommendations, {
+        success: false,
+        message: "Query failed",
+      });
     });
   });
 

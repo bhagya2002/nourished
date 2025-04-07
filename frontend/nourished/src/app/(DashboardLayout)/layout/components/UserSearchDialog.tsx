@@ -92,7 +92,7 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
       setIsSearchInputError(true);
       return;
     }
-    // implement search logic
+
     try {
       const response = await fetch(`${API_BASE_URL}/searchUser`, {
         method: "POST",
@@ -122,22 +122,18 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
     }
   };
 
-  // Follows or unfollows user, type 0 for search results, 1 for recommended users
   const handleFollow = async (type: number, followee: string) => {
     try {
       if (!user || !token) {
         return;
       }
 
-      // Find the user in the appropriate array
       const targetUser =
         type === 0
           ? searchResults.find((user) => user.id === followee)
           : recommendedUsers.find((user) => user.id === followee);
 
-      // Check if user is private and not already followed
       if (targetUser?.isPrivate && !targetUser.followers?.includes(user.uid)) {
-        // TODO: In the future, you could implement a follow request system here
         console.log("This account is private and cannot be followed");
         return;
       }
@@ -173,7 +169,7 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
       if (!followRes.ok) {
         throw new Error("Failed to follow user");
       }
-      // Update search results followers list, if user exists, remove it, if not, add it
+
       setSearchResults(
         searchResults.map((theUser) => {
           if (theUser.id !== followee) return theUser;
@@ -191,7 +187,7 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
           return theUser;
         })
       );
-      // Update recommended users followers list, if user exists, remove it, if not, add it
+
       setRecommendedUsers(
         recommendedUsers.map((theUser) => {
           if (theUser.id !== followee) return theUser;
@@ -217,14 +213,12 @@ const UserSearchDialog: React.FC<UserSearchDialogProps> = ({
     }
   };
 
-  // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
-  // Fetches recommended users while initializing the page
   useEffect(() => {
     if (user && token) {
       fetchRecommendedUsers();

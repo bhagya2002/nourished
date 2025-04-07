@@ -38,7 +38,6 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
   const theme = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Get icon and color based on mood rating
   const getMoodIcon = (rating: number) => {
     switch (rating) {
       case 5:
@@ -58,7 +57,6 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
     }
   };
 
-  // Month navigation
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => {
       const date = new Date(prev);
@@ -75,17 +73,14 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
     });
   };
 
-  // Get days in month
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
 
-  // Get day of week for first day of month (0 = Sunday, 6 = Saturday)
   const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay();
   };
 
-  // Generate calendar data
   const generateCalendarData = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -93,26 +88,21 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
     const firstDayOfMonth = getFirstDayOfMonth(year, month);
     const calendarDays = [];
 
-    // Add empty cells for days before the first of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
       calendarDays.push({ day: null, entry: null });
     }
 
-    // Create a map to store the latest mood entry for each day (to handle duplicate entries)
     const dayMoodMap = new Map();
 
-    // Process all mood entries to find the latest for each calendar day
     moodEntries.forEach((entry) => {
       const entryDate = new Date(entry.date);
       const entryYear = entryDate.getFullYear();
       const entryMonth = entryDate.getMonth();
       const entryDay = entryDate.getDate();
 
-      // Only process entries for the current month/year
       if (entryYear === year && entryMonth === month) {
         const dayKey = entryDay.toString();
 
-        // If no entry exists for this day, or if this entry is newer, use it
         if (
           !dayMoodMap.has(dayKey) ||
           new Date(entry.date) > new Date(dayMoodMap.get(dayKey).date)
@@ -122,13 +112,11 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
       }
     });
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const dateString = `${year}-${(month + 1)
         .toString()
         .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 
-      // Get the mood entry for this day from our map (if any)
       const entry = dayMoodMap.get(day.toString());
 
       calendarDays.push({ day, entry, dateString });
@@ -244,7 +232,6 @@ const MoodCalendar: React.FC<MoodCalendarProps> = ({
               ).toDateString()
             : false;
 
-          // If the cell has a mood entry, get the icon and color
           const moodStyle = cell.entry ? getMoodIcon(cell.entry.rating) : null;
 
           const Icon = moodStyle ? moodStyle.icon : null;

@@ -31,14 +31,12 @@ import EventNoteIcon from "@mui/icons-material/EventNote";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import { TrendingUp } from "@mui/icons-material";
 
-// Import our new components
 import PageHeader from "./components/PageHeader";
 import PostCard from "./components/PostCard";
 import CommentDialog from "./components/CommentDialog";
 import PostDialog from "./components/PostDialog";
 import EmptyState from "./components/EmptyState";
 
-// Update API base URL to match environment variable name exactly
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
@@ -50,7 +48,6 @@ export type Comment = {
   createdAt: string;
 };
 
-// Define a type for the posts
 export type Post = {
   id: string;
   name: string;
@@ -96,7 +93,6 @@ export default function FriendCirclePage() {
     severity: "info" as AlertColor,
   });
 
-  // Post dialog state
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState("");
@@ -104,26 +100,22 @@ export default function FriendCirclePage() {
   const [postGoalLinkId, setPostGoalLinkId] = useState("");
   const [validationError, setValidationError] = useState("");
 
-  // Comment dialog state
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [commentContent, setCommentContent] = useState("");
   const [commentDialogPostId, setCommentDialogPostId] = useState("");
   const [commentValidationError, setCommentValidationError] = useState("");
 
-  // Data state
   const [posts, setPosts] = useState<Post[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
-  // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
-  // Fetches posts while initializing the posts page
   useEffect(() => {
     if (!user && !loading) {
       router.push("/authentication/login");
@@ -164,7 +156,6 @@ export default function FriendCirclePage() {
         return;
       }
 
-      // Show loading state
       if (!isRefreshing) {
         setPosts([]);
       }
@@ -177,32 +168,27 @@ export default function FriendCirclePage() {
         body: JSON.stringify({ token }),
       });
 
-      // Check for HTTP errors
       if (!response.ok) {
         let errorMessage = "Failed to fetch posts";
         try {
           const errorText = await response.text();
           errorMessage = `${errorMessage}: ${errorText}`;
         } catch (e) {
-          // If we can't parse the error text, just use the default message
+          // Intentionally left empty to ignore the error
         }
         throw new Error(errorMessage);
       }
 
-      // Parse the JSON response
       const responseData = await response.json();
 
-      // Check if the response has the expected structure
       if (!responseData.success) {
         throw new Error(responseData.error || "Invalid response format");
       }
 
-      // Ensure postsData is an array
       const postsArray = Array.isArray(responseData.data)
         ? responseData.data
         : [];
 
-      // Sort posts by creation date (newest first)
       postsArray.sort(
         (a: Post, b: Post) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -210,7 +196,6 @@ export default function FriendCirclePage() {
 
       setPosts(postsArray);
 
-      // Only show success toast if posts were actually fetched
       if (postsArray.length > 0) {
         setToast({
           open: true,
@@ -230,7 +215,6 @@ export default function FriendCirclePage() {
     }
   };
 
-  // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
     try {
       if (!token) {
@@ -246,27 +230,23 @@ export default function FriendCirclePage() {
         body: JSON.stringify({ token }),
       });
 
-      // Check for HTTP errors
       if (!response.ok) {
         let errorMessage = "Failed to fetch goals";
         try {
           const errorText = await response.text();
           errorMessage = `${errorMessage}: ${errorText}`;
         } catch (e) {
-          // If we can't parse the error text, just use the default message
+          // Intentionally left empty to ignore the error
         }
         throw new Error(errorMessage);
       }
 
-      // Parse the JSON response
       const responseData = await response.json();
 
-      // Check if the response has the expected structure
       if (!responseData.success) {
         throw new Error(responseData.error || "Invalid response format");
       }
 
-      // Ensure goalsData is an array
       const goalsArray = Array.isArray(responseData.data)
         ? responseData.data
         : [];
@@ -308,7 +288,6 @@ export default function FriendCirclePage() {
     }
 
     if (!isEditing) {
-      // create a new post in the database
       const postCreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createPost`, {
@@ -353,7 +332,6 @@ export default function FriendCirclePage() {
       setPostContent("");
       setPostGoalLinkId("");
     } else {
-      // update an existing post in the database
       try {
         const updateField = async (field: string, value: string) => {
           const response = await fetch(`${API_BASE_URL}/editPost`, {
@@ -374,7 +352,7 @@ export default function FriendCirclePage() {
           updateField("content", postContent),
           updateField("goalId", postGoalLinkId),
         ]);
-        // Update the post Array
+
         const updatedPosts = posts.map((post) => {
           if (post.id === editingPostId) {
             return {
@@ -406,7 +384,6 @@ export default function FriendCirclePage() {
     }
   };
 
-  // Handle closing the toast box
   const handleToastClose = () => {
     setToast({ ...toast, open: false });
   };
@@ -671,7 +648,6 @@ export default function FriendCirclePage() {
     }
   };
 
-  // Get the current post for the comment dialog
   const currentPost = posts.find((post) => post.id === commentDialogPostId);
 
   return (

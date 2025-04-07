@@ -86,7 +86,7 @@ const AccountPage = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear any previous error/success messages
+
     setError(null);
     setSuccess(null);
   };
@@ -97,7 +97,7 @@ const AccountPage = () => {
       ...prev,
       [name]: checked,
     }));
-    // Clear any previous error/success messages
+
     setError(null);
     setSuccess(null);
   };
@@ -134,14 +134,12 @@ const AccountPage = () => {
     setSuccess(null);
 
     try {
-      // Re-authenticate user
       const credential = EmailAuthProvider.credential(
         user.email || "",
         formData.currentPassword
       );
       await reauthenticateWithCredential(user, credential);
 
-      // Update email
       await updateEmail(user, formData.email);
       await updateDoc(doc(db, "users", user.uid), {
         email: formData.email,
@@ -171,18 +169,15 @@ const AccountPage = () => {
     setSuccess(null);
 
     try {
-      // Re-authenticate user
       const credential = EmailAuthProvider.credential(
         user.email || "",
         formData.currentPassword
       );
       await reauthenticateWithCredential(user, credential);
 
-      // Update password
       await updatePassword(user, formData.newPassword);
       setSuccess("Password updated successfully");
 
-      // Clear password fields
       setFormData((prev) => ({
         ...prev,
         currentPassword: "",

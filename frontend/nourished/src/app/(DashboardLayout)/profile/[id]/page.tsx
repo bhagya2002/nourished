@@ -52,7 +52,7 @@ const UserProfilePage = () => {
     email: string;
     friends: string[];
     joinedDate?: string;
-    // location?: string;
+
     bio?: string;
     stats?: {
       tasksCompleted: number;
@@ -76,7 +76,6 @@ const UserProfilePage = () => {
       }
 
       try {
-        // Get user profile data from API
         const response = await fetch(`${API_BASE_URL}/getUserProfile`, {
           method: "POST",
           headers: {
@@ -99,15 +98,13 @@ const UserProfilePage = () => {
         const data = result.data;
         setIsFriend(data.isFriend);
 
-        // Set user data
         setUserData({
           id: userId,
           name: data.name || "Anonymous",
           email: data.email,
           friends: data.friends || [],
           joinedDate: data.createdAt || new Date().toISOString(),
-          // location: data.location || "Not specified",
-          // bio: data.bio || "No bio yet",
+
           stats: {
             tasksCompleted: data.taskHistory?.completions?.length || 0,
             currentStreak: data.taskHistory?.streaks?.current || 0,
@@ -116,7 +113,6 @@ const UserProfilePage = () => {
           },
         });
 
-        // Set recent activity
         if (data.taskHistory?.completions) {
           setRecentActivity(
             data.taskHistory.completions.slice(0, 5).map((task: any) => ({

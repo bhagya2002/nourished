@@ -10,7 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import PropTypes from "prop-types";
-// components
+
 import Profile from "./Profile";
 import Notifications from "./Notifications";
 import { IconMenuOrder } from "@tabler/icons-react";

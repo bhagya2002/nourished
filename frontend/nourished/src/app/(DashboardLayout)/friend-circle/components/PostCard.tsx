@@ -1,5 +1,5 @@
-'use client';
-import React, { useState } from 'react';
+"use client";
+import React, { useState } from "react";
 import {
   Card,
   CardHeader,
@@ -17,8 +17,8 @@ import {
   Divider,
   alpha,
   useTheme,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 import {
   MoreVert,
   Favorite,
@@ -27,30 +27,29 @@ import {
   Edit,
   Delete,
   Flag,
-} from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Post } from '../page';
+} from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
+import { Post } from "../page";
 
-// Helper function for haptic feedback
 const triggerHapticFeedback = () => {
   if (navigator.vibrate) {
-    navigator.vibrate(20); // Short vibration (20ms)
+    navigator.vibrate(20);
   }
 };
 
 const StyledCard = styled(Card)(({ theme }) => ({
-  borderRadius: '16px',
-  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.05)',
-  transition: 'all 0.3s ease',
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  overflow: 'visible',
-  position: 'relative',
+  borderRadius: "16px",
+  boxShadow: "0 2px 12px rgba(0, 0, 0, 0.05)",
+  transition: "all 0.3s ease",
+  height: "100%",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "visible",
+  position: "relative",
   border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-  '&:hover': {
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
-    transform: 'translateY(-2px)',
+  "&:hover": {
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
+    transform: "translateY(-2px)",
   },
 }));
 
@@ -58,7 +57,7 @@ const StyledAvatar = styled(Avatar)(({ theme }) => ({
   backgroundColor: theme.palette.primary.main,
   width: 44,
   height: 44,
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
 }));
 
 const GoalChip = styled(Chip)(({ theme }) => ({
@@ -66,29 +65,29 @@ const GoalChip = styled(Chip)(({ theme }) => ({
   color: theme.palette.primary.main,
   fontWeight: 500,
   border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-  '& .MuiChip-icon': {
+  "& .MuiChip-icon": {
     color: theme.palette.primary.main,
   },
 }));
 
 const LikeButton = styled(IconButton, {
-  shouldForwardProp: (prop) => prop !== 'isLiked',
+  shouldForwardProp: (prop) => prop !== "isLiked",
 })<{ isLiked?: boolean }>(({ theme, isLiked }) => ({
-  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-  color: isLiked ? '#ff3366' : 'inherit',
-  position: 'relative',
-  '&:hover': {
-    transform: 'scale(1.15)',
-    color: isLiked ? '#ff3366' : alpha('#ff3366', 0.7),
+  transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+  color: isLiked ? "#ff3366" : "inherit",
+  position: "relative",
+  "&:hover": {
+    transform: "scale(1.15)",
+    color: isLiked ? "#ff3366" : alpha("#ff3366", 0.7),
   },
-  '&:active': {
-    transform: 'scale(0.9)',
+  "&:active": {
+    transform: "scale(0.9)",
   },
 }));
 
 const HeartAnimation = styled(motion.div)({
-  position: 'absolute',
-  pointerEvents: 'none',
+  position: "absolute",
+  pointerEvents: "none",
   zIndex: 5,
 });
 
@@ -165,9 +164,9 @@ const PostCard: React.FC<PostCardProps> = ({
     } else if (diffDays < 7) {
       return `${diffDays}d ago`;
     } else {
-      return new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
+      return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
       }).format(date);
     }
   };
@@ -185,33 +184,33 @@ const PostCard: React.FC<PostCardProps> = ({
         <CardHeader
           avatar={
             <StyledAvatar>
-              {post.name ? post.name.charAt(0).toUpperCase() : 'U'}
+              {post.name ? post.name.charAt(0).toUpperCase() : "U"}
             </StyledAvatar>
           }
           action={
             isCurrentUserPost && (
               <IconButton
-                aria-label='settings'
+                aria-label="settings"
                 onClick={handleMenuOpen}
-                size='small'
+                size="small"
                 sx={{
-                  color: 'text.secondary',
-                  '&:hover': {
+                  color: "text.secondary",
+                  "&:hover": {
                     backgroundColor: alpha(theme.palette.primary.main, 0.1),
                   },
                 }}
               >
-                <MoreVert fontSize='small' />
+                <MoreVert fontSize="small" />
               </IconButton>
             )
           }
           title={
-            <Typography variant='subtitle2' fontWeight={600}>
-              {post.name || 'Anonymous'}
+            <Typography variant="subtitle2" fontWeight={600}>
+              {post.name || "Anonymous"}
             </Typography>
           }
           subheader={
-            <Typography variant='caption' color='text.secondary'>
+            <Typography variant="caption" color="text.secondary">
               {formatDate(post.createdAt)}
             </Typography>
           }
@@ -219,17 +218,17 @@ const PostCard: React.FC<PostCardProps> = ({
         />
 
         <CardContent sx={{ pt: 0, pb: 1 }}>
-          <Typography variant='body2' sx={{ mb: 1.5, whiteSpace: 'pre-wrap' }}>
+          <Typography variant="body2" sx={{ mb: 1.5, whiteSpace: "pre-wrap" }}>
             {post.content}
           </Typography>
 
           {post.goal && (
             <Box sx={{ mt: 2, mb: 1 }}>
               <GoalChip
-                icon={<Flag fontSize='small' />}
+                icon={<Flag fontSize="small" />}
                 label={post.goal.title}
-                size='small'
-                variant='outlined'
+                size="small"
+                variant="outlined"
               />
             </Box>
           )}
@@ -239,20 +238,20 @@ const PostCard: React.FC<PostCardProps> = ({
           <Divider />
         </Box>
 
-        <CardActions sx={{ px: 2, py: 0.5, justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ position: 'relative' }}>
+        <CardActions sx={{ px: 2, py: 0.5, justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box sx={{ position: "relative" }}>
               <LikeButton
                 onClick={handleLike}
                 isLiked={isLiked}
-                size='small'
+                size="small"
                 sx={{ mr: 0.5 }}
-                aria-label={isLiked ? 'Unlike' : 'Like'}
+                aria-label={isLiked ? "Unlike" : "Like"}
               >
                 {isLiked ? (
-                  <Favorite fontSize='small' />
+                  <Favorite fontSize="small" />
                 ) : (
-                  <FavoriteBorderOutlined fontSize='small' />
+                  <FavoriteBorderOutlined fontSize="small" />
                 )}
               </LikeButton>
 
@@ -262,9 +261,9 @@ const PostCard: React.FC<PostCardProps> = ({
                     initial={{ opacity: 1, scale: 0 }}
                     animate={{ opacity: 1, scale: 1.5 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    transition={{ duration: 0.6, type: 'spring' }}
+                    transition={{ duration: 0.6, type: "spring" }}
                   >
-                    <Favorite fontSize='small' sx={{ color: '#ff3366' }} />
+                    <Favorite fontSize="small" sx={{ color: "#ff3366" }} />
                   </HeartAnimation>
                 )}
               </AnimatePresence>
@@ -272,8 +271,8 @@ const PostCard: React.FC<PostCardProps> = ({
 
             {likeCount > 0 && (
               <Typography
-                variant='caption'
-                color={isLiked ? '#ff3366' : 'text.secondary'}
+                variant="caption"
+                color={isLiked ? "#ff3366" : "text.secondary"}
                 sx={{ mr: 2, fontWeight: isLiked ? 600 : 400 }}
               >
                 {likeCount}
@@ -282,17 +281,17 @@ const PostCard: React.FC<PostCardProps> = ({
 
             <IconButton
               onClick={() => onComment(post.id, commentCount)}
-              size='small'
+              size="small"
               sx={{
                 mr: 0.5,
-                transition: 'all 0.2s',
-                '&:hover': { transform: 'scale(1.1)' },
+                transition: "all 0.2s",
+                "&:hover": { transform: "scale(1.1)" },
               }}
             >
-              <ChatBubbleOutlineRounded fontSize='small' />
+              <ChatBubbleOutlineRounded fontSize="small" />
             </IconButton>
             {commentCount > 0 && (
-              <Typography variant='caption' color='text.secondary'>
+              <Typography variant="caption" color="text.secondary">
                 {commentCount}
               </Typography>
             )}
@@ -319,17 +318,17 @@ const PostCard: React.FC<PostCardProps> = ({
         anchorEl={anchorEl}
         open={isMenuOpen}
         onClose={handleMenuClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         PaperProps={{
           elevation: 2,
           sx: {
-            borderRadius: '12px',
-            minWidth: '160px',
-            overflow: 'visible',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            borderRadius: "12px",
+            minWidth: "160px",
+            overflow: "visible",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
             mt: 1,
-            '& .MuiMenuItem-root': {
+            "& .MuiMenuItem-root": {
               px: 2,
               py: 1.5,
             },
@@ -338,13 +337,13 @@ const PostCard: React.FC<PostCardProps> = ({
       >
         <MenuItem onClick={handleEdit}>
           <ListItemIcon>
-            <Edit fontSize='small' color='primary' />
+            <Edit fontSize="small" color="primary" />
           </ListItemIcon>
           <ListItemText>Edit Post</ListItemText>
         </MenuItem>
         <MenuItem onClick={handleDelete}>
           <ListItemIcon>
-            <Delete fontSize='small' color='error' />
+            <Delete fontSize="small" color="error" />
           </ListItemIcon>
           <ListItemText>Delete Post</ListItemText>
         </MenuItem>

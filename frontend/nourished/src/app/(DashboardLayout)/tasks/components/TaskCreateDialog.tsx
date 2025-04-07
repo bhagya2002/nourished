@@ -95,9 +95,9 @@ interface TaskCreateDialogProps {
     frequency: string;
     goalId?: string;
   }) => Promise<void>;
-  userTasks: any[]; // to check for duplicates if needed
-  goals?: any[]; // available goals to assign task to
-  token?: string | null; // token for API calls
+  userTasks: any[];
+  goals?: any[];
+  token?: string | null;
 }
 
 const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
@@ -115,7 +115,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // AI Suggestion states
   const [aiButtonEl, setAiButtonEl] = useState<null | HTMLElement>(null);
   const [showAiSuggestion, setShowAiSuggestion] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<any | null>(null);
@@ -132,7 +131,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const handleSaveClick = async () => {
     setErrorMsg(null);
 
-    // Basic Validation
     if (!title.trim()) {
       setErrorMsg("Title is required.");
       return;
@@ -154,7 +152,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
       return;
     }
 
-    // Optional: check for duplicates
     const duplicates = userTasks.filter(
       (t) => t.title.toLowerCase() === title.toLowerCase()
     );
@@ -166,7 +163,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     setSaving(true);
     try {
       await onCreate({ title, description, frequency, goalId });
-      // Clear form after success
+
       setTitle("");
       setDescription("");
       setFrequency("");
@@ -181,7 +178,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
 
   const handleCancel = () => {
     setErrorMsg(null);
-    // Clear form if desired
+
     setTitle("");
     setDescription("");
     setFrequency("");
@@ -190,7 +187,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   };
 
   const handleAiButtonClick = (event: React.MouseEvent<HTMLElement>) => {
-    // If already showing, just close it
     if (showAiSuggestion) {
       setShowAiSuggestion(false);
       setNotEnoughDataWarning(null);
@@ -201,12 +197,10 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
 
     const now = Date.now();
     if (now - lastFetchTime < 3000) {
-      // 3 second cooldown
       setShowAiSuggestion(true);
       return;
     }
 
-    // Reset states
     setNotEnoughDataWarning(null);
 
     fetchAiSuggestion();
@@ -307,7 +301,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   };
 
   const provideFallbackSuggestion = () => {
-    // Clear any existing errors
     setAiError(null);
 
     const fallbackSuggestions = [
@@ -370,7 +363,6 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
 
     const cleanedText = text.replace(/[^\x20-\x7E\s]/g, "").trim();
 
-    // Set the clean text immediately
     setTypingEffect(cleanedText);
   };
 

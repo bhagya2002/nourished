@@ -32,7 +32,6 @@ import TaskEditDialog from "../tasks/components/TaskEditDialog";
 import HappinessDialog from "../tasks/components/HappinessDialog";
 import { AnimatePresence } from "framer-motion";
 
-// Import our new components
 import PageHeader from "./components/PageHeader";
 import GoalCard from "./components/GoalCard";
 import EmptyState from "./components/EmptyState";
@@ -41,7 +40,6 @@ import GoalSummary from "./components/GoalSummary";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3010";
 
-// Define a type for the goals
 export type Goal = {
   id: string;
   title: string;
@@ -97,19 +95,16 @@ export default function GoalsPage() {
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [taskEditingIndex, setTaskEditingIndex] = useState(-1);
 
-  // Add happiness dialog states
   const [happinessDialogOpen, setHappinessDialogOpen] = useState(false);
   const [ratingTaskId, setRatingTaskId] = useState<string | null>(null);
   const [ratingTaskTitle, setRatingTaskTitle] = useState<string>("");
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Add a state to track expanded goals (multiple can be expanded at once)
   const [expandedGoals, setExpandedGoals] = useState<{
     [key: string]: boolean;
   }>({});
 
-  // Reset the form to initial state
   const resetNewGoal = () => {
     setNewGoal({
       id: "",
@@ -124,12 +119,10 @@ export default function GoalsPage() {
     });
   };
 
-  // Handle closing the toast box
   const handleToastClose = () => {
     setToast({ ...toast, open: false });
   };
 
-  // fetch user's friends list
   const fetchFriends = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/getFriends`, {
@@ -154,7 +147,7 @@ export default function GoalsPage() {
         message: "Failed to fetch friends",
         severity: "error",
       });
-      setFriends([]); // Ensure friends is always an array even on error
+      setFriends([]);
     }
   };
 
@@ -186,11 +179,10 @@ export default function GoalsPage() {
         message: "Failed to fetch challenges",
         severity: "error",
       });
-      setChallenges([]); // Ensure challenges is always an array even on error
+      setChallenges([]);
     }
   };
 
-  // Fetches user's goals from the database to populate the list
   const fetchGoals = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/getUsergoals`, {
@@ -203,17 +195,14 @@ export default function GoalsPage() {
       if (!response.ok) throw new Error("Failed to fetch goals");
       const goalsData = await response.json();
 
-      // Ensure we're setting an array even if the API returns something else
       if (goalsData && goalsData.data && Array.isArray(goalsData.data)) {
         const goalsDetail = goalsData.data.map((goal: any) => ({
           ...goal,
           tasks: goal.taskIds || [],
         }));
 
-        // Set goals first
         setGoals(goalsDetail);
 
-        // Then fetch tasks for each goal
         for (let index = 0; index < goalsDetail.length; index++) {
           if (goalsDetail[index] && goalsDetail[index].id) {
             await fetchGoalTasks(index, goalsDetail);
@@ -229,15 +218,13 @@ export default function GoalsPage() {
         message: "Failed to fetch goals",
         severity: "error",
       });
-      setGoals([]); // Ensure goals is always an array even on error
+      setGoals([]);
     }
   };
 
   const fetchGoalTasks = async (index: number, currentGoals?: Goal[]) => {
-    // Use either the passed goals array or the current state
     const goalsArray = currentGoals || goals;
 
-    // Safety check to ensure the index and goal exist
     if (!goalsArray[index] || !goalsArray[index].id) {
       console.error("Invalid goal index or missing goal ID");
       return;
@@ -255,15 +242,13 @@ export default function GoalsPage() {
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const tasksData = await response.json();
 
-      // Ensure tasksData is an array
       const tasksArray = Array.isArray(tasksData)
         ? tasksData
         : tasksData && Array.isArray(tasksData.data)
-          ? tasksData.data
-          : [];
+        ? tasksData.data
+        : [];
 
       setGoals((prevGoals) => {
-        // Additional safety check
         if (!prevGoals[index]) return prevGoals;
 
         const updatedGoal = { ...prevGoals[index] };
@@ -278,14 +263,12 @@ export default function GoalsPage() {
     }
   };
 
-  // Opens and resets the form dialog
   const handleAddGoalClick = () => {
     setIsEditing(false);
     setGoalModalOpen(true);
     setValidationError("");
   };
 
-  // Populates form with goal data for editing
   const handleEditGoalClick = (index: number, userId: string) => {
     const goalId = goals[index].id;
     setIsEditing(true);
@@ -300,7 +283,6 @@ export default function GoalsPage() {
     setGoalModalOpen(true);
   };
 
-  // Deletes a goal after confirmation
   const handleDeleteGoalClick = async (index: number) => {
     try {
       const response = await fetch(`${API_BASE_URL}/deleteGoal`, {
@@ -327,7 +309,6 @@ export default function GoalsPage() {
     }
   };
 
-  // Closes the dialog
   const handleClose = () => {
     setGoalModalOpen(false);
     setValidationError("");
@@ -335,13 +316,11 @@ export default function GoalsPage() {
     setInviteeIds([]);
   };
 
-  // Updates form inputs
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewGoal({ ...newGoal, [e.target.name]: e.target.value });
     setValidationError("");
   };
 
-  // Submits the form, adding or updating a goal
   const handleSubmit = async () => {
     if (!user || !token) {
       console.error("User or token not found");
@@ -366,7 +345,6 @@ export default function GoalsPage() {
       return;
     }
 
-    // If we are editing, update the goal locally
     if (isEditing) {
       try {
         const updateField = async (field: string, value: string) => {
@@ -389,7 +367,7 @@ export default function GoalsPage() {
           updateField("description", newGoal.description),
           updateField("deadline", newGoal.deadline),
         ]);
-        // Update the goals array with the new goal (avoiding redundant fetches)
+
         setGoals((prevGoals) =>
           prevGoals.map((goal, idx) => (idx === editingIndex ? newGoal : goal))
         );
@@ -410,7 +388,6 @@ export default function GoalsPage() {
       resetNewGoal();
       setInviteeIds([]);
     } else {
-      // Otherwise, create a new goal in the database
       const goalCreatedAt = new Date().toISOString();
       try {
         const response = await fetch(`${API_BASE_URL}/createGoal`, {
@@ -441,9 +418,7 @@ export default function GoalsPage() {
         const goalId = goalData.data.id;
         const challengeId = goalData.data.challengeId;
 
-        // Create the challenge if it is
         if (newGoal.isChallenge && challengeId) {
-          // Add the challenge to the challenges array
           setChallenges((prevChallenges) => [
             ...prevChallenges,
             {
@@ -455,7 +430,6 @@ export default function GoalsPage() {
           ]);
         }
 
-        // Update the goals array with the new goal (avoiding redundant fetches)
         setGoals((prevGoals) => [
           ...prevGoals,
           { ...newGoal, id: goalId, createdAt: goalCreatedAt, uid: user.uid },
@@ -479,13 +453,11 @@ export default function GoalsPage() {
     }
   };
 
-  // Function to toggle goal expansion
   const handleToggleGoalExpand = (goalId: string) => {
     setExpandedGoals((prev) => {
       const newState = { ...prev };
       newState[goalId] = !prev[goalId];
 
-      // If we're expanding, make sure we fetch the tasks
       if (!prev[goalId]) {
         const goalIndex = goals.findIndex((g) => g.id === goalId);
         if (goalIndex !== -1) {
@@ -503,7 +475,6 @@ export default function GoalsPage() {
     setExpandingGoalIndex(goals.findIndex((g) => g.id === goalId));
   };
 
-  // Function to handle adding a task to a goal
   const handleAddTaskToGoal = (goalId: string) => {
     const goalIndex = goals.findIndex((g) => g.id === goalId);
     if (goalIndex !== -1) {
@@ -512,7 +483,6 @@ export default function GoalsPage() {
     }
   };
 
-  // Create a new task
   const handleGoalTaskCreate = async ({
     title,
     description,
@@ -523,7 +493,7 @@ export default function GoalsPage() {
     frequency: string;
   }) => {
     const taskCreatedAt = new Date().toISOString();
-    // save the task to the database
+
     try {
       const response = await fetch(`${API_BASE_URL}/createTask`, {
         method: "POST",
@@ -559,15 +529,15 @@ export default function GoalsPage() {
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         updatedGoal.tasks = [...updatedGoal.tasks, newTask];
-        // Update goal's totalTasks
+
         const goalDeadline = new Date(updatedGoal.deadline);
         const taskCreatedTime = new Date(taskCreatedAt);
         const daysLeft = Math.ceil(
           (goalDeadline.getTime() - taskCreatedTime.getTime()) /
-          (1000 * 60 * 60 * 24)
+            (1000 * 60 * 60 * 24)
         );
         let totalTasks = 0;
-        // Calculate total tasks incompleted based on goal deadline and frequency
+
         switch (frequency) {
           case "Daily":
             totalTasks = Math.ceil(daysLeft / 1);
@@ -602,7 +572,6 @@ export default function GoalsPage() {
     }
   };
 
-  // Save task changes from edit
   const handleGoalTaskEdit = async (updatedData: {
     title: string;
     description: string;
@@ -632,7 +601,7 @@ export default function GoalsPage() {
         updateField("description", updatedData.description),
         updateField("frequency", updatedData.frequency),
       ]);
-      // Update the goal tasks array with the new task (avoiding redundant fetches)
+
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         const updatedTasks = [...updatedGoal.tasks];
@@ -641,13 +610,13 @@ export default function GoalsPage() {
           ...updatedData,
         };
         updatedGoal.tasks = updatedTasks;
-        // Update goal's totalTasks
+
         if (prevFrequency !== updatedData.frequency) {
           const goalDeadline = new Date(updatedGoal.deadline);
           const taskEditTime = new Date();
           let daysLeft = Math.ceil(
             (goalDeadline.getTime() - taskEditTime.getTime()) /
-            (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24)
           );
           if (updatedTasks[taskEditingIndex].completedAt) {
             const completedAt: Date = new Date(
@@ -713,7 +682,6 @@ export default function GoalsPage() {
     }
   };
 
-  // Delete task
   const handleGoalTaskDelete = async (taskId: string) => {
     try {
       if (!taskId) return;
@@ -723,7 +691,6 @@ export default function GoalsPage() {
       );
       const taskName = taskToDelete?.title || "Task";
 
-      // Show notification before deleting
       setToast({
         open: true,
         message: `Deleting "${taskName}"...`,
@@ -745,7 +712,6 @@ export default function GoalsPage() {
 
       let res = await makeRequest(token!);
 
-      // Check for token expiration
       if (res.status === 401) {
         const responseText = await res.text();
 
@@ -763,21 +729,19 @@ export default function GoalsPage() {
         }
       }
 
-      // Process the response
       if (res.ok) {
-        // Success!
         setGoals((prevGoals) => {
           const updatedGoal = { ...prevGoals[expandingGoalIndex] };
           const updatedTasks = [...updatedGoal.tasks];
           const taskIndex = updatedTasks.findIndex(
             (task) => task.id === taskId
           );
-          // Update goal's totalTasks
+
           const goalDeadline = new Date(updatedGoal.deadline);
           const taskDeletedTime = new Date();
           let daysLeft = Math.ceil(
             (goalDeadline.getTime() - taskDeletedTime.getTime()) /
-            (1000 * 60 * 60 * 24)
+              (1000 * 60 * 60 * 24)
           );
           if (updatedTasks[taskIndex].completedAt) {
             const completedAt: Date = new Date(
@@ -814,21 +778,17 @@ export default function GoalsPage() {
           );
         });
 
-        // Show success notification
         setToast({
           open: true,
           message: `"${taskName}" deleted successfully`,
           severity: "success",
         });
 
-        // No need to refresh, we've already updated optimistically
         return;
       }
 
-      // If we get here, response was not OK
       const data = await res.json().catch(() => ({}));
 
-      // Show error and revert the optimistic update
       setToast({
         open: true,
         message: data.error || "Failed to delete task",
@@ -844,13 +804,10 @@ export default function GoalsPage() {
     }
   };
 
-  // Toggle task completion
   const handleComplete = async (taskId: string) => {
-    // Make sure we're not already processing another request
     if (isLoading) return;
 
     try {
-      // Safety check for expandingGoalIndex
       if (expandingGoalIndex < 0 || expandingGoalIndex >= goals.length) {
         console.error("Invalid goal index:", expandingGoalIndex);
         return;
@@ -864,7 +821,6 @@ export default function GoalsPage() {
         return;
       }
 
-      // New completed state (toggle current state)
       const newCompletedState = !currentTask.completed;
 
       setToast({
@@ -875,7 +831,6 @@ export default function GoalsPage() {
         severity: newCompletedState ? "success" : "info",
       });
 
-      // Optimistically update UI first
       setGoals((prevGoals) => {
         const updatedGoal = { ...prevGoals[expandingGoalIndex] };
         const updatedTasks = [...updatedGoal.tasks];
@@ -883,19 +838,16 @@ export default function GoalsPage() {
 
         if (taskIndex === -1) return prevGoals;
 
-        // Update task completion status
         updatedTasks[taskIndex] = {
           ...updatedTasks[taskIndex],
           completed: newCompletedState,
         };
 
-        // Update goal's tasks and completion count
         updatedGoal.tasks = updatedTasks;
         updatedGoal.completedTasks = newCompletedState
           ? updatedGoal.completedTasks + 1
           : updatedGoal.completedTasks - 1;
 
-        // Debug log
         console.log("Task completion update:", {
           goalId: updatedGoal.id,
           goalTitle: updatedGoal.title,
@@ -910,7 +862,6 @@ export default function GoalsPage() {
         );
       });
 
-      // Send toggle request to server
       try {
         const makeRequest = async (currentToken: string) => {
           return await fetch(`${API_BASE_URL}/toggleTaskCompletion`, {
@@ -924,14 +875,11 @@ export default function GoalsPage() {
           });
         };
 
-        // First attempt with current token
         let response = await makeRequest(token!);
 
-        // Check if we got a token expiration error
         if (response.status === 401) {
           const responseText = await response.text();
 
-          // If token has expired, try refreshing and retrying once
           if (
             responseText.includes("token has expired") ||
             responseText.includes("auth/id-token-expired")
@@ -946,14 +894,11 @@ export default function GoalsPage() {
           }
         }
 
-        // First check if the request was successful based on status code
         if (response.ok) {
-          // Success! The optimistic update was correct, no need to fetch all goals
-          // If marked as complete, open the happiness rating dialog
           if (newCompletedState) {
             setRatingTaskId(taskId);
             setRatingTaskTitle(currentTask.title);
-            // Small delay to allow notification to be seen before showing happiness dialog
+
             setTimeout(() => {
               setHappinessDialogOpen(true);
             }, 1000);
@@ -961,7 +906,6 @@ export default function GoalsPage() {
           return;
         }
 
-        // If we get here, response was not OK
         throw new Error("Failed to update task completion");
       } catch (error) {
         console.error("Error toggling task completion:", error);
@@ -971,7 +915,6 @@ export default function GoalsPage() {
           severity: "error",
         });
 
-        // Revert the optimistic UI update
         setGoals((prevGoals) => {
           const updatedGoal = { ...prevGoals[expandingGoalIndex] };
           const updatedTasks = [...updatedGoal.tasks];
@@ -981,13 +924,11 @@ export default function GoalsPage() {
 
           if (taskIndex === -1) return prevGoals;
 
-          // Revert task completion status
           updatedTasks[taskIndex] = {
             ...updatedTasks[taskIndex],
             completed: !newCompletedState,
           };
 
-          // Update goal's tasks and completion count
           updatedGoal.tasks = updatedTasks;
           updatedGoal.completedTasks = updatedTasks.filter(
             (t) => t.completed
@@ -1029,14 +970,11 @@ export default function GoalsPage() {
         });
       };
 
-      // First attempt with current token
       let response = await makeRequest(token!);
 
-      // Check if we got a token expiration error
       if (response.status === 401) {
         const responseText = await response.text();
 
-        // If token has expired, try refreshing and retrying once
         if (
           responseText.includes("token has expired") ||
           responseText.includes("auth/id-token-expired")
@@ -1055,7 +993,6 @@ export default function GoalsPage() {
         throw new Error("Failed to submit happiness rating");
       }
 
-      // Success! Show success notification
       setToast({
         open: true,
         message: "Happiness rating submitted. Thank you!",
@@ -1074,14 +1011,12 @@ export default function GoalsPage() {
     }
   };
 
-  // Redirects to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push("/authentication/login");
     }
   }, [loading, user, router]);
 
-  // Fetches goals while initializing the goals page
   useEffect(() => {
     if (user && token) {
       fetchFriends();
@@ -1132,9 +1067,9 @@ export default function GoalsPage() {
                     isOwner={
                       goal.isChallenge
                         ? user.uid ===
-                        challenges.find(
-                          (challenge) => challenge.goalId === goal.id
-                        )?.uid
+                          challenges.find(
+                            (challenge) => challenge.goalId === goal.id
+                          )?.uid
                         : true
                     }
                     key={goal.id}
@@ -1239,8 +1174,8 @@ export default function GoalsPage() {
               {isEditing
                 ? newGoal.isChallenge
                   ? challenges.find(
-                    (challenge) => challenge.goalId === newGoal.id
-                  )?.goalId === newGoal.id
+                      (challenge) => challenge.goalId === newGoal.id
+                    )?.goalId === newGoal.id
                     ? "Challenge Info"
                     : "Edit Challenge"
                   : "Edit goal"
@@ -1266,9 +1201,9 @@ export default function GoalsPage() {
                   isEditing &&
                   newGoal.isChallenge &&
                   user.uid !==
-                  challenges.find(
-                    (challenge) => challenge.goalId === newGoal.id
-                  )?.uid
+                    challenges.find(
+                      (challenge) => challenge.goalId === newGoal.id
+                    )?.uid
                 }
               />
               <TextField
@@ -1284,9 +1219,9 @@ export default function GoalsPage() {
                   isEditing &&
                   newGoal.isChallenge &&
                   user.uid !==
-                  challenges.find(
-                    (challenge) => challenge.goalId === newGoal.id
-                  )?.uid
+                    challenges.find(
+                      (challenge) => challenge.goalId === newGoal.id
+                    )?.uid
                 }
               />
               <TextField
@@ -1380,14 +1315,14 @@ export default function GoalsPage() {
                 isEditing &&
                 newGoal.isChallenge &&
                 user.uid !==
-                challenges.find(
-                  (challenge) => challenge.goalId === newGoal.id
-                )?.uid
+                  challenges.find(
+                    (challenge) => challenge.goalId === newGoal.id
+                  )?.uid
               ) && (
-                  <Button variant="contained" onClick={handleSubmit}>
-                    {isEditing ? "Update" : "Create"}
-                  </Button>
-                )}
+                <Button variant="contained" onClick={handleSubmit}>
+                  {isEditing ? "Update" : "Create"}
+                </Button>
+              )}
             </DialogActions>
           </Dialog>
         )}
@@ -1400,8 +1335,8 @@ export default function GoalsPage() {
             onCreate={handleGoalTaskCreate}
             userTasks={
               expandingGoalIndex >= 0 &&
-                goals[expandingGoalIndex] !== undefined &&
-                Array.isArray(goals[expandingGoalIndex].tasks)
+              goals[expandingGoalIndex] !== undefined &&
+              Array.isArray(goals[expandingGoalIndex].tasks)
                 ? goals[expandingGoalIndex].tasks
                 : []
             }
