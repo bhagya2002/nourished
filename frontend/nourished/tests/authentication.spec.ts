@@ -94,6 +94,7 @@ test('Sign-up and login flow', async ({ page }) => {
         await page.waitForURL('**/dashboard');
         await expect(page.url()).toContain('/dashboard');
 
+        await page.waitForTimeout(1500);
 
         await expect(page.getByRole('heading', { name: 'Welcome back,' })).toBeVisible();
         await expect(page.getByRole('heading', { name: 'Your Wellness Plant' })).toBeVisible();

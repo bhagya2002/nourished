@@ -9,10 +9,8 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
     const editGoalTitle = `Edit Goal${randomId}`;
 
 
-
     await test.step('Login', async () => {
         await page.goto('/');
-
 
         await page.waitForTimeout(3000);
 
@@ -59,15 +57,14 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
 
         const formattedDate = `${yyyy}-${mm}-${dd}`;
 
-
         await expect(page.getByRole('textbox', { name: 'Deadline' })).toBeVisible();
-
 
         await page.getByRole('textbox', { name: 'Deadline' }).fill(formattedDate);
 
+        await page.waitForTimeout(1000);
+
         await expect(page.getByRole('button', { name: 'Create' })).toBeVisible();
         await page.getByRole('button', { name: 'Create' }).click();
-
 
         await expect(page.getByRole('heading', { name: goalTitle })).toBeVisible();
         await expect(page.getByText('Create Description').first()).toBeVisible();
@@ -82,7 +79,6 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first()).toBeVisible();
         await page.locator('.MuiCardContent-root > div:nth-child(2) > .MuiButtonBase-root').first().click();
         await page.getByText('Edit', { exact: true }).first().click();
-
 
         await page.getByRole('textbox', { name: 'Title' }).fill(editGoalTitle);
         await page.getByRole('textbox', { name: 'Description' }).fill('Edit Description');
@@ -108,8 +104,5 @@ test('Create, Edit, and Delete Goals', async ({ page }) => {
         await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();
         await page.getByRole('button', { name: 'Delete' }).click();
-
-
-
     });
 });
