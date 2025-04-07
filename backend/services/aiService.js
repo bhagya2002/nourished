@@ -63,7 +63,7 @@ module.exports.AITips = async function AITips(uid) {
     return { success: true, message: cacheCheck };
   }
 
-  // Call the newer implementation
+
   return module.exports.getWellnessTip(uid);
 };
 
@@ -78,7 +78,7 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(
   try {
     console.log("getTaskRecommendation called for uid:", uid);
 
-    // Check cache first
+
     const cacheCheck = getCachedResult(uid, 1);
     if (cacheCheck) {
       return { success: true, message: cacheCheck };
@@ -112,9 +112,9 @@ module.exports.getTaskRecommendation = async function getTaskRecommendation(
     const suggestion = response.choices[0].message.content;
 
     try {
-      // Try to parse the response as JSON
+
       const parsedSuggestion = JSON.parse(suggestion);
-      // Store in cache
+
       taskRecommendationByUID.set(uid, {
         date: new Date(),
         data: parsedSuggestion,
@@ -148,20 +148,20 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
   try {
     console.log("getWellnessTip called for uid:", uid);
 
-    // Check cache first
+
     const cacheCheck = getCachedResult(uid, 0);
     if (cacheCheck) {
       return { success: true, message: cacheCheck };
     }
 
-    // Get user's happiness data and task history for personalization
+
     const happinessData = await taskService.getHappinessData(uid);
     const taskHistory = await taskService.getTaskHistory(uid);
 
     let userData = {};
     let hasSufficientData = false;
 
-    // Check if we have enough data for personalization
+
     if (
       happinessData.success &&
       happinessData.data &&
@@ -182,10 +182,10 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
       hasSufficientData = true;
     }
 
-    // Prepare the user data for the AI
+
     const userDataString = JSON.stringify(userData);
 
-    // Get tip from AI
+
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -204,9 +204,9 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
     const tipContent = response.choices[0].message.content;
 
     try {
-      // Parse the JSON response
+
       const parsedTip = JSON.parse(tipContent);
-      // Store in cache
+
       tipByUID.set(uid, { date: new Date(), data: parsedTip });
       return {
         success: true,
@@ -215,13 +215,13 @@ module.exports.getWellnessTip = async function getWellnessTip(uid) {
     } catch (e) {
       console.error("Failed to parse AI tip response as JSON");
 
-      // If parsing fails, return a simple format with the raw content
+
       const fallbackTip = {
         title: "Daily Wellness Tip",
         description: tipContent.replace(/```json|```/g, "").trim(),
       };
 
-      // Store fallback in cache
+
       tipByUID.set(uid, { date: new Date(), data: fallbackTip });
 
       return {
@@ -249,7 +249,7 @@ module.exports.AITaskRecommendation = async function AITaskRecommendation(uid) {
     return { success: true, message: cacheCheck };
   }
 
-  // Call the newer implementation
+
   return module.exports.getTaskRecommendation(uid);
 };
 

@@ -184,9 +184,9 @@ describe("goalService", function () {
       dbStub.removeFromFieldArray.resolves({ success: true });
       dbStub.queryDatabaseSingle
         .onFirstCall()
-        .resolves({ success: true, data: goalData }) // Goal data
+        .resolves({ success: true, data: goalData })
         .onSecondCall()
-        .resolves({ success: true }); // Task reset response
+        .resolves({ success: true });
       dbStub.queryDatabase.resolves({ success: true, data: challenges });
       dbStub.updateField.resolves({ success: true });
       challengeServiceStub.deleteChallenge.resolves({ success: true });

@@ -2,7 +2,7 @@ const db = require("../firebase/firestore");
 
 module.exports.createPost = async function createPost(uid, post) {
   try {
-    // Set the uid on the post
+
     post.uid = uid;
     if (!post.name || post.name.trim() === "") {
       const userResult = await db.queryDatabaseSingle(uid, "users");
@@ -11,12 +11,12 @@ module.exports.createPost = async function createPost(uid, post) {
       }
       post.name = userResult.data.name;
     }
-    // Create a new post document in the "posts" collection
+
     const result = await db.addSingleDoc("posts", post);
     if (!result.success) {
       return { success: false, error: result.error };
     }
-    // Update the user's document in the "users" collection by adding the new post id to the posts array
+
     const updateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -26,7 +26,7 @@ module.exports.createPost = async function createPost(uid, post) {
     if (!updateResult.success) {
       return { success: false, error: updateResult.error };
     }
-    // Get the goal document data if required and exists
+
     if (post.goalId) {
       const getGoalRes = await db.queryDatabaseSingle(post.goalId, "goals");
       if (!getGoalRes.success) {
@@ -70,10 +70,10 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
     ];
     const allUids = [...followersAndFriends, uid];
     const uniqueUIds = [...new Set(allUids)];
-    // Initialize an array to hold all the promises for fetching user and friend posts
+
     const postFetchPromises = [];
 
-    // For each friend, get their posts from function getUserPosts(uid)
+
     for (const singleUid of uniqueUIds) {
       const getPostsRes = await this.getUserPosts(singleUid);
       if (!getPostsRes.success) {
@@ -82,13 +82,13 @@ module.exports.getUserWithFriendPosts = async function getUserWithFriendPosts(
       postFetchPromises.push(getPostsRes.data);
     }
 
-    // Wait for all promises to resolve and get the posts
+
     const posts = await Promise.all(postFetchPromises);
 
-    // Flatten the array of posts arrays into a single array
+
     const flattenedPosts = posts.reduce((acc, val) => acc.concat(val), []);
 
-    // Sort the posts by date
+
     flattenedPosts.sort((a, b) => b.date - a.date);
 
     return { success: true, data: flattenedPosts };
@@ -104,32 +104,32 @@ module.exports.getUserPosts = async function getUserPosts(uid) {
       return userResult;
     }
 
-    // Get the user's posts from the "posts" collection
+
     const postsResult = await db.queryMultiple(userResult.data.posts, "posts");
     if (!postsResult.success) {
       return postsResult;
     }
 
-    // Initialize an array to hold all the promises for fetching goal details
+
     const goalFetchPromises = postsResult.data.map((post) => {
       if (post.goalId) {
         return db.queryDatabaseSingle(post.goalId, "goals");
       } else {
-        return Promise.resolve(null); // Resolve with null if no goalId is present
+        return Promise.resolve(null);
       }
     });
 
-    // Resolve all promises to get goal details
+
     const goals = await Promise.all(goalFetchPromises);
 
-    // Replace goalId in each post with the corresponding goal data
+
     const postsWithGoals = postsResult.data.map((post, index) => {
       if (goals[index] && goals[index].success) {
-        post.goal = goals[index].data; // Replace goalId with goal data
+        post.goal = goals[index].data;
       } else {
-        post.goal = null; // Set to null if goal was not found or if there was no goalId
+        post.goal = null;
       }
-      delete post.goalId; // Clean up by removing the goalId field
+      delete post.goalId;
       return post;
     });
 
@@ -166,7 +166,7 @@ module.exports.likePost = async function likePost(uid, postId) {
   if (!userResult.success) {
     return userResult;
   }
-  // Check if the user has already liked the post, if not, like it, if so, remove the like
+
   const isLiked = post.likes.includes(uid);
   if (isLiked) {
     const updateResult = await db.removeFromFieldArray(
@@ -179,7 +179,7 @@ module.exports.likePost = async function likePost(uid, postId) {
       return updateResult;
     }
     post.likes = post.likes.filter((id) => id !== uid);
-    // update the user doc with like/unlike postId
+
     const userUpdateResult = await db.updateFieldArray(
       "users",
       uid,
@@ -200,7 +200,7 @@ module.exports.likePost = async function likePost(uid, postId) {
       return updateResult;
     }
     post.likes.push(uid);
-    // update the user doc with like/unlike postId
+
     const userUpdateResult = await db.removeFromFieldArray(
       "users",
       uid,
