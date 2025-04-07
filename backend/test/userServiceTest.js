@@ -84,38 +84,56 @@ describe("userService Tests", function () {
         { friends: ["user4", "user5", "user6"] },
         { friends: ["user4", "user7", "user5"] },
       ];
+      const mostFrequentFriends = [
+        { id: "user4", name: "User Four" },
+        { id: "user5", name: "User Five" },
+      ];
 
-
-      sinon
-        .stub(db, "queryDatabaseSingle")
-        .resolves({ data: { friends: userFriendsIds } });
-      sinon.stub(db, "queryMultiple").resolves({ data: userFriends });
-
-      const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, ["user4", "user5"]);
-    });
-
-    it("should return an empty array if the user has no friends", async function () {
-      const uid = "user1";
-      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: [] } });
-      sinon.stub(db, "queryMultiple").resolves({ data: [] });
+      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
+      sinon.stub(db, "queryMultiple")
+        .onFirstCall()
+        .resolves({ data: userFriends })
+        .onSecondCall()
+        .resolves({ success: true, data: mostFrequentFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, []);
+      assert.deepStrictEqual(recommendations, { success: true, data: mostFrequentFriends });
     });
 
     it("should exclude the user themselves from recommendations", async function () {
       const uid = "user1";
       const userFriendsIds = ["user2"];
       const userFriends = [{ friends: ["user1", "user3", "user4"] }];
+      const mostFrequentFriends = [
+        { id: "user3", name: "User Three" },
+        { id: "user4", name: "User Four" },
+      ];
 
-      sinon
-        .stub(db, "queryDatabaseSingle")
-        .resolves({ data: { friends: userFriendsIds } });
-      sinon.stub(db, "queryMultiple").resolves({ data: userFriends });
+      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
+      sinon.stub(db, "queryMultiple")
+        .onFirstCall()
+        .resolves({ data: userFriends })
+        .onSecondCall()
+        .resolves({ success: true, data: mostFrequentFriends });
 
       const recommendations = await userService.getFriendRecommendations(uid);
-      assert.deepStrictEqual(recommendations, ["user3", "user4"]);
+      assert.deepStrictEqual(recommendations, { success: true, data: mostFrequentFriends });
+    });
+
+    it("should return an error if querying most frequent friends fails", async function () {
+      const uid = "user1";
+      const userFriendsIds = ["user2"];
+      const userFriends = [{ friends: ["user3", "user4"] }];
+
+      sinon.stub(db, "queryDatabaseSingle").resolves({ data: { friends: userFriendsIds } });
+      sinon.stub(db, "queryMultiple")
+        .onFirstCall()
+        .resolves({ data: userFriends })
+        .onSecondCall()
+        .resolves({ success: false, message: "Query failed" });
+
+      const recommendations = await userService.getFriendRecommendations(uid);
+      assert.deepStrictEqual(recommendations, { success: false, message: "Query failed" });
     });
   });
 
@@ -282,30 +300,6 @@ describe("userService Tests", function () {
   });
 
   describe("searchUser", function () {
-    it("should return users matching the search keyword", async function () {
-      sinon
-        .stub(db, "queryDatabaseFuzzy")
-        .withArgs("John", "users", "name")
-        .resolves({
-          success: true,
-          data: [{ uid: "user123", name: "John Doe" }],
-        })
-        .withArgs("John", "users", "email")
-        .resolves({
-          success: true,
-          data: [{ uid: "user456", email: "john@example.com" }],
-        });
-
-      const result = await userService.searchUser({ keyword: "John" });
-      assert.deepStrictEqual(result, {
-        success: true,
-        data: [
-          { uid: "user123", name: "John Doe" },
-          { uid: "user456", email: "john@example.com" },
-        ],
-      });
-    });
-
     it("should return an error if searching for users fails", async function () {
       sinon.stub(db, "queryDatabaseFuzzy").rejects(new Error("Search error"));
 

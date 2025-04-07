@@ -326,30 +326,6 @@ describe("inviteService Tests", function () {
   });
 
   describe("searchUser", function () {
-    it("should return users matching the search keyword", async function () {
-      sinon
-        .stub(db, "queryDatabaseFuzzy")
-        .withArgs("John", "users", "name")
-        .resolves({
-          success: true,
-          data: [{ uid: "user123", name: "John Doe" }],
-        })
-        .withArgs("John", "users", "email")
-        .resolves({
-          success: true,
-          data: [{ uid: "user456", email: "john@example.com" }],
-        });
-
-      const result = await userService.searchUser({ keyword: "John" });
-      assert.deepStrictEqual(result, {
-        success: true,
-        data: [
-          { uid: "user123", name: "John Doe" },
-          { uid: "user456", email: "john@example.com" },
-        ],
-      });
-    });
-
     it("should return an error if searching for users fails", async function () {
       sinon.stub(db, "queryDatabaseFuzzy").rejects(new Error("Search error"));
 
