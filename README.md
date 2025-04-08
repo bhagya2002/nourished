@@ -13,6 +13,14 @@ How to set up the project locally.
 Ensure the following are installed or configured:
 
 - [Node.js](https://nodejs.org/) installed on your machine.
+
+  - To install Node.js go to the [Node.js website](https://nodejs.org/) and download the installer for your operating system. Follow the instructions to install Node.js (LTS).
+  - After installation, you can verify the installation by running the following command in your terminal:
+
+    ```bash
+    node -v
+    ```
+
 - `.env` & `.local.env` files are correctly configured
 
 You can find all required environment files in the **Shared Folder on Google Drive**.

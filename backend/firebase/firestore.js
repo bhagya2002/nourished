@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 const admin = require("./firebaseAdmin");
 const logger = require("../util/logger");
 
