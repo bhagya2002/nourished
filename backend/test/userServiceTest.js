@@ -71,6 +71,17 @@ describe("userService Tests", function () {
       const result = await userService.addFriendConnection("userA", "userB");
       assert.strictEqual(result, false);
     });
+
+    it("should update both users' friend lists in correct order", async () => {
+      const spy = sinon.stub(db, "updateFieldArray").resolves(true);
+
+      const result = await userService.addFriendConnection("userA", "userB");
+      assert.strictEqual(result, true);
+      sinon.assert.callOrder(
+        spy.withArgs("users", "userA", "friends", "userB"),
+        spy.withArgs("users", "userB", "friends", "userA"),
+      );
+    });
   });
 
   describe("getFriendRecommendations", function () {
@@ -209,6 +220,14 @@ describe("userService Tests", function () {
       const result = await userService.followUser("user123", "user456");
       assert.deepStrictEqual(result, { success: false });
     });
+
+    it("should handle exception in followUser", async () => {
+      sinon.stub(db, "updateFieldArray").throws(new Error("Boom"));
+
+      const result = await userService.followUser("user123", "user456");
+      assert.strictEqual(result.success, false);
+      assert(result.err instanceof Error);
+    });
   });
 
   describe("unfollowUser", function () {
@@ -257,6 +276,14 @@ describe("userService Tests", function () {
 
       const result = await userService.unfollowUser("user123", "user456");
       assert.deepStrictEqual(result, { success: false });
+    });
+
+    it("should handle exception in unfollowUser", async () => {
+      sinon.stub(db, "removeFromFieldArray").throws(new Error("DB crash"));
+
+      const result = await userService.unfollowUser("user123", "user456");
+      assert.strictEqual(result.success, false);
+      assert(result.err.message.includes("DB crash"));
     });
   });
 
@@ -322,6 +349,72 @@ describe("userService Tests", function () {
       assert.deepStrictEqual(result, {
         success: false,
         err: new Error("Search error"),
+      });
+    });
+
+    it("should return combined user list with no duplicates", async () => {
+      sinon
+        .stub(db, "queryDatabaseFuzzy")
+        .withArgs("John", "users", "name")
+        .resolves({
+          success: true,
+          data: [{ id: "1", name: "John" }],
+        })
+        .withArgs("John", "users", "email")
+        .resolves({
+          success: true,
+          data: [{ id: "2", name: "Johnny" }],
+        });
+
+      const result = await userService.searchUser({ keyword: "John" });
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.data.length, 2);
+    });
+  });
+
+  describe("getFriends", function () {
+    it("should return full friend documents if lookup succeeds", async () => {
+      sinon.stub(db, "queryDatabaseSingle").resolves({
+        success: true,
+        data: { friends: ["userA", "userB"] },
+      });
+      sinon.stub(db, "queryMultiple").resolves({
+        success: true,
+        data: [{ name: "Alice" }, { name: "Bob" }],
+      });
+
+      const result = await userService.getFriends("user123");
+      assert.deepStrictEqual(result, {
+        success: true,
+        data: [{ name: "Alice" }, { name: "Bob" }],
+      });
+    });
+
+    it("should return error if user document fetch fails", async () => {
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ success: false, message: "User not found" });
+
+      const result = await userService.getFriends("user123");
+      assert.deepStrictEqual(result, {
+        success: false,
+        message: "User not found",
+      });
+    });
+
+    it("should return error if fetching friend documents fails", async () => {
+      sinon.stub(db, "queryDatabaseSingle").resolves({
+        success: true,
+        data: { friends: ["userA", "userB"] },
+      });
+      sinon
+        .stub(db, "queryMultiple")
+        .resolves({ success: false, message: "Failed to fetch" });
+
+      const result = await userService.getFriends("user123");
+      assert.deepStrictEqual(result, {
+        success: false,
+        message: "Failed to fetch",
       });
     });
   });

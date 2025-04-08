@@ -37,6 +37,21 @@ describe("inviteService Tests", function () {
 
       expect(result).to.deep.equal({ success: false, error: "Database error" });
     });
+
+    it("should default inviterName, targetId, and targetTitle if not provided", async function () {
+      const mockResult = { success: true, id: "inviteDefaultTest" };
+      sinon.stub(db, "addSingleDoc").resolves(mockResult);
+
+      const result = await inviteService.createInvite("user123", {
+        type: 0,
+        invitee: "user456",
+      });
+
+      expect(result).to.deep.equal({
+        success: true,
+        data: "inviteDefaultTest",
+      });
+    });
   });
 
   describe("acceptInvite", function () {
@@ -107,6 +122,53 @@ describe("inviteService Tests", function () {
         error: "Invite not found",
       });
     });
+
+    it("should return error if challenge document query fails during challenge invite", async function () {
+      const batchStub = {
+        delete: sinon.stub(),
+        update: sinon.stub(),
+        commit: sinon.stub().resolves(),
+      };
+      sinon.stub(db, "batch").returns(batchStub);
+      sinon.stub(db, "getRef").returnsArg(1);
+      sinon.stub(db, "getAddToArray").returnsArg(0);
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ success: false, error: "Not found" });
+
+      const result = await inviteService.acceptInvite("user123", {
+        type: 1,
+        invitee: "user456",
+        targetId: "challengeX",
+        id: "invite789",
+      });
+
+      expect(result).to.deep.equal({ success: false, error: "Not found" });
+    });
+
+    it("should return error if updating goals array fails after accepting challenge invite", async function () {
+      const batchStub = {
+        delete: sinon.stub(),
+        update: sinon.stub(),
+        commit: sinon.stub().resolves(),
+      };
+      sinon.stub(db, "batch").returns(batchStub);
+      sinon.stub(db, "getRef").returnsArg(1);
+      sinon.stub(db, "getAddToArray").returnsArg(0);
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .resolves({ success: true, data: { goalId: "goal123" } });
+      sinon.stub(db, "updateFieldArray").resolves({ success: false });
+
+      const result = await inviteService.acceptInvite("user123", {
+        type: 1,
+        invitee: "user456",
+        targetId: "challengeX",
+        id: "invite789",
+      });
+
+      expect(result).to.deep.equal({ success: false });
+    });
   });
 
   describe("getUserInvites", function () {
@@ -160,6 +222,42 @@ describe("inviteService Tests", function () {
         success: false,
         error: "Invite not found",
       });
+    });
+
+    it("should return error if querying invites for a challenge fails", async function () {
+      sinon.stub(db, "queryDatabase").resolves({ success: false });
+
+      const result = await inviteService.deleteInvitesOnChallenge(
+        "user123",
+        "challenge123",
+      );
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "Challenge not found",
+      });
+    });
+
+    it("should delete all invites for a challenge", async function () {
+      const batchStub = {
+        delete: sinon.stub(),
+        commit: sinon.stub().resolves(),
+      };
+      sinon.stub(db, "batch").returns(batchStub);
+      sinon.stub(db, "getRef").callsFake((col, id) => `${col}/${id}`);
+      sinon.stub(db, "queryDatabase").resolves({
+        success: true,
+        data: [{ id: "invite1" }, { id: "invite2" }],
+      });
+
+      const result = await inviteService.deleteInvitesOnChallenge(
+        "user123",
+        "challengeX",
+      );
+
+      expect(batchStub.delete.calledTwice).to.be.true;
+      expect(batchStub.commit.calledOnce).to.be.true;
+      expect(result).to.deep.equal({ success: true });
     });
   });
 
@@ -268,6 +366,42 @@ describe("inviteService Tests", function () {
 
       const result = await userService.unfollowUser("user123", "user456");
       assert.deepStrictEqual(result, { success: false });
+    });
+
+    it("should return early if querying invites for friend deletion fails", async function () {
+      sinon.stub(db, "queryDatabase").resolves({ success: false });
+
+      const result = await inviteService.deleteFriendInvite(
+        "user123",
+        "user456",
+      );
+
+      expect(result).to.deep.equal({ success: false });
+    });
+
+    it("should delete only matching friend invites", async function () {
+      const batchStub = {
+        delete: sinon.stub(),
+        commit: sinon.stub().resolves(),
+      };
+      sinon.stub(db, "batch").returns(batchStub);
+      sinon.stub(db, "getRef").callsFake((col, id) => `${col}/${id}`);
+      sinon.stub(db, "queryDatabase").resolves({
+        success: true,
+        data: [
+          { id: "invite1", type: 0, inviter: "user123" },
+          { id: "invite2", type: 1, inviter: "user123" },
+          { id: "invite3", type: 0, inviter: "someoneElse" },
+        ],
+      });
+
+      const result = await inviteService.deleteFriendInvite(
+        "user123",
+        "user456",
+      );
+
+      expect(batchStub.delete.calledOnce).to.be.true;
+      expect(result).to.deep.equal({ success: true });
     });
   });
 

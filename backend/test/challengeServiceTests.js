@@ -151,6 +151,57 @@ describe("challengeService", function () {
         error: "Failed to create invite",
       });
     });
+
+    it("should return an error if inviter user lookup fails", async function () {
+      dbStub.addSingleDoc.resolves({ success: true, id: "challenge123" });
+      dbStub.updateFieldArray.resolves({ success: true });
+      dbStub.queryDatabaseSingle
+        .onFirstCall()
+        .resolves({ success: false, error: "User not found" });
+
+      const result = await challengeService.createChallenge("user123", {
+        goalId: "goal123",
+        invitees: ["user456"],
+      });
+
+      expect(result).to.deep.equal({ success: false, error: "User not found" });
+    });
+
+    it("should return an error if goal title lookup fails", async function () {
+      dbStub.addSingleDoc.resolves({ success: true, id: "challenge123" });
+      dbStub.updateFieldArray.resolves({ success: true });
+      dbStub.queryDatabaseSingle
+        .onFirstCall()
+        .resolves({ success: true, data: { name: "John" } });
+      dbStub.queryDatabaseSingle
+        .onSecondCall()
+        .resolves({ success: false, error: "Goal not found" });
+
+      const result = await challengeService.createChallenge("user123", {
+        goalId: "goal123",
+        invitees: ["user456"],
+      });
+
+      expect(result).to.deep.equal({ success: false, error: "Goal not found" });
+    });
+
+    it("should return an error if updating user's challenges array fails", async function () {
+      dbStub.addSingleDoc.resolves({ success: true, id: "challenge123" });
+      dbStub.updateFieldArray.resolves({
+        success: false,
+        error: "Update failed",
+      });
+
+      const result = await challengeService.createChallenge("user123", {
+        goalId: "goal123",
+        invitees: ["user456"],
+      });
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "Failed to update user challenges array",
+      });
+    });
   });
 
   describe("deleteChallenge", function () {
@@ -223,6 +274,113 @@ describe("challengeService", function () {
       expect(result).to.deep.equal({
         success: false,
         error: "Batch commit failed",
+      });
+    });
+
+    it("should return an error if deleting the challenge document fails", async function () {
+      dbStub.queryDatabaseSingle.resolves({
+        success: true,
+        data: { participants: ["user123"], goalId: "goal123" },
+      });
+      const batch = { update: sinon.stub() };
+      dbStub.batch.returns(batch);
+      dbStub.commitBatch.resolves({ success: true });
+      dbStub.deleteSingleDoc.resolves({
+        success: false,
+        error: "Delete failed",
+      });
+
+      const result = await challengeService.deleteChallenge(
+        "user123",
+        "challenge123",
+      );
+
+      expect(result).to.deep.equal({ success: false, error: "Delete failed" });
+    });
+
+    it("should return an error if deleting invites fails", async function () {
+      dbStub.queryDatabaseSingle.resolves({
+        success: true,
+        data: { participants: ["user123"], goalId: "goal123" },
+      });
+      const batch = { update: sinon.stub() };
+      dbStub.batch.returns(batch);
+      dbStub.commitBatch.resolves({ success: true });
+      dbStub.deleteSingleDoc.resolves({ success: true });
+      inviteServiceStub.deleteInvitesOnChallenge.resolves({
+        success: false,
+        error: "Invite cleanup failed",
+      });
+
+      const result = await challengeService.deleteChallenge(
+        "user123",
+        "challenge123",
+      );
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "Invite cleanup failed",
+      });
+    });
+  });
+
+  describe("addUserToChallenge", function () {
+    it("should return error if adding challenge to user fails", async function () {
+      dbStub.updateFieldArray
+        .withArgs("challenges", "challenge123", "participants", "user456")
+        .resolves({ success: true });
+      dbStub.updateFieldArray
+        .withArgs("users", "user456", "challenges", "challenge123")
+        .resolves({ success: false, error: "User update fail" });
+
+      const result = await challengeService.addUserToChallenge(
+        "user456",
+        "challenge123",
+      );
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "User update fail",
+      });
+    });
+  });
+
+  describe("removeUserFromChallenge", function () {
+    it("should return error if removing challenge from user fails", async function () {
+      dbStub.removeFromFieldArray
+        .withArgs("challenges", "challenge123", "participants", "user456")
+        .resolves({ success: true });
+      dbStub.removeFromFieldArray
+        .withArgs("users", "user456", "challenges", "challenge123")
+        .resolves({ success: false, error: "Remove user failed" });
+
+      const result = await challengeService.removeUserFromChallenge(
+        "user456",
+        "challenge123",
+      );
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "Remove user failed",
+      });
+    });
+  });
+
+  describe("incrementChallenge", function () {
+    it("should return error if incrementing challenge fails", async function () {
+      dbStub.incrementField.resolves({
+        success: false,
+        error: "Increment failed",
+      });
+
+      const result = await challengeService.incrementChallenge({
+        challengeId: "challenge123",
+        amount: 1,
+      });
+
+      expect(result).to.deep.equal({
+        success: false,
+        error: "Increment failed",
       });
     });
   });

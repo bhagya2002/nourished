@@ -75,6 +75,25 @@ describe("taskService Tests", function () {
         error: "Failed to update goal taskIds",
       });
     });
+
+    it("should return an error if goal lookup fails after updating goal taskIds", async function () {
+      sinon.stub(db, "addSingleDoc").resolves({ success: true, id: "task456" });
+      sinon.stub(db, "updateFieldArray").resolves({ success: true });
+      sinon.stub(db, "queryDatabaseSingle").resolves({
+        success: false,
+        error: "Goal lookup failed",
+      });
+
+      const result = await taskService.createTask(
+        "user123",
+        { frequency: "Daily" },
+        "goal789",
+      );
+      assert.deepStrictEqual(result, {
+        success: false,
+        error: "Goal lookup failed",
+      });
+    });
   });
 
   describe("editTask", function () {
@@ -170,6 +189,34 @@ describe("taskService Tests", function () {
         success: false,
         error: "Goal not found",
       });
+    });
+
+    it("should not adjust goal totalTasks if frequency did not change", async function () {
+      const uid = "user123";
+      const taskId = "task456";
+
+      sinon
+        .stub(db, "queryDatabaseSingle")
+        .onFirstCall()
+        .resolves({ success: true })
+        .onSecondCall()
+        .resolves({
+          success: true,
+          data: { goalId: "goal123", frequency: "Weekly" },
+        });
+
+      const updateStub = sinon
+        .stub(db, "updateField")
+        .resolves({ success: true });
+
+      const result = await taskService.editTask(
+        uid,
+        taskId,
+        "frequency",
+        "Weekly",
+      );
+      assert.deepStrictEqual(result, { success: true });
+      assert(updateStub.calledOnce);
     });
   });
 
@@ -311,6 +358,14 @@ describe("taskService Tests", function () {
         error: "Failed to remove task from user",
       });
     });
+
+    it("should delete task without goal and only update user", async function () {
+      sinon.stub(db, "removeFromFieldArray").resolves({ success: true });
+      sinon.stub(db, "deleteSingleDoc").resolves({ success: true });
+
+      const result = await taskService.deleteTask("user123", "task456", null);
+      assert.deepStrictEqual(result, { success: true });
+    });
   });
 
   describe("toggleTaskCompletion", function () {
@@ -378,6 +433,44 @@ describe("taskService Tests", function () {
       });
     });
 
+    it("should return success even if clearing completedAt fails when unchecking task", async () => {
+      sinon.stub(db, "queryDatabaseSingle").resolves({
+        success: true,
+        data: { uid: "user123" },
+      });
+
+      sinon
+        .stub(db, "updateField")
+        .onFirstCall()
+        .resolves({ success: true })
+        .onSecondCall()
+        .resolves({ success: false });
+
+      const result = await taskService.toggleTaskCompletion(
+        "user123",
+        "task456",
+        false,
+      );
+      assert.deepStrictEqual(result, { success: true });
+    });
+
+    it("should handle error when querying happiness ratings", async () => {
+      sinon.stub(db, "queryDatabaseSingle").resolves({
+        success: true,
+        data: { uid: "user123" },
+      });
+
+      sinon.stub(db, "updateField").resolves({ success: true });
+      sinon.stub(db, "queryDatabase").throws(new Error("query failed"));
+
+      const result = await taskService.toggleTaskCompletion(
+        "user123",
+        "task456",
+        false,
+      );
+      assert.deepStrictEqual(result, { success: true });
+    });
+
     describe("toggleTaskCompletion", function () {
       it("should mark a task as completed and update timestamps", async function () {
         sinon.stub(db, "queryDatabaseSingle").resolves({
@@ -411,6 +504,110 @@ describe("taskService Tests", function () {
           error: "You don't have permission to modify this task",
         });
       });
+
+      it("should continue even if incrementing goal completedTasks fails", async function () {
+        sinon
+          .stub(db, "queryDatabaseSingle")
+          .onFirstCall()
+          .resolves({
+            success: true,
+            data: { uid: "user123", frequency: "Daily", goalId: "goal123" },
+          })
+          .onSecondCall()
+          .resolves({ success: true, data: { plantHealth: 3 } })
+          .onThirdCall()
+          .resolves({ success: true, data: { deadline: "2025-05-01" } });
+
+        sinon.stub(db, "updateField").resolves({ success: true });
+        sinon.stub(db, "incrementField").resolves({ success: false });
+
+        const result = await taskService.toggleTaskCompletion(
+          "user123",
+          "task456",
+          true,
+        );
+        assert.deepStrictEqual(result, { success: true });
+      });
+
+      it("should return error if taskId is not provided", async () => {
+        const result = await taskService.toggleTaskCompletion(
+          "user123",
+          null,
+          true,
+        );
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Task ID is required",
+        });
+      });
+
+      it("should return error if task data is missing", async () => {
+        sinon
+          .stub(db, "queryDatabaseSingle")
+          .resolves({ success: true, data: null });
+
+        const result = await taskService.toggleTaskCompletion(
+          "user123",
+          "task456",
+          true,
+        );
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Task not found",
+        });
+      });
+
+      it("should return success even if updating completedAt field fails", async () => {
+        sinon
+          .stub(db, "queryDatabaseSingle")
+          .onFirstCall()
+          .resolves({
+            success: true,
+            data: { uid: "user123", frequency: "Daily", goalId: "goal1" },
+          })
+          .onSecondCall()
+          .resolves({ success: true, data: { plantHealth: 3 } })
+          .onThirdCall()
+          .resolves({ success: true, data: { deadline: "2025-04-30" } });
+
+        sinon
+          .stub(db, "updateField")
+          .onFirstCall()
+          .resolves({ success: true })
+          .onSecondCall()
+          .resolves({ success: false });
+
+        const result = await taskService.toggleTaskCompletion(
+          "user123",
+          "task123",
+          true,
+        );
+        assert.deepStrictEqual(result, { success: true });
+      });
+
+      it("should return success even if updating goal completedTasks fails", async () => {
+        sinon
+          .stub(db, "queryDatabaseSingle")
+          .onFirstCall()
+          .resolves({
+            success: true,
+            data: { uid: "user123", frequency: "Daily", goalId: "goal1" },
+          })
+          .onSecondCall()
+          .resolves({ success: true, data: { plantHealth: 3 } })
+          .onThirdCall()
+          .resolves({ success: true, data: { deadline: "2025-04-30" } });
+
+        sinon.stub(db, "updateField").resolves({ success: true });
+        sinon.stub(db, "incrementField").resolves({ success: false });
+
+        const result = await taskService.toggleTaskCompletion(
+          "user123",
+          "task123",
+          true,
+        );
+        assert.deepStrictEqual(result, { success: true });
+      });
     });
 
     describe("getTaskHistory", function () {
@@ -425,6 +622,28 @@ describe("taskService Tests", function () {
           success: false,
           error: "User not found",
         });
+      });
+
+      it("should return paginated task history when lastDoc is provided", async () => {
+        const tasks = [
+          { id: "t1", completed: true, completedAt: "2025-04-01" },
+          { id: "t2", completed: true, completedAt: "2025-04-02" },
+          { id: "t3", completed: true, completedAt: "2025-04-03" },
+        ];
+
+        sinon.stub(db, "queryDatabaseSingle").resolves({ success: true });
+        sinon
+          .stub(taskService, "getUserTasks")
+          .resolves({ success: true, data: tasks });
+
+        const result = await taskService.getTaskHistory(
+          "user123",
+          null,
+          null,
+          "t1",
+        );
+        assert.strictEqual(result.success, true);
+        assert(result.data.completions.length <= 10);
       });
     });
 
@@ -469,6 +688,67 @@ describe("taskService Tests", function () {
           error: "Cannot rate an incomplete task",
         });
       });
+
+      it("should return error if updating duplicate rating fails", async function () {
+        sinon.stub(db, "queryDatabaseSingle").resolves({
+          success: true,
+          data: { uid: "user123", completed: true },
+        });
+        sinon.stub(db, "queryDatabase").resolves({
+          success: true,
+          data: [{ id: "rating123", taskId: "task456", date: "2025-04-02" }],
+        });
+        sinon.stub(db, "updateField").resolves({ success: false });
+
+        const result = await taskService.submitHappinessRating(
+          "user123",
+          "task456",
+          4,
+          "2025-04-02",
+        );
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Failed to update existing happiness rating",
+        });
+      });
+
+      it("should return error for invalid rating input", async () => {
+        const result = await taskService.submitHappinessRating(
+          "user123",
+          "task456",
+          7,
+          "2025-04-05",
+        );
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Valid happiness rating (1-5) is required",
+        });
+      });
+
+      it("should return error if duplicate happiness rating fails to update", async () => {
+        sinon.stub(db, "queryDatabaseSingle").resolves({
+          success: true,
+          data: { uid: "user123", completed: true },
+        });
+
+        sinon.stub(db, "queryDatabase").resolves({
+          success: true,
+          data: [{ id: "rating123", taskId: "task456", date: "2025-04-05" }],
+        });
+
+        sinon.stub(db, "updateField").resolves({ success: false });
+
+        const result = await taskService.submitHappinessRating(
+          "user123",
+          "task456",
+          4,
+          "2025-04-05",
+        );
+        assert.deepStrictEqual(result, {
+          success: false,
+          error: "Failed to update existing happiness rating",
+        });
+      });
     });
 
     describe("getHappinessData", function () {
@@ -499,6 +779,25 @@ describe("taskService Tests", function () {
           success: false,
           error: "User not found",
         });
+      });
+
+      it("should return 0 average if no ratings match date filter", async function () {
+        sinon.stub(db, "queryDatabaseSingle").resolves({ success: true });
+        sinon.stub(db, "queryDatabase").resolves({
+          success: true,
+          data: [
+            { rating: 5, date: "2024-01-01" },
+            { rating: 4, date: "2024-01-02" },
+          ],
+        });
+
+        const result = await taskService.getHappinessData(
+          "user123",
+          "2025-01-01",
+          "2025-01-31",
+        );
+        assert.strictEqual(result.data.averageHappiness, 0);
+        assert.strictEqual(result.data.count, 0);
       });
     });
 
@@ -532,6 +831,77 @@ describe("taskService Tests", function () {
           success: false,
           error: "Failed to fetch tasks for reset",
         });
+      });
+
+      it("should collect error details for failed task resets", async () => {
+        sinon.stub(db, "queryDatabaseCustom").resolves({
+          success: true,
+          data: [
+            {
+              id: "task1",
+              uid: "user123",
+              frequency: "Daily",
+              completedAt: new Date(Date.now() - 86400000).toISOString(),
+            },
+          ],
+        });
+
+        sinon
+          .stub(db, "updateField")
+          .onFirstCall()
+          .resolves({ success: false });
+
+        const result = await taskService.resetRecurringTasks();
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.data.details[0].success, false);
+      });
+
+      it("should reset completedAt field for recurring task", async () => {
+        sinon.stub(db, "queryDatabaseCustom").resolves({
+          success: true,
+          data: [
+            {
+              id: "task1",
+              uid: "user123",
+              frequency: "Daily",
+              completedAt: new Date(Date.now() - 86400000).toISOString(),
+            },
+          ],
+        });
+
+        sinon
+          .stub(db, "updateField")
+          .onFirstCall()
+          .resolves({ success: true })
+          .onSecondCall()
+          .resolves({ success: true });
+
+        const result = await taskService.resetRecurringTasks();
+        assert.strictEqual(result.success, true);
+        assert.strictEqual(result.data.tasksReset, 1);
+      });
+
+      it("should capture thrown error during task reset loop", async () => {
+        sinon.stub(db, "queryDatabaseCustom").resolves({
+          success: true,
+          data: [
+            {
+              id: "task1",
+              uid: "user123",
+              frequency: "Daily",
+              completedAt: new Date(Date.now() - 86400000).toISOString(),
+            },
+          ],
+        });
+
+        sinon
+          .stub(db, "updateField")
+          .onFirstCall()
+          .throws(new Error("Update crashed"));
+
+        const result = await taskService.resetRecurringTasks();
+        assert.strictEqual(result.success, true);
+        assert(result.data.details[0].error.includes("Update crashed"));
       });
     });
 
@@ -727,6 +1097,41 @@ describe("taskService Tests", function () {
           success: false,
           error: "You don't have permission to modify this task",
         });
+      });
+
+      it("should still succeed even if decrementing completedTasks fails", async () => {
+        sinon
+          .stub(db, "queryDatabaseSingle")
+          .onFirstCall()
+          .resolves({
+            success: true,
+            data: {
+              uid: "user123",
+              goalId: "goal789",
+              frequency: "Daily",
+              completed: true,
+            },
+          })
+          .onSecondCall()
+          .resolves({
+            success: true,
+            data: { uid: "user123", deadline: "2025-04-30" },
+          });
+
+        sinon.stub(db, "updateField").resolves({ success: true });
+        sinon.stub(db, "removeFromFieldArray").resolves({ success: true });
+        sinon
+          .stub(db, "incrementField")
+          .onFirstCall()
+          .resolves({ success: true })
+          .onSecondCall()
+          .resolves({ success: false });
+
+        const result = await taskService.unassociateTaskFromGoal(
+          "user123",
+          "task123",
+        );
+        assert.strictEqual(result.success, true);
       });
     });
   });
