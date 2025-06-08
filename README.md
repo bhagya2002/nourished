@@ -1,69 +1,55 @@
-# Nourished
+# Nourished – A Gamified Social Wellness App
 
-Gamified Social Wellness App
+Nourished is a full-stack wellness web app that helps users improve their mental health by building positive habits, setting personal goals, and journaling their thoughts—all visualized through the growth of a virtual plant. As users progress, their plant flourishes, making wellness feel rewarding, visual, and community-driven.
 
----
-
-## Getting Started
-
-How to set up the project locally.
-
-### Prerequisites
-
-Ensure the following are installed or configured:
-
-- [Node.js](https://nodejs.org/) installed on your machine.
-
-  - To install Node.js go to the [Node.js website](https://nodejs.org/) and download the installer for your operating system. Follow the instructions to install Node.js (LTS).
-  - After installation, you can verify the installation by running the following command in your terminal:
-
-    ```bash
-    node -v
-    ```
-
-- `.env` & `.local.env` files are correctly configured
-
-You can find all required environment files in the **Shared Folder on Google Drive**.
-
-#### Required Files
-
-- In the **project root**, ensure you have the following files:
-  - `.env`
-- In the **frontend** (`frontend/nourished`) directory, ensure you have the following files:
-  - `.local.env`
 
 ---
 
-## Install Dependencies
+## Demo
 
-Install all required dependencies:
+[Nourished](capstone2025.vercel.app)
 
-```bash
-# For the backend
-cd backend
-npm install
+---
 
-# For the frontend
-cd frontend/nourished
-npm install
-```
+## Features
 
-## Run the Project
+### Core Functionality
+- Habit Tracker – Log and monitor daily habits with progress history
+- Goal Setting – Define long-term goals and track milestones
+- Mood-Aware Journaling – Journal entries with optional mood tags and sentiment visualization
+- Virtual Plant Avatar – Reflects the user’s wellness journey visually
+- AI Insights – Context-aware nudges, reflections, and suggestions based on usage data
 
-### Backend
+### Gamified Experience
+- Plant Growth Mechanic – Your plant grows as you stay consistent
+- Streaks & Milestones – Encourages accountability with visual feedback
+- Community Encouragement – Join others to stay motivated (planned feature)
 
-To run the backend server, navigate to the `backend` directory and use the following command:
+### Account & Data
+- Firebase Authentication – Secure user login and registration
+- Real-Time Sync – User data updates instantly using Firestore
 
-```bash
-npm run dev
-```
+### Testing & Quality
+- Playwright – Automated UI testing for reliability
+- Mocha – Backend unit testing for key logic
 
-### Frontend
+---
 
-To run the frontend application, navigate to the `frontend/nourished` directory and use the following command:
+## Tech Stack
 
-```bash
-npm run dev
-```
+| Area           | Tech Used                          |
+|----------------|------------------------------------|
+| Frontend       | Next.js                            |
+| Backend        | Node.js, Express                   |
+| Database       | Firebase, Firestore (NoSQL)        |
+| Auth           | Firebase Authentication            |
+| Hosting        | Vercel                             |
+| Testing        | Playwright (UI), Mocha (Backend)   |
+| Styling        | Material UI                        |
 
-This will start the development server, and you can access the application at `http://localhost:3000`.
+---
+
+## Poster Presentation
+
+[Nourished Poster.pdf](https://github.com/user-attachments/files/20642692/Nourished.Poster.pdf)
+
